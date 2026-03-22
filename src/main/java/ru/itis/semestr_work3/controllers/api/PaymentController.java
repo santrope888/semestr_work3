@@ -19,24 +19,24 @@ public class PaymentController {
     }
 
     @GetMapping
-    public List<Payment> findAll(){
+    public List<Payment> findAll() {
         return paymentRepository.findAll();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Payment> findById(@PathVariable Long id){
+    public ResponseEntity<Payment> findById(@PathVariable Long id) {
         return paymentRepository.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Payment create(@Valid @RequestBody Payment payment){
+    public Payment create(@Valid @RequestBody Payment payment) {
         return paymentRepository.save(payment);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Payment> update(@PathVariable Long id, @Valid @RequestBody Payment payment){
-        if(!paymentRepository.existsById(id)){
+    public ResponseEntity<Payment> update(@PathVariable Long id, @Valid @RequestBody Payment payment) {
+        if (!paymentRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
         Payment paymentUpdated = paymentRepository.save(payment);
@@ -44,8 +44,8 @@ public class PaymentController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteById(@PathVariable Long id){
-        if(!paymentRepository.existsById(id)){
+    public ResponseEntity<Void> deleteById(@PathVariable Long id) {
+        if (!paymentRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
         paymentRepository.deleteById(id);

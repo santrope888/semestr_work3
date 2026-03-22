@@ -19,24 +19,24 @@ public class ReviewController {
     }
 
     @GetMapping
-    public List<Review> findAll(){
+    public List<Review> findAll() {
         return reviewRepository.findAll();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Review> findById(@PathVariable Long id){
+    public ResponseEntity<Review> findById(@PathVariable Long id) {
         return reviewRepository.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Review create(@Valid @RequestBody Review review){
+    public Review create(@Valid @RequestBody Review review) {
         return reviewRepository.save(review);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Review> update(@PathVariable Long id, @Valid @RequestBody Review review){
-        if(!reviewRepository.existsById(id)){
+    public ResponseEntity<Review> update(@PathVariable Long id, @Valid @RequestBody Review review) {
+        if (!reviewRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
         Review reviewUpdated = reviewRepository.save(review);
@@ -44,8 +44,8 @@ public class ReviewController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteById(@PathVariable Long id){
-        if(!reviewRepository.existsById(id)){
+    public ResponseEntity<Void> deleteById(@PathVariable Long id) {
+        if (!reviewRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
         reviewRepository.deleteById(id);

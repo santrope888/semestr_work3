@@ -19,24 +19,24 @@ public class FavoriteController {
     }
 
     @GetMapping
-    public List<Favorite> findAll(){
+    public List<Favorite> findAll() {
         return favoriteRepository.findAll();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Favorite> findById(@PathVariable Long id){
+    public ResponseEntity<Favorite> findById(@PathVariable Long id) {
         return favoriteRepository.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Favorite create(@Valid @RequestBody Favorite favorite){
+    public Favorite create(@Valid @RequestBody Favorite favorite) {
         return favoriteRepository.save(favorite);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Favorite> update(@PathVariable Long id, @Valid @RequestBody Favorite favorite){
-        if(!favoriteRepository.existsById(id)){
+    public ResponseEntity<Favorite> update(@PathVariable Long id, @Valid @RequestBody Favorite favorite) {
+        if (!favoriteRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
         Favorite favoriteUpdated = favoriteRepository.save(favorite);
@@ -44,8 +44,8 @@ public class FavoriteController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteById(@PathVariable Long id){
-        if(!favoriteRepository.existsById(id)){
+    public ResponseEntity<Void> deleteById(@PathVariable Long id) {
+        if (!favoriteRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
         favoriteRepository.deleteById(id);

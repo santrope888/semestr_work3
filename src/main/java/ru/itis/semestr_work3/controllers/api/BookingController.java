@@ -19,24 +19,24 @@ public class BookingController {
     }
 
     @GetMapping
-    public List<Booking> findAll(){
+    public List<Booking> findAll() {
         return bookingRepository.findAll();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Booking> findById(@PathVariable Long id){
+    public ResponseEntity<Booking> findById(@PathVariable Long id) {
         return bookingRepository.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Booking create(@Valid @RequestBody Booking booking){
+    public Booking create(@Valid @RequestBody Booking booking) {
         return bookingRepository.save(booking);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Booking> update(@PathVariable Long id, @Valid @RequestBody Booking booking){
-        if(!bookingRepository.existsById(id)){
+    public ResponseEntity<Booking> update(@PathVariable Long id, @Valid @RequestBody Booking booking) {
+        if (!bookingRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
         Booking bookingUpdated = bookingRepository.save(booking);
@@ -44,8 +44,8 @@ public class BookingController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteById(@PathVariable Long id){
-        if(!bookingRepository.existsById(id)){
+    public ResponseEntity<Void> deleteById(@PathVariable Long id) {
+        if (!bookingRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
         bookingRepository.deleteById(id);

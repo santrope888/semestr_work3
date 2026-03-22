@@ -19,24 +19,24 @@ public class CarController {
     }
 
     @GetMapping
-    public List<Car> findAll(){
+    public List<Car> findAll() {
         return carRepository.findAll();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Car> findById(@PathVariable Long id){
+    public ResponseEntity<Car> findById(@PathVariable Long id) {
         return carRepository.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Car create(@Valid @RequestBody Car car){
+    public Car create(@Valid @RequestBody Car car) {
         return carRepository.save(car);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Car> update(@PathVariable Long id, @Valid @RequestBody Car car){
-        if(!carRepository.existsById(id)){
+    public ResponseEntity<Car> update(@PathVariable Long id, @Valid @RequestBody Car car) {
+        if (!carRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
         Car carUpdated = carRepository.save(car);
@@ -44,8 +44,8 @@ public class CarController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteById(@PathVariable Long id){
-        if(!carRepository.existsById(id)){
+    public ResponseEntity<Void> deleteById(@PathVariable Long id) {
+        if (!carRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
         carRepository.deleteById(id);

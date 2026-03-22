@@ -1,8 +1,15 @@
 package ru.itis.semestr_work3.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.time.LocalDate;
 
+@Getter
+@Setter
+@NoArgsConstructor
 @Entity
 @Table(name = "reviews")
 public class Review {
@@ -13,7 +20,7 @@ public class Review {
     private Long id;
 
     @Column(nullable = false)
-    private Integer rating; // 1-5
+    private Integer rating;
 
     @Column
     private String comment;
