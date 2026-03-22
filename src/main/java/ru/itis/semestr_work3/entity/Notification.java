@@ -1,0 +1,32 @@
+package ru.itis.semestr_work3.entity;
+
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "notifications")
+public class Notification {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "notification_id")
+    private Long id;
+
+    @Column(nullable = false)
+    private String message;
+
+    @Column(nullable = false)
+    private String type; // BOOKING_CONFIRMED, BOOKING_CANCELLED, REMINDER, REVIEW_REPLY
+
+    @Column(name = "is_read", nullable = false)
+    private Boolean isRead = false;
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+
+}
