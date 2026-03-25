@@ -5,51 +5,42 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.itis.semestr_work3.entity.Payment;
-import ru.itis.semestr_work3.repository.PaymentRepository;
+import ru.itis.semestr_work3.service.PaymentService;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/payment")
 public class PaymentController {
-    private final PaymentRepository paymentRepository;
+    private final PaymentService paymentService;
 
-    public PaymentController(PaymentRepository paymentRepository) {
-        this.paymentRepository = paymentRepository;
+    public PaymentController(PaymentService paymentService) {
+        this.paymentService = paymentService;
     }
 
     @GetMapping
     public List<Payment> findAll() {
-        return paymentRepository.findAll();
+        return paymentService.findAll();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Payment> findById(@PathVariable Long id) {
-        return paymentRepository.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        return paymentService.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Payment create(@Valid @RequestBody Payment payment) {
-        return paymentRepository.save(payment);
+        return paymentService.save(payment);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Payment> update(@PathVariable Long id, @Valid @RequestBody Payment payment) {
-        if (!paymentRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        payment.setId(id);
-        Payment paymentUpdated = paymentRepository.save(payment);
-        return ResponseEntity.ok(paymentUpdated);
+        return paymentService.update(id, payment).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
-        if (!paymentRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        paymentRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
+        return paymentService.deleteById(id) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 }

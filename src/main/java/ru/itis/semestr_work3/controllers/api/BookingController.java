@@ -5,51 +5,42 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.itis.semestr_work3.entity.Booking;
-import ru.itis.semestr_work3.repository.BookingRepository;
+import ru.itis.semestr_work3.service.BookingService;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/booking")
 public class BookingController {
-    private final BookingRepository bookingRepository;
+    private final BookingService bookingService;
 
-    public BookingController(BookingRepository bookingRepository) {
-        this.bookingRepository = bookingRepository;
+    public BookingController(BookingService bookingService) {
+        this.bookingService = bookingService;
     }
 
     @GetMapping
     public List<Booking> findAll() {
-        return bookingRepository.findAll();
+        return bookingService.findAll();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Booking> findById(@PathVariable Long id) {
-        return bookingRepository.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        return bookingService.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Booking create(@Valid @RequestBody Booking booking) {
-        return bookingRepository.save(booking);
+        return bookingService.save(booking);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Booking> update(@PathVariable Long id, @Valid @RequestBody Booking booking) {
-        if (!bookingRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        booking.setId(id);
-        Booking bookingUpdated = bookingRepository.save(booking);
-        return ResponseEntity.ok(bookingUpdated);
+        return bookingService.update(id, booking).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
-        if (!bookingRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        bookingRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
+        return bookingService.deleteById(id) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 }

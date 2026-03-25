@@ -5,51 +5,42 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.itis.semestr_work3.entity.Car;
-import ru.itis.semestr_work3.repository.CarRepository;
+import ru.itis.semestr_work3.service.CarService;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/car")
 public class CarController {
-    private final CarRepository carRepository;
+    private final CarService carService;
 
-    public CarController(CarRepository carRepository) {
-        this.carRepository = carRepository;
+    public CarController(CarService carService) {
+        this.carService = carService;
     }
 
     @GetMapping
     public List<Car> findAll() {
-        return carRepository.findAll();
+        return carService.findAll();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Car> findById(@PathVariable Long id) {
-        return carRepository.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        return carService.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Car create(@Valid @RequestBody Car car) {
-        return carRepository.save(car);
+        return carService.save(car);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Car> update(@PathVariable Long id, @Valid @RequestBody Car car) {
-        if (!carRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        car.setId(id);
-        Car carUpdated = carRepository.save(car);
-        return ResponseEntity.ok(carUpdated);
+        return carService.update(id, car).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
-        if (!carRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        carRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
+        return carService.deleteById(id) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 }
