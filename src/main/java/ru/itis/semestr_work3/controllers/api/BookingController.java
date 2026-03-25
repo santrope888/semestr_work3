@@ -39,6 +39,7 @@ public class BookingController {
         if (!bookingRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
+        booking.setId(id);
         Booking bookingUpdated = bookingRepository.save(booking);
         return ResponseEntity.ok(bookingUpdated);
     }

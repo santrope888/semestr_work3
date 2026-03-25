@@ -39,6 +39,7 @@ public class FavoriteController {
         if (!favoriteRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
+        favorite.setId(id);
         Favorite favoriteUpdated = favoriteRepository.save(favorite);
         return ResponseEntity.ok(favoriteUpdated);
     }

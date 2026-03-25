@@ -39,6 +39,7 @@ public class PaymentController {
         if (!paymentRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
+        payment.setId(id);
         Payment paymentUpdated = paymentRepository.save(payment);
         return ResponseEntity.ok(paymentUpdated);
     }

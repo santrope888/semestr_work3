@@ -39,6 +39,7 @@ public class CarController {
         if (!carRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
+        car.setId(id);
         Car carUpdated = carRepository.save(car);
         return ResponseEntity.ok(carUpdated);
     }

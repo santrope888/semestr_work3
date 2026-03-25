@@ -39,6 +39,7 @@ public class ReviewController {
         if (!reviewRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
+        review.setId(id);
         Review reviewUpdated = reviewRepository.save(review);
         return ResponseEntity.ok(reviewUpdated);
     }
