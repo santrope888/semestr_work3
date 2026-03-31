@@ -1,50 +1,40 @@
 package ru.itis.semestr_work3.service;
 
-import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.itis.semestr_work3.entity.Payment;
 import ru.itis.semestr_work3.repository.PaymentRepository;
 
-import java.util.List;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
-@Transactional
+@RequiredArgsConstructor
 public class PaymentService {
-    private PaymentRepository paymentRepository;
 
-    public PaymentService(PaymentRepository paymentRepository) {
-        this.paymentRepository = paymentRepository;
-    }
-
-    public List<Payment> findAll() {
-        return paymentRepository.findAll();
-    }
+    private final PaymentRepository paymentRepository;
 
     public Optional<Payment> findById(Long id) {
         return paymentRepository.findById(id);
     }
 
-    public Payment save(Payment payment) {
+    public Optional<Payment> findByBooking(Long bookingId) {
+        return paymentRepository.findByBooking(bookingId);
+    }
+
+    public Payment pay(Long paymentId, String method) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new RuntimeException("Payment not found"));
+        payment.setStatus("PAID");
+        payment.setMethod(method);
+        payment.setPaidAt(LocalDateTime.now());
         return paymentRepository.save(payment);
     }
 
-    public Optional<Payment> update(Long id, Payment payment) {
-        if (!paymentRepository.existsById(id)) {
-            return Optional.empty();
-        }
-        payment.setId(id);
-        Payment paymentUpdated = paymentRepository.save(payment);
-        return Optional.of(paymentUpdated);
-    }
-
-    public boolean deleteById(Long id) {
-        if (!paymentRepository.existsById(id)) {
-            return false;
-        }
-
-        paymentRepository.deleteById(id);
-
-        return true;
+    public Payment refund(Long paymentId) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new RuntimeException("Payment not found"));
+        payment.setStatus("REFUNDED");
+        return paymentRepository.save(payment);
     }
 }

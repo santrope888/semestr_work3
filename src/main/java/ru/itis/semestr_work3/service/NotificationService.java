@@ -1,0 +1,46 @@
+package ru.itis.semestr_work3.service;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import ru.itis.semestr_work3.entity.Notification;
+import ru.itis.semestr_work3.entity.User;
+import ru.itis.semestr_work3.repository.NotificationRepository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class NotificationService {
+
+    private final NotificationRepository notificationRepository;
+
+    public List<Notification> findByUser(Long userId) {
+        return notificationRepository.findByUser(userId);
+    }
+
+    public List<Notification> findUnread(Long userId) {
+        return notificationRepository.findUnread(userId);
+    }
+
+    public long countUnread(Long userId) {
+        return notificationRepository.countUnread(userId);
+    }
+
+    public void markAsRead(Long notificationId) {
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new RuntimeException("Notification not found"));
+        notification.setIsRead(true);
+        notificationRepository.save(notification);
+    }
+
+    public void send(User user, String type, String message) {
+        Notification notification = new Notification();
+        notification.setUser(user);
+        notification.setType(type);
+        notification.setMessage(message);
+        notification.setIsRead(false);
+        notification.setCreatedAt(LocalDateTime.now());
+        notificationRepository.save(notification);
+    }
+}

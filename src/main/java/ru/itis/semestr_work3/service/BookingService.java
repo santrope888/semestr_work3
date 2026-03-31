@@ -1,21 +1,25 @@
 package ru.itis.semestr_work3.service;
 
-import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.itis.semestr_work3.entity.Booking;
+import ru.itis.semestr_work3.entity.Insurance;
+import ru.itis.semestr_work3.entity.Payment;
 import ru.itis.semestr_work3.repository.BookingRepository;
+import ru.itis.semestr_work3.repository.InsuranceRepository;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
-@Transactional
+@RequiredArgsConstructor
 public class BookingService {
-    private BookingRepository bookingRepository;
 
-    public BookingService(BookingRepository bookingRepository) {
-        this.bookingRepository = bookingRepository;
-    }
+    private final BookingRepository bookingRepository;
+    private final InsuranceRepository insuranceRepository;
 
     public List<Booking> findAll() {
         return bookingRepository.findAll();
@@ -25,26 +29,80 @@ public class BookingService {
         return bookingRepository.findById(id);
     }
 
-    public Booking save(Booking booking) {
+    public List<Booking> findByUser(Long userId) {
+        return bookingRepository.findByUser(userId);
+    }
+
+    public List<Booking> findByCar(Long carId) {
+        return bookingRepository.findByCar(carId);
+    }
+
+    public List<Booking> findByStatus(String status) {
+        return bookingRepository.findByStatus(status);
+    }
+
+    public Booking create(Booking booking, Set<Long> insuranceIds) {
+        if (booking.getEndDate().isBefore(booking.getStartDate())) {
+            throw new IllegalArgumentException("Дата окончания не может быть раньше даты начала");
+        }
+        if (booking.getStartDate().isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Дата начала не может быть в прошлом");
+        }
+
+        long days = ChronoUnit.DAYS.between(booking.getStartDate(), booking.getEndDate()) + 1;
+        int carPrice = booking.getCar().getPricePerDay() * (int) days;
+
+        int insurancePrice = 0;
+        if (insuranceIds != null && !insuranceIds.isEmpty()) {
+            List<Insurance> insurances = insuranceRepository.findAllById(insuranceIds);
+            booking.setInsurances(Set.copyOf(insurances));
+            insurancePrice = insurances.stream()
+                    .mapToInt(i -> i.getPricePerDay() * (int) days)
+                    .sum();
+        }
+
+        booking.setTotalPrice(carPrice + insurancePrice);
+        booking.setStatus("PENDING");
+        booking.setCreatedAt(LocalDate.now());
+
+        Payment payment = new Payment();
+        payment.setAmount(booking.getTotalPrice());
+        payment.setCurrency("RUB");
+        payment.setStatus("PENDING");
+        payment.setBooking(booking);
+        booking.setPayment(payment);
+
         return bookingRepository.save(booking);
     }
 
-    public Optional<Booking> update(Long id, Booking booking) {
-        if (!bookingRepository.existsById(id)) {
-            return Optional.empty();
-        }
-        booking.setId(id);
-        Booking bookingUpdated = bookingRepository.save(booking);
-        return Optional.of(bookingUpdated);
+    public Booking confirm(Long id) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+        booking.setStatus("CONFIRMED");
+        return bookingRepository.save(booking);
     }
 
-    public boolean deleteById(Long id) {
-        if (!bookingRepository.existsById(id)) {
-            return false;
+    public Booking cancel(Long id, Long userId) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+        if (!booking.getUser().getId().equals(userId)) {
+            throw new SecurityException("Нельзя отменить чужое бронирование");
         }
+        booking.setStatus("CANCELLED");
+        if (booking.getPayment() != null) {
+            booking.getPayment().setStatus("REFUNDED");
+        }
+        return bookingRepository.save(booking);
+    }
 
-        bookingRepository.deleteById(id);
+    public Booking complete(Long id) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+        booking.setStatus("COMPLETED");
+        return bookingRepository.save(booking);
+    }
 
-        return true;
+    public List<Object[]> findMostBooked() {
+        return bookingRepository.findMostBooked();
     }
 }

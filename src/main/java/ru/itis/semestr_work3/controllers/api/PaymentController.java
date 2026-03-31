@@ -1,46 +1,56 @@
 package ru.itis.semestr_work3.controllers.api;
 
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.itis.semestr_work3.entity.Payment;
+import ru.itis.semestr_work3.service.CurrencyService;
 import ru.itis.semestr_work3.service.PaymentService;
 
-import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/payment")
+@RequestMapping("/api/payments")
 public class PaymentController {
+
     private final PaymentService paymentService;
+    private final CurrencyService currencyService;
 
-    public PaymentController(PaymentService paymentService) {
+    public PaymentController(PaymentService paymentService, CurrencyService currencyService) {
         this.paymentService = paymentService;
-    }
-
-    @GetMapping
-    public List<Payment> findAll() {
-        return paymentService.findAll();
+        this.currencyService = currencyService;
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Payment> findById(@PathVariable Long id) {
-        return paymentService.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        return paymentService.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public Payment create(@Valid @RequestBody Payment payment) {
-        return paymentService.save(payment);
+    @GetMapping("/booking/{bookingId}")
+    public ResponseEntity<Payment> findByBooking(@PathVariable Long bookingId) {
+        return paymentService.findByBooking(bookingId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Payment> update(@PathVariable Long id, @Valid @RequestBody Payment payment) {
-        return paymentService.update(id, payment).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    @PostMapping("/{id}/pay")
+    public Payment pay(@PathVariable Long id, @RequestParam String method) {
+        return paymentService.pay(id, method);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteById(@PathVariable Long id) {
-        return paymentService.deleteById(id) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+    @PostMapping("/{id}/refund")
+    public Payment refund(@PathVariable Long id) {
+        return paymentService.refund(id);
+    }
+
+    @GetMapping("/convert")
+    public Map<String, Object> convert(@RequestParam int amount, @RequestParam String currency) {
+        double converted = currencyService.convert(amount, currency);
+        return Map.of(
+                "original", amount,
+                "currency", currency,
+                "converted", converted
+        );
     }
 }

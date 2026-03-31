@@ -1,50 +1,46 @@
 package ru.itis.semestr_work3.service;
 
-import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.itis.semestr_work3.entity.Review;
 import ru.itis.semestr_work3.repository.ReviewRepository;
 
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @Service
-@Transactional
+@RequiredArgsConstructor
 public class ReviewService {
-    private ReviewRepository reviewRepository;
 
-    public ReviewService(ReviewRepository reviewRepository) {
-        this.reviewRepository = reviewRepository;
-    }
+    private final ReviewRepository reviewRepository;
 
     public List<Review> findAll() {
         return reviewRepository.findAll();
     }
 
-    public Optional<Review> findById(Long id) {
-        return reviewRepository.findById(id);
+    public List<Review> findByCar(Long carId) {
+        return reviewRepository.findByCar(carId);
     }
 
-    public Review save(Review review) {
+    public List<Review> findByUser(Long userId) {
+        return reviewRepository.findByUser(userId);
+    }
+
+    public Review create(Review review) {
+        if (review.getRating() < 1 || review.getRating() > 5) {
+            throw new IllegalArgumentException("Рейтинг должен быть от 1 до 5");
+        }
+        if (reviewRepository.exists(review.getUser().getId(), review.getCar().getId())) {
+            throw new IllegalArgumentException("Вы уже оставляли отзыв на этот автомобиль");
+        }
+        review.setCreatedAt(LocalDate.now());
         return reviewRepository.save(review);
     }
 
-    public Optional<Review> update(Long id, Review review) {
+    public void delete(Long id) {
         if (!reviewRepository.existsById(id)) {
-            return Optional.empty();
+            throw new RuntimeException("Review not found: " + id);
         }
-        review.setId(id);
-        Review reviewUpdated = reviewRepository.save(review);
-        return Optional.of(reviewUpdated);
-    }
-
-    public boolean deleteById(Long id) {
-        if (!reviewRepository.existsById(id)) {
-            return false;
-        }
-
         reviewRepository.deleteById(id);
-
-        return true;
     }
 }

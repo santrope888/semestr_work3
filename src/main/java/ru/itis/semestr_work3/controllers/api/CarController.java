@@ -1,6 +1,5 @@
 package ru.itis.semestr_work3.controllers.api;
 
-import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,8 +9,9 @@ import ru.itis.semestr_work3.service.CarService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/car")
+@RequestMapping("/api/cars")
 public class CarController {
+
     private final CarService carService;
 
     public CarController(CarService carService) {
@@ -25,22 +25,40 @@ public class CarController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Car> findById(@PathVariable Long id) {
-        return carService.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        return carService.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/available")
+    public List<Car> findAvailable() {
+        return carService.findAvailable();
+    }
+
+    @GetMapping("/category/{categoryId}")
+    public List<Car> findByCategory(@PathVariable Long categoryId) {
+        return carService.findByCategory(categoryId);
+    }
+
+    @GetMapping("/top-rated")
+    public List<Car> findTopRated(@RequestParam(defaultValue = "4.0") double min) {
+        return carService.findTopRated(min);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Car create(@Valid @RequestBody Car car) {
-        return carService.save(car);
+    public Car create(@RequestBody Car car) {
+        return carService.create(car);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Car> update(@PathVariable Long id, @Valid @RequestBody Car car) {
-        return carService.update(id, car).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    public Car update(@PathVariable Long id, @RequestBody Car car) {
+        return carService.update(id, car);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteById(@PathVariable Long id) {
-        return carService.deleteById(id) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        carService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

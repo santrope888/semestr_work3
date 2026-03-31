@@ -1,6 +1,5 @@
 package ru.itis.semestr_work3.controllers.api;
 
-import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,8 +9,9 @@ import ru.itis.semestr_work3.service.ReviewService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/review")
+@RequestMapping("/api/reviews")
 public class ReviewController {
+
     private final ReviewService reviewService;
 
     public ReviewController(ReviewService reviewService) {
@@ -23,24 +23,25 @@ public class ReviewController {
         return reviewService.findAll();
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Review> findById(@PathVariable Long id) {
-        return reviewService.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    @GetMapping("/car/{carId}")
+    public List<Review> findByCar(@PathVariable Long carId) {
+        return reviewService.findByCar(carId);
+    }
+
+    @GetMapping("/user/{userId}")
+    public List<Review> findByUser(@PathVariable Long userId) {
+        return reviewService.findByUser(userId);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Review create(@Valid @RequestBody Review review) {
-        return reviewService.save(review);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Review> update(@PathVariable Long id, @Valid @RequestBody Review review) {
-        return reviewService.update(id, review).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    public Review create(@RequestBody Review review) {
+        return reviewService.create(review);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteById(@PathVariable Long id) {
-        return reviewService.deleteById(id) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        reviewService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -8,6 +8,7 @@ import ru.itis.semestr_work3.entity.Booking;
 import ru.itis.semestr_work3.service.BookingService;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/booking")
@@ -25,22 +26,30 @@ public class BookingController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Booking> findById(@PathVariable Long id) {
-        return bookingService.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        return bookingService.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Booking create(@Valid @RequestBody Booking booking) {
-        return bookingService.save(booking);
+    public Booking create(@Valid @RequestBody Booking booking,
+                          @RequestParam(required = false) Set<Long> insuranceIds) {
+        return bookingService.create(booking, insuranceIds);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Booking> update(@PathVariable Long id, @Valid @RequestBody Booking booking) {
-        return bookingService.update(id, booking).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    @PostMapping("/{id}/confirm")
+    public Booking confirm(@PathVariable Long id) {
+        return bookingService.confirm(id);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteById(@PathVariable Long id) {
-        return bookingService.deleteById(id) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+    @PostMapping("/{id}/cancel")
+    public Booking cancel(@PathVariable Long id, @RequestParam Long userId) {
+        return bookingService.cancel(id, userId);
+    }
+
+    @PostMapping("/{id}/complete")
+    public Booking complete(@PathVariable Long id) {
+        return bookingService.complete(id);
     }
 }
