@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои бронирования — Aura Motum</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<div class="bookings-page container">
+    <div class="page-header">
+        <h1>Мои бронирования</h1>
+    </div>
+
+    <div th:each="booking : ${bookings}" class="booking-card">
+        <div class="booking-card-image">
+            <img th:src="${booking.car.imagePath != null ? booking.car.imagePath : '/images/no-car.png'}" alt="">
+        </div>
+        <div class="booking-card-info">
+            <div class="booking-card-title" th:text="${booking.car.brand + ' ' + booking.car.model}">Toyota Camry</div>
+            <div class="booking-card-dates">
+                <i class='bx bx-calendar'></i>
+                <span th:text="${booking.startDate + ' — ' + booking.endDate}">01.01 — 05.01</span>
+            </div>
+        </div>
+        <div class="booking-card-right">
+                <span class="badge"
+                      th:classappend="'badge-' + ${booking.status.toLowerCase()}"
+                      th:text="${booking.status}">PENDING</span>
+            <div class="booking-card-price" th:text="${booking.totalPrice + ' ₽'}">25 000 ₽</div>
+        </div>
+    </div>
+
+    <div class="empty-state" th:if="${#lists.isEmpty(bookings)}">
+        <i class='bx bx-calendar-x'></i>
+        <h3>Нет бронирований</h3>
+        <p>У вас пока нет забронированных автомобилей</p>
+        <a th:href="@{/catalog}" class="btn btn-primary">Перейти в каталог</a>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

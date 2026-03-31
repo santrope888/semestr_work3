@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<header th:fragment="header">
+    <div class="nav">
+        <a th:href="@{/}" class="logo">Aura<span>Motum</span></a>
+        <div class="navbar">
+            <a th:href="@{/}" class="nav-link">Главная</a>
+            <a th:href="@{/catalog}" class="nav-link">Каталог</a>
+            <a th:href="@{/favorites}" class="nav-link">Избранное</a>
+            <a th:href="@{/bookings}" class="nav-link">Мои брони</a>
+            <a th:href="@{/chat}" class="nav-link">ИИ-помощник</a>
+        </div>
+        <div class="nav-icons">
+            <a th:href="@{/login}" class="btn btn-outline-light btn-sm">Войти</a>
+        </div>
+    </div>
+</header>
+</html>

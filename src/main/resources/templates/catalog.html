@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Каталог — Aura Motum</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<div class="page-header container">
+    <h1>Каталог автомобилей</h1>
+    <p>Выберите автомобиль для аренды</p>
+</div>
+
+<section class="container">
+    <div class="filters">
+        <a th:href="@{/catalog}" class="filter-chip"
+           th:classappend="${selectedCategory == null} ? 'active'">Все</a>
+        <a th:each="cat : ${categories}" th:href="@{/catalog(category=${cat.id})}"
+           class="filter-chip"
+           th:classappend="${selectedCategory != null && selectedCategory == cat.id} ? 'active'"
+           th:text="${cat.name}">Категория</a>
+    </div>
+
+    <div class="rentals-content" th:if="${not #lists.isEmpty(cars)}">
+        <div class="rental-box" th:each="car : ${cars}">
+            <div class="rental-top">
+                <h3 th:text="${car.category != null ? car.category.name : 'Авто'}">Sedan</h3>
+                <i class='bx bx-heart' style="cursor:pointer;color:var(--main-color);font-size:22px;"></i>
+            </div>
+            <img th:src="${car.imagePath != null ? car.imagePath : '/images/no-car.png'}" alt="">
+            <h2 th:text="${car.brand + ' ' + car.model}">Toyota Camry</h2>
+            <h4 th:text="${car.transmission + ' · ' + car.engine + ' · ' + car.seats + ' мест'}">Automatic</h4>
+            <div class="price-btn">
+                <p><span th:text="${car.pricePerDay}">5000</span> ₽ <span>/день</span></p>
+                <a th:href="@{/cars/{id}(id=${car.id})}" class="rental-btn">Подробнее</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="empty-state" th:if="${#lists.isEmpty(cars)}">
+        <i class='bx bx-car'></i>
+        <h3>Нет автомобилей</h3>
+        <p>В выбранной категории пока нет доступных машин</p>
+    </div>
+</section>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

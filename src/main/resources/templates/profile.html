@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль — Aura Motum</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<div class="profile-page container">
+    <div class="profile-header">
+        <img th:src="${user.avatarPath != null ? user.avatarPath : '/images/default-avatar.png'}"
+             class="profile-avatar-lg" alt="avatar">
+        <div>
+            <div class="profile-name" th:text="${user.username}">Username</div>
+            <div class="profile-email" th:text="${user.email}">email@example.com</div>
+            <div class="profile-stats">
+                <div>
+                    <div class="profile-stat-value" th:text="${bookingsCount}">0</div>
+                    <div class="profile-stat-label">Бронирований</div>
+                </div>
+                <div>
+                    <div class="profile-stat-value" th:text="${reviewsCount}">0</div>
+                    <div class="profile-stat-label">Отзывов</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="background:#fff;border-radius:1.5rem;padding:32px;box-shadow:0 4px 20px rgba(0,0,0,0.06);">
+        <h3 style="margin-bottom:24px;">Редактировать профиль</h3>
+        <form th:action="@{/profile}" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label class="form-label">Телефон</label>
+                <input type="tel" name="phoneNumber" class="form-input" th:value="${user.phoneNumber}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Аватар</label>
+                <input type="file" name="avatar" class="form-input" accept="image/*">
+            </div>
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+        </form>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

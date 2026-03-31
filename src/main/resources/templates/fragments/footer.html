@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<footer th:fragment="footer">
+    <div class="footer-content container">
+        <div class="footer-box">
+            <a href="#" class="logo">Aura<span>Motum</span></a>
+            <p>Сервис аренды автомобилей с ИИ-помощником по подбору</p>
+            <div class="social">
+                <a href="#"><i class='bx bxl-telegram'></i></a>
+                <a href="#"><i class='bx bxl-instagram'></i></a>
+                <a href="#"><i class='bx bxl-github'></i></a>
+            </div>
+        </div>
+        <div class="footer-box">
+            <h3>Режим работы</h3>
+            <p>Пн - Пт: 9:00 - 21:00</p>
+            <p>Сб - Вс: 10:00 - 18:00</p>
+        </div>
+        <div class="footer-box">
+            <h3>Навигация</h3>
+            <a th:href="@{/catalog}">Каталог</a>
+            <a th:href="@{/chat}">ИИ-помощник</a>
+            <a th:href="@{/register}">Регистрация</a>
+        </div>
+        <div class="footer-box">
+            <h3>Контакты</h3>
+            <a href="tel:+79518988181">+7 (951) 898-81-81</a>
+            <a href="mailto:contact@auramotum.com">contact@auramotum.com</a>
+        </div>
+    </div>
+    <p class="copyright">&#169; 2026 Aura Motum. Все права защищены.</p>
+</footer>
+</html>

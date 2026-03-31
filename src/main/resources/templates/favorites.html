@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Избранное — Aura Motum</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<div class="favorites-page container">
+    <div class="page-header">
+        <h1>Избранное</h1>
+    </div>
+
+    <div class="rentals-content" th:if="${not #lists.isEmpty(favorites)}">
+        <div class="rental-box" th:each="fav : ${favorites}">
+            <div class="rental-top">
+                <h3 th:text="${fav.car.category != null ? fav.car.category.name : 'Авто'}">Sedan</h3>
+                <i class='bx bxs-heart' style="color:var(--main-color);font-size:22px;cursor:pointer;"></i>
+            </div>
+            <img th:src="${fav.car.imagePath != null ? fav.car.imagePath : '/images/no-car.png'}" alt="">
+            <h2 th:text="${fav.car.brand + ' ' + fav.car.model}">Toyota</h2>
+            <h4 th:text="${fav.car.transmission}">Automatic</h4>
+            <div class="price-btn">
+                <p th:text="${fav.car.pricePerDay + ' ₽/день'}">5 000 ₽</p>
+                <a th:href="@{/cars/{id}(id=${fav.car.id})}" class="rental-btn">Подробнее</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="empty-state" th:if="${#lists.isEmpty(favorites)}">
+        <i class='bx bx-heart'></i>
+        <h3>Пусто</h3>
+        <p>Добавьте автомобили в избранное, чтобы не потерять</p>
+        <a th:href="@{/catalog}" class="btn btn-primary">Перейти в каталог</a>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

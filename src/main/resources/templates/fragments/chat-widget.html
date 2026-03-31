@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="chat-widget" sec:authorize="isAuthenticated()">
+    <div class="chat-widget">
+        <button class="chat-toggle-btn" onclick="toggleChat()">
+            <i class='bx bx-message-dots'></i>
+        </button>
+        <div class="chat-window" id="chat-window">
+            <div class="chat-header">
+                <div class="chat-header-icon"><i class='bx bx-bot'></i></div>
+                <div>
+                    <div class="chat-header-title">ИИ-помощник</div>
+                    <div class="chat-header-status">Подберу автомобиль</div>
+                </div>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+                <div class="chat-message assistant">
+                    Привет! Я помогу подобрать автомобиль. Опишите, для чего вам нужна машина.
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" class="chat-input" id="chat-input"
+                       placeholder="Напишите сообщение..." onkeypress="if(event.key==='Enter') sendChat()">
+                <button class="chat-send-btn" onclick="sendChat()">
+                    <i class='bx bx-send'></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleChat() {
+            document.getElementById('chat-window').classList.toggle('open');
+        }
+
+        async function sendChat() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            const messages = document.getElementById('chat-messages');
+            messages.innerHTML += `<div class="chat-message user">${msg}</div>`;
+            input.value = '';
+            messages.scrollTop = messages.scrollHeight;
+
+            messages.innerHTML += `<div class="chat-typing" id="typing">Печатает...</div>`;
+
+            try {
+                const res = await fetch('/api/chat/sessions/1/send', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: msg})
+                });
+                const data = await res.json();
+                document.getElementById('typing')?.remove();
+                messages.innerHTML += `<div class="chat-message assistant">${data.response}</div>`;
+            } catch (e) {
+                document.getElementById('typing')?.remove();
+                messages.innerHTML += `<div class="chat-message assistant">Ошибка соединения. Попробуйте позже.</div>`;
+            }
+            messages.scrollTop = messages.scrollHeight;
+        }
+    </script>
+</div>
+</html>

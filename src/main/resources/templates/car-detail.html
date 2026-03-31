@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${car.brand + ' ' + car.model + ' — Aura Motum'}">Детали</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<section class="car-detail container">
+    <div class="car-detail-grid">
+        <div class="car-detail-image">
+            <img th:src="${car.imagePath != null ? car.imagePath : '/images/no-car.png'}" alt="">
+        </div>
+        <div class="car-detail-info">
+            <span class="car-detail-category" th:text="${car.category != null ? car.category.name : ''}">Комфорт</span>
+            <h1 th:text="${car.brand + ' ' + car.model}">Toyota Camry</h1>
+            <div class="car-detail-price">
+                <span th:text="${#numbers.formatInteger(car.pricePerDay, 1, 'COMMA')}">5000</span> ₽ <span>/день</span>
+            </div>
+            <p class="car-detail-desc" th:text="${car.description}">Описание автомобиля</p>
+
+            <div class="specs-grid">
+                <div class="spec-item">
+                    <i class='bx bx-calendar'></i>
+                    <div>
+                        <div class="spec-label">Год</div>
+                        <div class="spec-value" th:text="${car.year}">2024</div>
+                    </div>
+                </div>
+                <div class="spec-item">
+                    <i class='bx bx-user'></i>
+                    <div>
+                        <div class="spec-label">Мест</div>
+                        <div class="spec-value" th:text="${car.seats}">5</div>
+                    </div>
+                </div>
+                <div class="spec-item">
+                    <i class='bx bx-cog'></i>
+                    <div>
+                        <div class="spec-label">Коробка</div>
+                        <div class="spec-value" th:text="${car.transmission}">Автомат</div>
+                    </div>
+                </div>
+                <div class="spec-item">
+                    <i class='bx bx-gas-pump'></i>
+                    <div>
+                        <div class="spec-label">Двигатель</div>
+                        <div class="spec-value" th:text="${car.engine}">Бензин</div>
+                    </div>
+                </div>
+                <div class="spec-item">
+                    <i class='bx bx-palette'></i>
+                    <div>
+                        <div class="spec-label">Цвет</div>
+                        <div class="spec-value" th:text="${car.color}">Белый</div>
+                    </div>
+                </div>
+                <div class="spec-item">
+                    <i class='bx bx-transfer'></i>
+                    <div>
+                        <div class="spec-label">Привод</div>
+                        <div class="spec-value" th:text="${car.drive}">FWD</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="car-detail-actions">
+                <a th:href="@{/bookings/new(carId=${car.id})}" class="btn btn-primary btn-lg">Забронировать</a>
+                <button class="btn btn-secondary btn-lg" onclick="toggleFavorite()">
+                    <i class='bx bx-heart'></i> В избранное
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Отзывы -->
+    <div class="reviews-section">
+        <h3>Отзывы</h3>
+        <div th:each="review : ${reviews}" class="review-card">
+            <div class="review-header">
+                <div class="review-author">
+                    <div class="review-avatar" th:text="${#strings.substring(review.user.username, 0, 1).toUpperCase()}">A</div>
+                    <div>
+                        <div class="review-name" th:text="${review.user.username}">Иван</div>
+                        <div class="review-date" th:text="${review.createdAt}">01.01.2026</div>
+                    </div>
+                </div>
+                <div class="rating">
+                    <i th:each="i : ${#numbers.sequence(1, 5)}"
+                       class="bx"
+                       th:classappend="${i <= review.rating} ? 'bxs-star' : 'bx-star empty'"></i>
+                </div>
+            </div>
+            <p class="review-text" th:text="${review.comment}">Отличный автомобиль!</p>
+        </div>
+        <div class="empty-state" th:if="${#lists.isEmpty(reviews)}" style="padding:32px;">
+            <p class="text-muted">Пока нет отзывов</p>
+        </div>
+    </div>
+</section>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+<div th:replace="~{fragments/chat-widget :: chat-widget}"></div>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aura Motum — Премиум Аренда</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header}"></header>
+
+<section class="home" id="home">
+    <div class="home-content container">
+        <div class="home-img">
+            <img src="/images/home.png" alt="Porsche Taycan">
+        </div>
+    </div>
+</section>
+
+<section class="trending container" id="trending">
+    <div class="heading">
+        <h2>Популярные модели</h2>
+    </div>
+    <div class="trending-content">
+        <div class="trend-box">
+            <h4>Electric</h4>
+            <img src="/images/trend-1.png" alt="">
+            <h3>Taycan S</h3>
+            <p>От 25.000 ₽/день</p>
+        </div>
+        <div class="trend-box">
+            <h4>Electric</h4>
+            <img src="/images/trend-2.png" alt="">
+            <h3>Taycan</h3>
+            <p>От 22.000 ₽/день</p>
+        </div>
+        <div class="trend-box">
+            <h4>Electric</h4>
+            <img src="/images/trend-3.png" alt="">
+            <h3>Taycan Turbo</h3>
+            <p>От 35.000 ₽/день</p>
+        </div>
+        <div class="trend-box">
+            <h4>Electric</h4>
+            <img src="/images/trend-4.png" alt="">
+            <h3>Taycan Turismo</h3>
+            <p>От 30.000 ₽/день</p>
+        </div>
+    </div>
+</section>
+
+<section class="rentals container" id="rentals">
+    <div class="heading">
+        <h2>Наш автопарк</h2>
+    </div>
+    <div class="rentals-content">
+        <div class="rental-box">
+            <div class="rental-top">
+                <h3>Sedan</h3>
+                <i class='bx bx-heart'></i>
+            </div>
+            <img src="/images/rental-1.png" alt="">
+            <h2>Rolls-Royce</h2>
+            <h4>Automatic</h4>
+            <div class="price-btn">
+                <p>45.000 ₽ <span>/день</span></p>
+                <a href="/catalog" class="rental-btn">Аренда</a>
+            </div>
+        </div>
+        <div class="rental-box">
+            <div class="rental-top">
+                <h3>SUV</h3>
+                <i class='bx bx-heart'></i>
+            </div>
+            <img src="/images/rental-2.png" alt="">
+            <h2>Macan 4</h2>
+            <h4>Automatic</h4>
+            <div class="price-btn">
+                <p>18.000 ₽ <span>/день</span></p>
+                <a href="/catalog" class="rental-btn">Аренда</a>
+            </div>
+        </div>
+        <div class="rental-box">
+            <div class="rental-top">
+                <h3>Sport</h3>
+                <i class='bx bx-heart'></i>
+            </div>
+            <img src="/images/rental-3.png" alt="">
+            <h2>Cayenne S</h2>
+            <h4>Automatic</h4>
+            <div class="price-btn">
+                <p>22.000 ₽ <span>/день</span></p>
+                <a href="/catalog" class="rental-btn">Аренда</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="container" style="padding: 4rem 0;">
+    <div class="heading">
+        <h2>Не знаете, что выбрать?</h2>
+        <p style="color:var(--text-alter-color);margin-top:8px;">Наш ИИ-помощник подберёт автомобиль под вашу задачу</p>
+    </div>
+    <div style="text-align:center;">
+        <a href="/chat" class="btn btn-primary btn-lg" style="padding:16px 48px;font-size:1.1rem;">
+            <i class='bx bx-bot'></i> Открыть ИИ-помощник
+        </a>
+    </div>
+</section>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+<script src="https://unpkg.com/scrollreveal"></script>
+<script>
+    const sr = ScrollReveal({
+        origin: 'top',
+        distance: '60px',
+        duration: 2500,
+        delay: 400,
+        reset: false
+    });
+    sr.reveal('.nav');
+    sr.reveal('.home-img', { delay: 600, origin: 'right' });
+    sr.reveal('.heading', { delay: 500 });
+    sr.reveal('.trend-box, .rental-box', { interval: 100, origin: 'bottom' });
+</script>
+</body>
+</html>

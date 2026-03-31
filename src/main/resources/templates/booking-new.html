@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Бронирование — Aura Motum</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<section class="booking-page container">
+    <div class="page-header">
+        <h1>Бронирование</h1>
+        <p th:text="${car.brand + ' ' + car.model}">Toyota Camry</p>
+    </div>
+
+    <div class="booking-grid">
+        <div>
+            <form th:action="@{/bookings}" method="post">
+                <input type="hidden" name="carId" th:value="${car.id}">
+
+                <div class="form-group">
+                    <label class="form-label">Дата начала</label>
+                    <input type="date" name="startDate" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Дата окончания</label>
+                    <input type="date" name="endDate" class="form-input" required>
+                </div>
+
+                <h3 style="margin-bottom:16px;">Страховки</h3>
+                <div class="insurance-list">
+                    <label class="insurance-item" th:each="ins : ${insurances}">
+                        <input type="checkbox" name="insuranceIds" th:value="${ins.id}">
+                        <div class="insurance-info">
+                            <div class="insurance-name" th:text="${ins.name}">Базовая</div>
+                            <div class="insurance-desc" th:text="${ins.description}">Описание</div>
+                        </div>
+                        <div class="insurance-price" th:text="${ins.pricePerDay + ' ₽/день'}">500 ₽/день</div>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg btn-block">Подтвердить бронирование</button>
+            </form>
+        </div>
+
+        <div class="booking-summary">
+            <h3>Итого</h3>
+            <div class="summary-row">
+                <span class="label">Автомобиль</span>
+                <span class="value" th:text="${car.brand + ' ' + car.model}">Toyota Camry</span>
+            </div>
+            <div class="summary-row">
+                <span class="label">Цена за день</span>
+                <span class="value" th:text="${car.pricePerDay + ' ₽'}">5 000 ₽</span>
+            </div>
+            <div class="summary-row total">
+                <span>Итого</span>
+                <span id="total-price">—</span>
+            </div>
+            <div class="currency-toggle mt-md">
+                <button class="currency-btn active" onclick="setCurrency('RUB')">RUB</button>
+                <button class="currency-btn" onclick="setCurrency('USD')">USD</button>
+                <button class="currency-btn" onclick="setCurrency('EUR')">EUR</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+<script th:inline="javascript">
+    const carPrice = [[${car.pricePerDay}]];
+    // Пересчёт при смене валюты через AJAX
+    async function setCurrency(cur) {
+        document.querySelectorAll('.currency-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+        if (cur === 'RUB') {
+            document.getElementById('total-price').textContent = carPrice + ' ₽';
+            return;
+        }
+        const res = await fetch(`/api/payments/convert?amount=${carPrice}&currency=${cur}`);
+        const data = await res.json();
+        const symbol = cur === 'USD' ? '$' : '€';
+        document.getElementById('total-price').textContent = data.converted.toFixed(2) + ' ' + symbol;
+    }
+</script>
+</body>
+</html>

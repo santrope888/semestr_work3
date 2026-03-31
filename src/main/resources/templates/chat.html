@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ИИ-помощник — Aura Motum</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        .chat-full { max-width: 800px; margin: 0 auto; }
+        .chat-full .chat-messages { height: 500px; border-radius: 1.2rem; }
+        .chat-full .chat-input-area { background: #fff; border-radius: 0 0 1.2rem 1.2rem; }
+    </style>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<div class="page-header container">
+    <h1>ИИ-помощник</h1>
+    <p>Опишите, для чего вам нужен автомобиль — я подберу лучший вариант</p>
+</div>
+
+<section class="container chat-full">
+    <div class="chat-messages" id="chat-messages">
+        <div class="chat-message assistant">
+            Привет! Расскажите, какой автомобиль вам нужен — для поездки за город, на свидание, для семьи? Я подберу из нашего каталога.
+        </div>
+    </div>
+    <div class="chat-input-area">
+        <input type="text" class="chat-input" id="chat-input"
+               placeholder="Например: нужна машина на 5 человек, бюджет до 5000/день"
+               onkeypress="if(event.key==='Enter') sendChat()">
+        <button class="chat-send-btn" onclick="sendChat()">
+            <i class='bx bx-send'></i>
+        </button>
+    </div>
+</section>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+<script th:inline="javascript">
+    const sessionId = [[${sessionId}]];
+
+    async function sendChat() {
+        const input = document.getElementById('chat-input');
+        const msg = input.value.trim();
+        if (!msg) return;
+
+        const messages = document.getElementById('chat-messages');
+        messages.innerHTML += `<div class="chat-message user">${msg}</div>`;
+        input.value = '';
+        messages.scrollTop = messages.scrollHeight;
+
+        messages.innerHTML += `<div class="chat-typing" id="typing">Печатает...</div>`;
+
+        try {
+            const res = await fetch(`/api/chat/sessions/${sessionId}/send`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: msg})
+            });
+            const data = await res.json();
+            document.getElementById('typing')?.remove();
+            messages.innerHTML += `<div class="chat-message assistant">${data.response}</div>`;
+        } catch (e) {
+            document.getElementById('typing')?.remove();
+            messages.innerHTML += `<div class="chat-message assistant">Ошибка. Попробуйте позже.</div>`;
+        }
+        messages.scrollTop = messages.scrollHeight;
+    }
+</script>
+</body>
+</html>

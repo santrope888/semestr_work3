@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход — Aura Motum</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+<div class="auth-page">
+    <div class="auth-card">
+        <a th:href="@{/}" class="logo" style="text-align:center;display:block;margin-bottom:32px;">Aura<span>Motum</span></a>
+        <h2>Вход в аккаунт</h2>
+        <p class="auth-subtitle">Введите свои данные для входа</p>
+
+        <div th:if="${param.error}" style="background:#fdeaea;color:#b83030;padding:12px 16px;border-radius:12px;font-size:0.85rem;margin-bottom:20px;">
+            Неверный логин или пароль
+        </div>
+        <div th:if="${param.logout}" style="background:#eef8f2;color:#1a7a3a;padding:12px 16px;border-radius:12px;font-size:0.85rem;margin-bottom:20px;">
+            Вы успешно вышли из аккаунта
+        </div>
+
+        <form th:action="@{/login}" method="post">
+            <div class="form-group">
+                <label class="form-label">Имя пользователя</label>
+                <input type="text" name="username" class="form-input" placeholder="username" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Пароль</label>
+                <input type="password" name="password" class="form-input" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block btn-lg">Войти</button>
+        </form>
+
+        <div class="auth-divider"><span>или</span></div>
+        <a href="/oauth2/google" class="btn btn-google btn-lg">
+            <i class='bx bxl-google'></i> Войти через Google
+        </a>
+
+        <p class="auth-link">Нет аккаунта? <a th:href="@{/register}">Зарегистрироваться</a></p>
+    </div>
+</div>
+</body>
+</html>

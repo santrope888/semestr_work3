@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>500 — Ошибка сервера</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+<div class="empty-state" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+    <i class='bx bx-error' style="font-size:72px;color:var(--main-color);opacity:0.5;"></i>
+    <h3 style="font-size:4rem;font-weight:800;margin:16px 0 8px;">500</h3>
+    <p>Внутренняя ошибка сервера. Попробуйте позже.</p>
+    <a th:href="@{/}" class="btn btn-primary" style="margin-top:24px;">На главную</a>
+</div>
+</body>
+</html>

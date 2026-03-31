@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактирование — Aura Motum</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<div class="admin-page container" style="max-width:700px;">
+    <div class="page-header">
+        <h1 th:text="${car.id != null ? 'Редактировать' : 'Добавить'} + ' автомобиль'">Добавить автомобиль</h1>
+    </div>
+
+    <div style="background:#fff;border-radius:1.5rem;padding:32px;box-shadow:0 4px 20px rgba(0,0,0,0.06);">
+        <form th:action="${car.id != null ? '/admin/cars/' + car.id + '/edit' : '/admin/cars'}" method="post" enctype="multipart/form-data">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="form-group">
+                    <label class="form-label">Марка</label>
+                    <input type="text" name="brand" class="form-input" th:value="${car.brand}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Модель</label>
+                    <input type="text" name="model" class="form-input" th:value="${car.model}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Год</label>
+                    <input type="number" name="year" class="form-input" th:value="${car.year}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Цвет</label>
+                    <input type="text" name="color" class="form-input" th:value="${car.color}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Цена/день (₽)</label>
+                    <input type="number" name="pricePerDay" class="form-input" th:value="${car.pricePerDay}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Мест</label>
+                    <input type="number" name="seats" class="form-input" th:value="${car.seats}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Коробка</label>
+                    <select name="transmission" class="form-select">
+                        <option value="Automatic" th:selected="${car.transmission == 'Automatic'}">Автомат</option>
+                        <option value="Manual" th:selected="${car.transmission == 'Manual'}">Механика</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Двигатель</label>
+                    <select name="engine" class="form-select">
+                        <option value="Petrol" th:selected="${car.engine == 'Petrol'}">Бензин</option>
+                        <option value="Diesel" th:selected="${car.engine == 'Diesel'}">Дизель</option>
+                        <option value="Electric" th:selected="${car.engine == 'Electric'}">Электро</option>
+                        <option value="Hybrid" th:selected="${car.engine == 'Hybrid'}">Гибрид</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Привод</label>
+                    <select name="drive" class="form-select">
+                        <option value="FWD" th:selected="${car.drive == 'FWD'}">Передний</option>
+                        <option value="RWD" th:selected="${car.drive == 'RWD'}">Задний</option>
+                        <option value="AWD" th:selected="${car.drive == 'AWD'}">Полный</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Категория</label>
+                    <select name="categoryId" class="form-select">
+                        <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"
+                                th:selected="${car.category != null && car.category.id == cat.id}">Категория</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Описание</label>
+                <textarea name="description" class="form-textarea" th:text="${car.description}"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Фото</label>
+                <input type="file" name="image" class="form-input" accept="image/*">
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg">Сохранить</button>
+            <a th:href="@{/admin/cars}" class="btn btn-secondary btn-lg">Отмена</a>
+        </form>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>
