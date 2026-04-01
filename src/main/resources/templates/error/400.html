@@ -3,29 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 — Страница не найдена</title>
+    <title>400 — Некорректный запрос</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
 <section class="auth-page">
     <div class="auth-card text-center" style="max-width: 720px;">
-        <h1 style="font-size: 72px; margin-bottom: 12px;">404</h1>
-        <h2 style="margin-bottom: 12px;">Страница не найдена</h2>
+        <h1 style="font-size: 72px; margin-bottom: 12px;">400</h1>
+        <h2 style="margin-bottom: 12px;">Некорректный запрос</h2>
 
         <p class="text-muted" style="margin-bottom: 24px;"
            th:if="${errorMessage != null and !#strings.isEmpty(errorMessage)}"
            th:text="${errorMessage}">
-            Запрошенный ресурс не найден.
+            Запрос содержит некорректные данные.
         </p>
 
         <p class="text-muted" style="margin-bottom: 24px;"
            th:if="${errorMessage == null or #strings.isEmpty(errorMessage)}">
-            Запрошенный ресурс не найден или был удалён.
+            Запрос содержит некорректные данные.
         </p>
 
         <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
             <a th:href="@{/}" class="btn btn-primary">На главную</a>
-            <a th:href="@{/catalog}" class="btn btn-dark">Перейти в каталог</a>
+            <a href="javascript:history.back()" class="btn btn-dark">Назад</a>
         </div>
     </div>
 </section>

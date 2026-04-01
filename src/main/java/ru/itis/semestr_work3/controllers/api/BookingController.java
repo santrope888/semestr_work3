@@ -1,23 +1,22 @@
 package ru.itis.semestr_work3.controllers.api;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.itis.semestr_work3.entity.Booking;
+import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.service.BookingService;
 
 import java.util.List;
 import java.util.Set;
 
 @RestController
-@RequestMapping("/booking")
+@RequestMapping("/api/bookings")
+@RequiredArgsConstructor
 public class BookingController {
-    private final BookingService bookingService;
 
-    public BookingController(BookingService bookingService) {
-        this.bookingService = bookingService;
-    }
+    private final BookingService bookingService;
 
     @GetMapping
     public List<Booking> findAll() {
@@ -25,10 +24,9 @@ public class BookingController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Booking> findById(@PathVariable Long id) {
+    public Booking findById(@PathVariable Long id) {
         return bookingService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElseThrow(() -> new ResourceNotFoundException("Бронирование не найдено"));
     }
 
     @PostMapping

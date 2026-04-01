@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.itis.semestr_work3.entity.Notification;
 import ru.itis.semestr_work3.entity.User;
+import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.repository.NotificationRepository;
 
 import java.time.LocalDateTime;
@@ -29,7 +30,8 @@ public class NotificationService {
 
     public void markAsRead(Long notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Notification not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Уведомление не найдено"));
+
         notification.setIsRead(true);
         notificationRepository.save(notification);
     }

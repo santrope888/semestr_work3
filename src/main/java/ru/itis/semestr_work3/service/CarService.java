@@ -3,6 +3,7 @@ package ru.itis.semestr_work3.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.itis.semestr_work3.entity.Car;
+import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.repository.CarRepository;
 
 import java.time.LocalDate;
@@ -43,7 +44,8 @@ public class CarService {
 
     public Car update(Long id, Car carData) {
         Car car = carRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Car not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Автомобиль не найден: " + id));
+
         car.setBrand(carData.getBrand());
         car.setModel(carData.getModel());
         car.setYear(carData.getYear());
@@ -56,15 +58,17 @@ public class CarService {
         car.setDescription(carData.getDescription());
         car.setAvailable(carData.getAvailable());
         car.setCategory(carData.getCategory());
+
         if (carData.getImagePath() != null) {
             car.setImagePath(carData.getImagePath());
         }
+
         return carRepository.save(car);
     }
 
     public void delete(Long id) {
         if (!carRepository.existsById(id)) {
-            throw new RuntimeException("Car not found: " + id);
+            throw new ResourceNotFoundException("Автомобиль не найден: " + id);
         }
         carRepository.deleteById(id);
     }

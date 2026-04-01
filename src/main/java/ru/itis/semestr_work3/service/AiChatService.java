@@ -10,6 +10,7 @@ import ru.itis.semestr_work3.entity.Car;
 import ru.itis.semestr_work3.entity.ChatMessage;
 import ru.itis.semestr_work3.entity.ChatSession;
 import ru.itis.semestr_work3.entity.User;
+import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.repository.CarRepository;
 import ru.itis.semestr_work3.repository.ChatMessageRepository;
 import ru.itis.semestr_work3.repository.ChatSessionRepository;
@@ -56,7 +57,7 @@ public class AiChatService {
 
     public String sendMessage(Long sessionId, String userMessage) {
         ChatSession session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new RuntimeException("Session not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Чат-сессия не найдена"));
 
         saveMessage(session, "USER", userMessage);
         String aiResponse = callOllama(session);
@@ -68,23 +69,32 @@ public class AiChatService {
     private String callOllama(ChatSession session) {
         try {
             List<Car> cars = carRepository.findAvailable();
+
             String carsInfo = cars.stream()
-                    .map(c -> String.format("%s %s %d — %d мест, %s, %s, %d руб/день, категория: %s",
-                            c.getBrand(), c.getModel(), c.getYear(),
-                            c.getSeats(), c.getTransmission(), c.getEngine(),
+                    .map(c -> String.format(
+                            "%s %s %d — %d мест, %s, %s, %d руб/день, категория: %s",
+                            c.getBrand(),
+                            c.getModel(),
+                            c.getYear(),
+                            c.getSeats(),
+                            c.getTransmission(),
+                            c.getEngine(),
                             c.getPricePerDay(),
-                            c.getCategory() != null ? c.getCategory().getName() : "без категории"))
+                            c.getCategory() != null ? c.getCategory().getName() : "без категории"
+                    ))
                     .collect(Collectors.joining("\n"));
 
-            String systemPrompt = "Ты — ИИ-помощник по подбору автомобилей в аренду. " +
-                    "Вот список доступных автомобилей:\n" + carsInfo + "\n\n" +
-                    "Рекомендуй пользователю подходящие автомобили из этого списка, " +
-                    "объясняя свой выбор. Отвечай на русском языке.";
+            String systemPrompt = "Ты — ИИ-помощник по подбору автомобилей в аренду. "
+                    + "Вот список доступных автомобилей:\n"
+                    + carsInfo
+                    + "\n\nРекомендуй пользователю подходящие автомобили из этого списка, "
+                    + "объясняя свой выбор. Отвечай на русском языке.";
 
             List<ChatMessage> history = messageRepository.findBySession(session.getId());
 
             List<Map<String, String>> messages = new ArrayList<>();
             messages.add(Map.of("role", "system", "content", systemPrompt));
+
             for (ChatMessage msg : history) {
                 messages.add(Map.of(
                         "role", msg.getRole().toLowerCase(),
@@ -102,7 +112,10 @@ public class AiChatService {
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
             ResponseEntity<Map> response = restTemplate.postForEntity(
-                    ollamaUrl + "/api/chat", request, Map.class);
+                    ollamaUrl + "/api/chat",
+                    request,
+                    Map.class
+            );
 
             if (response.getBody() != null && response.getBody().containsKey("message")) {
                 Map<String, Object> message = (Map<String, Object>) response.getBody().get("message");

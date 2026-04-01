@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import ru.itis.semestr_work3.entity.Booking;
 import ru.itis.semestr_work3.entity.Insurance;
 import ru.itis.semestr_work3.entity.Payment;
+import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.repository.BookingRepository;
 import ru.itis.semestr_work3.repository.InsuranceRepository;
 
@@ -42,6 +43,15 @@ public class BookingService {
     }
 
     public Booking create(Booking booking, Set<Long> insuranceIds) {
+        if (booking.getStartDate() == null || booking.getEndDate() == null) {
+            throw new IllegalArgumentException("Нужно указать даты начала и окончания бронирования");
+        }
+        if (booking.getCar() == null) {
+            throw new IllegalArgumentException("Для бронирования необходимо указать автомобиль");
+        }
+        if (booking.getUser() == null) {
+            throw new IllegalArgumentException("Для бронирования необходимо указать пользователя");
+        }
         if (booking.getEndDate().isBefore(booking.getStartDate())) {
             throw new IllegalArgumentException("Дата окончания не может быть раньше даты начала");
         }
@@ -77,27 +87,30 @@ public class BookingService {
 
     public Booking confirm(Long id) {
         Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Бронирование не найдено"));
         booking.setStatus("CONFIRMED");
         return bookingRepository.save(booking);
     }
 
     public Booking cancel(Long id, Long userId) {
         Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Бронирование не найдено"));
+
         if (!booking.getUser().getId().equals(userId)) {
             throw new SecurityException("Нельзя отменить чужое бронирование");
         }
+
         booking.setStatus("CANCELLED");
         if (booking.getPayment() != null) {
             booking.getPayment().setStatus("REFUNDED");
         }
+
         return bookingRepository.save(booking);
     }
 
     public Booking complete(Long id) {
         Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Бронирование не найдено"));
         booking.setStatus("COMPLETED");
         return bookingRepository.save(booking);
     }

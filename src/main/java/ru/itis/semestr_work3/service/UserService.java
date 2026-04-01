@@ -5,6 +5,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import ru.itis.semestr_work3.entity.Role;
 import ru.itis.semestr_work3.entity.User;
+import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.repository.RoleRepository;
 import ru.itis.semestr_work3.repository.UserRepository;
 
@@ -20,6 +21,16 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     public User register(String username, String email, String password, String phoneNumber) {
+        if (username == null || username.isBlank()) {
+            throw new IllegalArgumentException("Username обязателен");
+        }
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Email обязателен");
+        }
+        if (password == null || password.isBlank()) {
+            throw new IllegalArgumentException("Пароль обязателен");
+        }
+
         if (userRepository.existsByUsername(username)) {
             throw new IllegalArgumentException("Username уже занят");
         }
@@ -35,9 +46,9 @@ public class UserService {
         user.setCreatedAt(LocalDate.now());
 
         Role userRole = roleRepository.findByName("USER")
-                .orElseThrow(() -> new RuntimeException("Role USER not found"));
-        user.setRole(userRole);
+                .orElseThrow(() -> new ResourceNotFoundException("Роль USER не найдена"));
 
+        user.setRole(userRole);
         return userRepository.save(user);
     }
 
@@ -55,9 +66,15 @@ public class UserService {
 
     public User updateProfile(Long id, String phoneNumber, String avatarPath) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        if (phoneNumber != null) user.setPhoneNumber(phoneNumber);
-        if (avatarPath != null) user.setAvatarPath(avatarPath);
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+
+        if (phoneNumber != null) {
+            user.setPhoneNumber(phoneNumber);
+        }
+        if (avatarPath != null) {
+            user.setAvatarPath(avatarPath);
+        }
+
         return userRepository.save(user);
     }
 }

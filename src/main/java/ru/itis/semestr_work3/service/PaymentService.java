@@ -3,6 +3,7 @@ package ru.itis.semestr_work3.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.itis.semestr_work3.entity.Payment;
+import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.repository.PaymentRepository;
 
 import java.time.LocalDateTime;
@@ -23,8 +24,13 @@ public class PaymentService {
     }
 
     public Payment pay(Long paymentId, String method) {
+        if (method == null || method.isBlank()) {
+            throw new IllegalArgumentException("Нужно указать способ оплаты");
+        }
+
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Платёж не найден"));
+
         payment.setStatus("PAID");
         payment.setMethod(method);
         payment.setPaidAt(LocalDateTime.now());
@@ -33,7 +39,8 @@ public class PaymentService {
 
     public Payment refund(Long paymentId) {
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Платёж не найден"));
+
         payment.setStatus("REFUNDED");
         return paymentRepository.save(payment);
     }

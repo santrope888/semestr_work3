@@ -3,6 +3,7 @@ package ru.itis.semestr_work3.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.itis.semestr_work3.entity.Review;
+import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.repository.ReviewRepository;
 
 import java.time.LocalDate;
@@ -30,16 +31,18 @@ public class ReviewService {
         if (review.getRating() < 1 || review.getRating() > 5) {
             throw new IllegalArgumentException("Рейтинг должен быть от 1 до 5");
         }
+
         if (reviewRepository.exists(review.getUser().getId(), review.getCar().getId())) {
             throw new IllegalArgumentException("Вы уже оставляли отзыв на этот автомобиль");
         }
+
         review.setCreatedAt(LocalDate.now());
         return reviewRepository.save(review);
     }
 
     public void delete(Long id) {
         if (!reviewRepository.existsById(id)) {
-            throw new RuntimeException("Review not found: " + id);
+            throw new ResourceNotFoundException("Отзыв не найден: " + id);
         }
         reviewRepository.deleteById(id);
     }
