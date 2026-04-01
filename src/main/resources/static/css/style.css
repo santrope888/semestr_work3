@@ -1,7 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Squada+One&display=swap');
 
 :root {
-    /* Насыщенный красно-оранжевый как на 2-м фото */
     --main-color: #f35525;
     --text-color: #060414;
     --bg-color: #f7f7f7;
@@ -32,7 +31,6 @@ body {
 img { width: 100%; }
 a { text-decoration: none; }
 
-/* --- HEADER (ЦЕНТРАЛЬНАЯ ПЛАШКА) --- */
 header {
     position: fixed;
     top: 25px;
@@ -85,7 +83,6 @@ header {
     display: flex;
 }
 
-/* --- ГЛАВНАЯ СЕКЦИЯ (ОРАНЖЕВЫЙ БЛОК) --- */
 .home {
     background: var(--main-color);
     min-height: 700px;
@@ -94,7 +91,7 @@ header {
     align-items: flex-end;
     justify-content: center;
     position: relative;
-    padding-bottom: 50px; /* Увеличил отступ, чтобы было пространство для маневра */
+    padding-bottom: 50px;
     overflow: visible;
 }
 
@@ -113,22 +110,19 @@ header {
     z-index: 10;
 }
 
-/* МАШИНА — ОПУСКАЕМ НИЖЕ */
 .home-img img {
     max-width: 900px;
     width: 100%;
     filter: drop-shadow(0 30px 50px rgba(0,0,0,0.4));
     position: relative;
-    /* Было -10px, ставим больше, например -80px, чтобы она съехала вниз */
     bottom: -120px;
     transition: 0.3s;
 }
 
-/* НАДПИСЬ ЗА МАШИНОЙ — ОСТАЕТСЯ НА МЕСТЕ */
 .home-img::before {
     content: 'TAYCAN';
     position: absolute;
-    top: -60px; /* Уровень текста не меняем */
+    top: -60px;
     left: 50%;
     transform: translateX(-50%);
     font-size: 22rem;
@@ -142,13 +136,11 @@ header {
     line-height: 1;
 }
 
-/* --- СЕКЦИИ --- */
 section { padding: 5rem 0; }
 
 .heading { text-align: center; margin-bottom: 3rem; }
 .heading h2 { font-size: 2.6rem; font-weight: 700; }
 
-/* Grid Layout */
 .trending-content, .rentals-content, .team-content {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, auto));
@@ -201,7 +193,6 @@ section { padding: 5rem 0; }
     font-weight: 600;
 }
 
-/* --- FOOTER --- */
 footer {
     background: var(--text-color);
     color: #fff;
@@ -239,12 +230,7 @@ footer {
     color: #555;
     font-size: 0.85rem;
 }
-/* ============================================================
-   ДОПОЛНИТЕЛЬНЫЕ СТИЛИ
-   Добавить в конец style.css
-   ============================================================ */
 
-/* --- СТРАНИЦА АВТОРИЗАЦИИ / РЕГИСТРАЦИИ --- */
 .auth-page {
     min-height: 100vh;
     display: flex;
@@ -282,7 +268,6 @@ footer {
     color: var(--text-color);
 }
 
-/* --- ФОРМЫ --- */
 .form-group {
     margin-bottom: 20px;
 }
@@ -341,7 +326,6 @@ footer {
     margin-top: 4px;
 }
 
-/* --- КНОПКИ --- */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -422,7 +406,6 @@ footer {
 .btn-block { width: 100%; }
 .btn-icon { width: 44px; height: 44px; padding: 0; border-radius: 50%; }
 
-/* Кнопка Google OAuth */
 .btn-google {
     background: #fff;
     color: var(--text-color);
@@ -468,7 +451,6 @@ footer {
     font-weight: 600;
 }
 
-/* --- СТРАНИЦА ДЕТАЛЕЙ МАШИНЫ --- */
 .car-detail {
     padding-top: 120px;
 }
@@ -528,7 +510,6 @@ footer {
     margin-bottom: 24px;
 }
 
-/* Характеристики в сетке */
 .specs-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -571,7 +552,6 @@ footer {
     .car-detail-grid { grid-template-columns: 1fr; }
 }
 
-/* --- СТРАНИЦА БРОНИРОВАНИЯ --- */
 .booking-page {
     padding-top: 120px;
 }
@@ -587,7 +567,6 @@ footer {
     .booking-grid { grid-template-columns: 1fr; }
 }
 
-/* Чекбоксы страховок */
 .insurance-list {
     display: flex;
     flex-direction: column;
@@ -635,7 +614,6 @@ footer {
     white-space: nowrap;
 }
 
-/* Итог бронирования */
 .booking-summary {
     background: #fff;
     border-radius: 1.5rem;
@@ -671,7 +649,6 @@ footer {
     font-weight: 700;
 }
 
-/* Переключатель валют */
 .currency-toggle {
     display: inline-flex;
     gap: 4px;
@@ -700,7 +677,6 @@ footer {
     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
-/* --- МОИ БРОНИРОВАНИЯ --- */
 .bookings-page {
     padding-top: 120px;
 }
@@ -758,7 +734,6 @@ footer {
     .booking-card-right { align-items: flex-start; flex-direction: row; gap: 12px; }
 }
 
-/* --- БЕЙДЖИ СТАТУСОВ --- */
 .badge {
     display: inline-flex;
     align-items: center;
@@ -778,7 +753,6 @@ footer {
 .badge-paid { background: #eef8f2; color: #1a7a3a; }
 .badge-refunded { background: #fdeaea; color: #b83030; }
 
-/* --- РЕЙТИНГ / ЗВЁЗДЫ --- */
 .rating {
     display: flex;
     align-items: center;
@@ -806,7 +780,6 @@ footer {
     margin-left: 4px;
 }
 
-/* --- ОТЗЫВЫ --- */
 .reviews-section {
     margin-top: 40px;
 }
@@ -855,7 +828,6 @@ footer {
 .review-date { font-size: 0.8rem; color: var(--text-alter-color); }
 .review-text { font-size: 0.9rem; color: var(--text-alter-color); line-height: 1.7; }
 
-/* --- ПРОФИЛЬ --- */
 .profile-page {
     padding-top: 120px;
 }
@@ -891,12 +863,10 @@ footer {
 .profile-stat-value { font-size: 1.3rem; font-weight: 700; }
 .profile-stat-label { font-size: 0.75rem; color: var(--text-alter-color); text-transform: uppercase; letter-spacing: 0.3px; }
 
-/* --- ИЗБРАННОЕ --- */
 .favorites-page {
     padding-top: 120px;
 }
 
-/* --- ЧАТ С ИИ (ВИДЖЕТ) --- */
 .chat-widget {
     position: fixed;
     bottom: 28px;
@@ -1044,7 +1014,6 @@ footer {
 
 .chat-send-btn:hover { background: #d94a1e; }
 
-/* --- УВЕДОМЛЕНИЯ (ВЫПАДАШКА) --- */
 .notifications-wrapper {
     position: relative;
 }
@@ -1115,7 +1084,6 @@ footer {
 .notification-text { font-size: 0.8rem; line-height: 1.5; }
 .notification-time { font-size: 0.75rem; color: var(--text-alter-color); margin-top: 4px; }
 
-/* --- ТАБЛИЦЫ (АДМИНКА) --- */
 .admin-page {
     padding-top: 120px;
 }
@@ -1154,7 +1122,6 @@ footer {
 .table tr:last-child td { border-bottom: none; }
 .table tr:hover td { background: var(--bg-color); }
 
-/* --- ФИЛЬТРЫ (ЧИПЫ КАТЕГОРИЙ) --- */
 .filters {
     display: flex;
     flex-wrap: wrap;
@@ -1186,7 +1153,6 @@ footer {
     border-color: var(--text-color);
 }
 
-/* --- ПАГИНАЦИЯ --- */
 .pagination {
     display: flex;
     align-items: center;
@@ -1215,7 +1181,6 @@ footer {
 .page-btn:hover { border-color: var(--main-color); color: var(--main-color); }
 .page-btn.active { background: var(--text-color); color: #fff; border-color: var(--text-color); }
 
-/* --- ПУСТОЕ СОСТОЯНИЕ --- */
 .empty-state {
     text-align: center;
     padding: 80px 24px;
@@ -1240,7 +1205,6 @@ footer {
     margin: 0 auto 28px;
 }
 
-/* --- ЗАГОЛОВОК СТРАНИЦЫ (ВНУТРЕННИЕ) --- */
 .page-header {
     padding-top: 120px;
     margin-bottom: 32px;
@@ -1257,7 +1221,6 @@ footer {
     margin-top: 4px;
 }
 
-/* --- УТИЛИТИ-КЛАССЫ --- */
 .text-center { text-align: center; }
 .text-muted { color: var(--text-alter-color); }
 .text-orange { color: var(--main-color); }
@@ -1274,7 +1237,6 @@ footer {
 
 .hidden { display: none; }
 
-/* --- АНИМАЦИИ --- */
 @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }

@@ -4,10 +4,21 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import ru.itis.semestr_work3.entity.Booking;
+import ru.itis.semestr_work3.entity.Car;
+import ru.itis.semestr_work3.entity.User;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
-import ru.itis.semestr_work3.service.*;
+import ru.itis.semestr_work3.service.BookingService;
+import ru.itis.semestr_work3.service.CarService;
+import ru.itis.semestr_work3.service.CategoryService;
+import ru.itis.semestr_work3.service.FavoriteService;
+import ru.itis.semestr_work3.service.InsuranceService;
+import ru.itis.semestr_work3.service.ReviewService;
+import ru.itis.semestr_work3.service.UserService;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 @Controller
 @RequiredArgsConstructor
@@ -71,7 +82,32 @@ public class PageController {
         model.addAttribute("car", carService.findById(carId)
                 .orElseThrow(() -> new ResourceNotFoundException("Автомобиль не найден")));
         model.addAttribute("insurances", insuranceService.findAll());
+        model.addAttribute("userId", 1L);
         return "booking-new";
+    }
+
+    @PostMapping("/bookings")
+    public String createBooking(@RequestParam Long carId,
+                                @RequestParam Long userId,
+                                @RequestParam LocalDate startDate,
+                                @RequestParam LocalDate endDate,
+                                @RequestParam(required = false) Set<Long> insuranceIds) {
+
+        Car car = carService.findById(carId)
+                .orElseThrow(() -> new ResourceNotFoundException("Автомобиль не найден"));
+
+        User user = userService.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+
+        Booking booking = new Booking();
+        booking.setCar(car);
+        booking.setUser(user);
+        booking.setStartDate(startDate);
+        booking.setEndDate(endDate);
+
+        bookingService.create(booking, insuranceIds);
+
+        return "redirect:/bookings";
     }
 
     @GetMapping("/bookings")

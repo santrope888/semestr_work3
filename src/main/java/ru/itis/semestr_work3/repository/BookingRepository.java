@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import ru.itis.semestr_work3.entity.Booking;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
@@ -18,10 +19,24 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT b FROM Booking b WHERE b.status = :status")
     List<Booking> findByStatus(@Param("status") String status);
 
-    @Query("SELECT b.car, COUNT(b) FROM Booking b " +
-            "WHERE b.status = 'COMPLETED' GROUP BY b.car " +
-            "HAVING COUNT(b) > (SELECT AVG(sub.cnt) FROM " +
-            "(SELECT COUNT(b2) as cnt FROM Booking b2 " +
-            "WHERE b2.status = 'COMPLETED' GROUP BY b2.car) sub)")
+    @Query("""
+        SELECT b
+        FROM Booking b
+        WHERE b.car.id = :carId
+          AND UPPER(b.status) NOT IN ('CANCELLED', 'COMPLETED')
+          AND b.startDate <= :endDate
+          AND b.endDate >= :startDate
+    """)
+    List<Booking> findOverlappingBookings(@Param("carId") Long carId,
+                                          @Param("startDate") LocalDate startDate,
+                                          @Param("endDate") LocalDate endDate);
+
+    @Query("""
+        SELECT b.car, COUNT(b)
+        FROM Booking b
+        WHERE b.status = 'COMPLETED'
+        GROUP BY b.car
+        ORDER BY COUNT(b) DESC
+    """)
     List<Object[]> findMostBooked();
 }

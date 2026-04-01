@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Бронирование — Aura Motum</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
 </head>
 <body>
 <header th:replace="~{fragments/header :: header}"></header>
@@ -20,11 +20,13 @@
         <div>
             <form th:action="@{/bookings}" method="post">
                 <input type="hidden" name="carId" th:value="${car.id}">
+                <input type="hidden" name="userId" th:value="${userId}">
 
                 <div class="form-group">
                     <label class="form-label">Дата начала</label>
                     <input type="date" name="startDate" class="form-input" required>
                 </div>
+
                 <div class="form-group">
                     <label class="form-label">Дата окончания</label>
                     <input type="date" name="endDate" class="form-input" required>
@@ -33,7 +35,10 @@
                 <h3 style="margin-bottom:16px;">Страховки</h3>
                 <div class="insurance-list">
                     <label class="insurance-item" th:each="ins : ${insurances}">
-                        <input type="checkbox" name="insuranceIds" th:value="${ins.id}">
+                        <input type="checkbox"
+                               name="insuranceIds"
+                               th:value="${ins.id}"
+                               th:attr="data-price=${ins.pricePerDay}">
                         <div class="insurance-info">
                             <div class="insurance-name" th:text="${ins.name}">Базовая</div>
                             <div class="insurance-desc" th:text="${ins.description}">Описание</div>
@@ -42,28 +47,44 @@
                     </label>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-lg btn-block">Подтвердить бронирование</button>
+                <button type="submit" class="btn btn-primary btn-lg btn-block">
+                    Подтвердить бронирование
+                </button>
             </form>
         </div>
 
         <div class="booking-summary">
             <h3>Итого</h3>
+
             <div class="summary-row">
                 <span class="label">Автомобиль</span>
                 <span class="value" th:text="${car.brand + ' ' + car.model}">Toyota Camry</span>
             </div>
+
             <div class="summary-row">
                 <span class="label">Цена за день</span>
-                <span class="value" th:text="${car.pricePerDay + ' ₽'}">5 000 ₽</span>
+                <span class="value" id="price-per-day" th:text="${car.pricePerDay + ' ₽'}">5 000 ₽</span>
             </div>
+
+            <div class="summary-row">
+                <span class="label">Количество дней</span>
+                <span class="value" id="days-count">—</span>
+            </div>
+
+            <div class="summary-row">
+                <span class="label">Страховки</span>
+                <span class="value" id="insurance-total">—</span>
+            </div>
+
             <div class="summary-row total">
                 <span>Итого</span>
                 <span id="total-price">—</span>
             </div>
+
             <div class="currency-toggle mt-md">
-                <button class="currency-btn active" onclick="setCurrency('RUB')">RUB</button>
-                <button class="currency-btn" onclick="setCurrency('USD')">USD</button>
-                <button class="currency-btn" onclick="setCurrency('EUR')">EUR</button>
+                <button type="button" class="currency-btn active" data-currency="RUB" onclick="setCurrency('RUB')">RUB</button>
+                <button type="button" class="currency-btn" data-currency="USD" onclick="setCurrency('USD')">USD</button>
+                <button type="button" class="currency-btn" data-currency="EUR" onclick="setCurrency('EUR')">EUR</button>
             </div>
         </div>
     </div>
@@ -72,20 +93,176 @@
 <footer th:replace="~{fragments/footer :: footer}"></footer>
 
 <script th:inline="javascript">
-    const carPrice = [[${car.pricePerDay}]];
-    // Пересчёт при смене валюты через AJAX
-    async function setCurrency(cur) {
-        document.querySelectorAll('.currency-btn').forEach(b => b.classList.remove('active'));
-        event.target.classList.add('active');
-        if (cur === 'RUB') {
-            document.getElementById('total-price').textContent = carPrice + ' ₽';
+    const carPricePerDayRub = Number([[${car.pricePerDay}]]);
+    let currentCurrency = 'RUB';
+
+    const startDateInput = document.querySelector('input[name="startDate"]');
+    const endDateInput = document.querySelector('input[name="endDate"]');
+    const insuranceCheckboxes = document.querySelectorAll('input[name="insuranceIds"]');
+
+    const pricePerDayElement = document.getElementById('price-per-day');
+    const daysCountElement = document.getElementById('days-count');
+    const insuranceTotalElement = document.getElementById('insurance-total');
+    const totalPriceElement = document.getElementById('total-price');
+
+    const currencyRateCache = {
+        RUB: 1
+    };
+
+    function calculateDays() {
+        const startValue = startDateInput.value;
+        const endValue = endDateInput.value;
+
+        if (!startValue || !endValue) {
+            return 0;
+        }
+
+        const start = new Date(startValue);
+        const end = new Date(endValue);
+
+        if (end < start) {
+            return 0;
+        }
+
+        const diffMs = end - start;
+        return Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+    }
+
+    function calculateInsuranceTotalRub(days) {
+        if (days <= 0) {
+            return 0;
+        }
+
+        let insuranceTotal = 0;
+
+        insuranceCheckboxes.forEach(cb => {
+            if (cb.checked) {
+                insuranceTotal += Number(cb.dataset.price) * days;
+            }
+        });
+
+        return insuranceTotal;
+    }
+
+    function calculateSummaryRub() {
+        const days = calculateDays();
+        const insuranceTotalRub = calculateInsuranceTotalRub(days);
+        const carTotalRub = days > 0 ? carPricePerDayRub * days : 0;
+        const totalRub = carTotalRub + insuranceTotalRub;
+
+        return {
+            days,
+            insuranceTotalRub,
+            totalRub
+        };
+    }
+
+    async function getCurrencyRate(currency) {
+        if (currencyRateCache[currency] !== undefined) {
+            return currencyRateCache[currency];
+        }
+
+        const probeAmountRub = 1000;
+        const res = await fetch(`/api/payments/convert?amount=${probeAmountRub}&currency=${currency}`);
+
+        if (!res.ok) {
+            throw new Error('Ошибка получения курса валюты');
+        }
+
+        const data = await res.json();
+        const rate = Number(data.converted) / probeAmountRub;
+
+        currencyRateCache[currency] = rate;
+        return rate;
+    }
+
+    function convertRubAmount(amountRub, rate) {
+        return amountRub * rate;
+    }
+
+    function formatCurrency(amount, currency) {
+        if (currency === 'RUB') {
+            return `${Math.round(amount)} ₽`;
+        }
+
+        if (currency === 'USD') {
+            return `${amount.toFixed(2)} $`;
+        }
+
+        return `${amount.toFixed(2)} €`;
+    }
+
+    async function renderTotal() {
+        const { days, insuranceTotalRub, totalRub } = calculateSummaryRub();
+
+        daysCountElement.textContent = days > 0 ? days : '—';
+
+        if (currentCurrency === 'RUB') {
+            pricePerDayElement.textContent = formatCurrency(carPricePerDayRub, 'RUB');
+            insuranceTotalElement.textContent = days > 0 ? formatCurrency(insuranceTotalRub, 'RUB') : '—';
+            totalPriceElement.textContent = days > 0 ? formatCurrency(totalRub, 'RUB') : '—';
             return;
         }
-        const res = await fetch(`/api/payments/convert?amount=${carPrice}&currency=${cur}`);
-        const data = await res.json();
-        const symbol = cur === 'USD' ? '$' : '€';
-        document.getElementById('total-price').textContent = data.converted.toFixed(2) + ' ' + symbol;
+
+        try {
+            const rate = await getCurrencyRate(currentCurrency);
+
+            const convertedPricePerDay = convertRubAmount(carPricePerDayRub, rate);
+            pricePerDayElement.textContent = formatCurrency(convertedPricePerDay, currentCurrency);
+
+            if (days <= 0) {
+                insuranceTotalElement.textContent = '—';
+                totalPriceElement.textContent = '—';
+                return;
+            }
+
+            const convertedInsurance = convertRubAmount(insuranceTotalRub, rate);
+            const convertedTotal = convertRubAmount(totalRub, rate);
+
+            insuranceTotalElement.textContent = formatCurrency(convertedInsurance, currentCurrency);
+            totalPriceElement.textContent = formatCurrency(convertedTotal, currentCurrency);
+        } catch (e) {
+            pricePerDayElement.textContent = 'Ошибка';
+            insuranceTotalElement.textContent = 'Ошибка';
+            totalPriceElement.textContent = 'Ошибка';
+        }
     }
+
+    async function setCurrency(cur) {
+        currentCurrency = cur;
+
+        document.querySelectorAll('.currency-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+
+        const activeBtn = document.querySelector(`.currency-btn[data-currency="${cur}"]`);
+        if (activeBtn) {
+            activeBtn.classList.add('active');
+        }
+
+        await renderTotal();
+    }
+
+    startDateInput.addEventListener('change', renderTotal);
+    endDateInput.addEventListener('change', renderTotal);
+
+    insuranceCheckboxes.forEach(cb => {
+        cb.addEventListener('change', renderTotal);
+
+        cb.addEventListener('change', () => {
+            const label = cb.closest('.insurance-item');
+            if (label) {
+                label.classList.toggle('checked', cb.checked);
+            }
+        });
+
+        const label = cb.closest('.insurance-item');
+        if (label) {
+            label.classList.toggle('checked', cb.checked);
+        }
+    });
+
+    renderTotal();
 </script>
 </body>
 </html>
