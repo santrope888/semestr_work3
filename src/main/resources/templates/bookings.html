@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мои бронирования — Aura Motum</title>
+    <title>Бронирования — Aura Motum</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
@@ -12,8 +12,37 @@
 
 <div class="bookings-page container">
     <div class="page-header">
-        <h1>Мои бронирования</h1>
+        <h1>Бронирования</h1>
     </div>
+
+    <form method="get" th:action="@{/bookings}" class="mt-md mb-lg">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+            <select name="status" class="form-select">
+                <option value="">Все статусы</option>
+                <option value="PENDING" th:selected="${filter.status == 'PENDING'}">Pending</option>
+                <option value="CONFIRMED" th:selected="${filter.status == 'CONFIRMED'}">Confirmed</option>
+                <option value="COMPLETED" th:selected="${filter.status == 'COMPLETED'}">Completed</option>
+                <option value="CANCELLED" th:selected="${filter.status == 'CANCELLED'}">Cancelled</option>
+            </select>
+
+            <input type="number" name="minTotalPrice" placeholder="Сумма от"
+                   th:value="${filter.minTotalPrice}" class="form-input">
+
+            <input type="number" name="maxTotalPrice" placeholder="Сумма до"
+                   th:value="${filter.maxTotalPrice}" class="form-input">
+
+            <input type="date" name="startDateFrom"
+                   th:value="${filter.startDateFrom}" class="form-input">
+
+            <input type="date" name="endDateTo"
+                   th:value="${filter.endDateTo}" class="form-input">
+        </div>
+
+        <div class="mt-md" style="display:flex;gap:12px;flex-wrap:wrap;">
+            <button type="submit" class="btn btn-primary">Применить</button>
+            <a th:href="@{/bookings}" class="btn btn-secondary">Сбросить</a>
+        </div>
+    </form>
 
     <div th:each="booking : ${bookings}" class="booking-card">
         <div class="booking-card-image">
@@ -27,9 +56,9 @@
             </div>
         </div>
         <div class="booking-card-right">
-                <span class="badge"
-                      th:classappend="'badge-' + ${booking.status.toLowerCase()}"
-                      th:text="${booking.status}">PENDING</span>
+            <span class="badge"
+                  th:classappend="'badge-' + ${booking.status.toLowerCase()}"
+                  th:text="${booking.status}">PENDING</span>
             <div class="booking-card-price" th:text="${booking.totalPrice + ' ₽'}">25 000 ₽</div>
         </div>
     </div>
@@ -37,7 +66,7 @@
     <div class="empty-state" th:if="${#lists.isEmpty(bookings)}">
         <i class='bx bx-calendar-x'></i>
         <h3>Нет бронирований</h3>
-        <p>У вас пока нет забронированных автомобилей</p>
+        <p>По выбранным фильтрам ничего не найдено</p>
         <a th:href="@{/catalog}" class="btn btn-primary">Перейти в каталог</a>
     </div>
 </div>

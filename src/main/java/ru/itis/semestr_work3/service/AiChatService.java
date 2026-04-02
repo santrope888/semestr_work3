@@ -3,7 +3,10 @@ package ru.itis.semestr_work3.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import ru.itis.semestr_work3.entity.Car;
@@ -14,10 +17,13 @@ import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.repository.CarRepository;
 import ru.itis.semestr_work3.repository.ChatMessageRepository;
 import ru.itis.semestr_work3.repository.ChatSessionRepository;
+import ru.itis.semestr_work3.specifications.CarSpecifications;
 
 import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -47,8 +53,9 @@ public class AiChatService {
         return sessionRepository.findByUser(userId);
     }
 
-    public Optional<ChatSession> findSessionById(Long sessionId) {
-        return sessionRepository.findById(sessionId);
+    public ChatSession findSessionById(Long sessionId) {
+        return sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Чат-сессия не найдена"));
     }
 
     public List<ChatMessage> getSessionMessages(Long sessionId) {
@@ -68,7 +75,7 @@ public class AiChatService {
 
     private String callOllama(ChatSession session) {
         try {
-            List<Car> cars = carRepository.findAvailable();
+            List<Car> cars = carRepository.findAll(CarSpecifications.isAvailable(true));
 
             String carsInfo = cars.stream()
                     .map(c -> String.format(
@@ -82,7 +89,8 @@ public class AiChatService {
                             c.getPricePerDay(),
                             c.getCategory() != null ? c.getCategory().getName() : "без категории"
                     ))
-                    .collect(Collectors.joining("\n"));
+                    .reduce((a, b) -> a + "\n" + b)
+                    .orElse("Нет доступных автомобилей");
 
             String systemPrompt = "Ты — ИИ-помощник по подбору автомобилей в аренду. "
                     + "Вот список доступных автомобилей:\n"
@@ -109,6 +117,7 @@ public class AiChatService {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
             ResponseEntity<Map> response = restTemplate.postForEntity(
@@ -119,7 +128,10 @@ public class AiChatService {
 
             if (response.getBody() != null && response.getBody().containsKey("message")) {
                 Map<String, Object> message = (Map<String, Object>) response.getBody().get("message");
-                return (String) message.get("content");
+                Object content = message.get("content");
+                if (content != null) {
+                    return content.toString();
+                }
             }
 
             return "Извините, не удалось получить ответ. Попробуйте ещё раз.";

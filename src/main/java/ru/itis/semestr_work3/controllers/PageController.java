@@ -1,24 +1,13 @@
 package ru.itis.semestr_work3.controllers;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import ru.itis.semestr_work3.entity.Booking;
-import ru.itis.semestr_work3.entity.Car;
-import ru.itis.semestr_work3.entity.User;
-import ru.itis.semestr_work3.exception.ResourceNotFoundException;
-import ru.itis.semestr_work3.service.BookingService;
-import ru.itis.semestr_work3.service.CarService;
-import ru.itis.semestr_work3.service.CategoryService;
-import ru.itis.semestr_work3.service.FavoriteService;
-import ru.itis.semestr_work3.service.InsuranceService;
-import ru.itis.semestr_work3.service.ReviewService;
-import ru.itis.semestr_work3.service.UserService;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Set;
+import ru.itis.semestr_work3.dto.CarFilter;
+import ru.itis.semestr_work3.service.*;
 
 @Controller
 @RequiredArgsConstructor
@@ -30,7 +19,6 @@ public class PageController {
     private final BookingService bookingService;
     private final FavoriteService favoriteService;
     private final ReviewService reviewService;
-    private final UserService userService;
 
     @GetMapping("/")
     public String index() {
@@ -38,22 +26,26 @@ public class PageController {
     }
 
     @GetMapping("/catalog")
-    public String catalog(@RequestParam(required = false) Long category, Model model) {
-        if (category != null) {
-            model.addAttribute("cars", carService.findByCategory(category));
-            model.addAttribute("selectedCategory", category);
-        } else {
-            model.addAttribute("cars", carService.findAvailable());
-        }
+    public String catalog(CarFilter filter,
+                          @PageableDefault(size = 12) Pageable pageable,
+                          Model model) {
 
+        var carsPage = carService.findCars(filter, pageable);
+
+        model.addAttribute("cars", carsPage.getContent());
+        model.addAttribute("carsPage", carsPage);
+        model.addAttribute("filter", filter);
         model.addAttribute("categories", categoryService.findAll());
+        model.addAttribute("brands", carService.findDistinctBrands());
+        model.addAttribute("colors", carService.findDistinctColors());
+
         return "catalog";
     }
 
     @GetMapping("/cars/{id}")
     public String carDetail(@PathVariable Long id, Model model) {
         model.addAttribute("car", carService.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Автомобиль не найден")));
+                .orElseThrow(() -> new RuntimeException("Car not found")));
         model.addAttribute("reviews", reviewService.findByCar(id));
         return "car-detail";
     }
@@ -72,42 +64,22 @@ public class PageController {
     public String register(@RequestParam String username,
                            @RequestParam String email,
                            @RequestParam String password,
-                           @RequestParam(required = false) String phoneNumber) {
-        userService.register(username, email, password, phoneNumber);
-        return "redirect:/login";
+                           @RequestParam(required = false) String phoneNumber,
+                           Model model) {
+        try {
+            return "redirect:/login";
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("error", e.getMessage());
+            return "register";
+        }
     }
 
     @GetMapping("/bookings/new")
     public String bookingForm(@RequestParam Long carId, Model model) {
         model.addAttribute("car", carService.findById(carId)
-                .orElseThrow(() -> new ResourceNotFoundException("Автомобиль не найден")));
+                .orElseThrow(() -> new RuntimeException("Car not found")));
         model.addAttribute("insurances", insuranceService.findAll());
-        model.addAttribute("userId", 1L);
         return "booking-new";
-    }
-
-    @PostMapping("/bookings")
-    public String createBooking(@RequestParam Long carId,
-                                @RequestParam Long userId,
-                                @RequestParam LocalDate startDate,
-                                @RequestParam LocalDate endDate,
-                                @RequestParam(required = false) Set<Long> insuranceIds) {
-
-        Car car = carService.findById(carId)
-                .orElseThrow(() -> new ResourceNotFoundException("Автомобиль не найден"));
-
-        User user = userService.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
-
-        Booking booking = new Booking();
-        booking.setCar(car);
-        booking.setUser(user);
-        booking.setStartDate(startDate);
-        booking.setEndDate(endDate);
-
-        bookingService.create(booking, insuranceIds);
-
-        return "redirect:/bookings";
     }
 
     @GetMapping("/bookings")
@@ -118,7 +90,7 @@ public class PageController {
 
     @GetMapping("/favorites")
     public String favorites(Model model) {
-        model.addAttribute("favorites", List.of());
+        model.addAttribute("favorites", java.util.List.of());
         return "favorites";
     }
 
@@ -131,7 +103,7 @@ public class PageController {
 
     @GetMapping("/chat")
     public String chat(Model model) {
-        model.addAttribute("sessionId", 1L);
+        model.addAttribute("sessionId", 1);
         return "chat";
     }
 }

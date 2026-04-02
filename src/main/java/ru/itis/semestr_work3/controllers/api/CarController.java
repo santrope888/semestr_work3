@@ -1,9 +1,12 @@
 package ru.itis.semestr_work3.controllers.api;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.itis.semestr_work3.dto.CarFilter;
 import ru.itis.semestr_work3.entity.Car;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.service.CarService;
@@ -17,9 +20,14 @@ public class CarController {
 
     private final CarService carService;
 
-    @GetMapping
+    @GetMapping("/all")
     public List<Car> findAll() {
         return carService.findAll();
+    }
+
+    @GetMapping
+    public Page<Car> find(@ModelAttribute CarFilter filter, Pageable pageable) {
+        return carService.findCars(filter, pageable);
     }
 
     @GetMapping("/{id}")
@@ -31,16 +39,6 @@ public class CarController {
     @GetMapping("/available")
     public List<Car> findAvailable() {
         return carService.findAvailable();
-    }
-
-    @GetMapping("/category/{categoryId}")
-    public List<Car> findByCategory(@PathVariable Long categoryId) {
-        return carService.findByCategory(categoryId);
-    }
-
-    @GetMapping("/top-rated")
-    public List<Car> findTopRated(@RequestParam(defaultValue = "4.0") double min) {
-        return carService.findTopRated(min);
     }
 
     @PostMapping

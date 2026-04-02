@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="carCard(car)">
+    <a th:href="@{/cars/{id}(id=${car.id})}" class="home-car-card-link">
+        <article class="home-car-card">
+            <div class="home-car-card-top">
+                <span class="home-car-card-badge"
+                      th:text="${car.category != null ? car.category.name : 'Авто'}">
+                    Sedan
+                </span>
+
+                <button type="button" class="home-car-card-fav" aria-label="Избранное">
+                    <i class='bx bx-heart'></i>
+                </button>
+            </div>
+
+            <div class="home-car-card-image-wrap">
+                <img th:src="${car.imagePath != null and !#strings.isEmpty(car.imagePath) ? car.imagePath : '/images/no-car.png'}"
+                     th:alt="${car.brand + ' ' + car.model}"
+                     onerror="this.onerror=null;this.src='/images/no-car.png';">
+            </div>
+
+            <div class="home-car-card-body">
+                <h3 th:text="${car.brand + ' ' + car.model}">Rolls-Royce</h3>
+
+                <p class="home-car-card-meta"
+                   th:text="${car.transmission != null and !#strings.isEmpty(car.transmission) ? car.transmission : 'Automatic'}">
+                    Automatic
+                </p>
+
+                <div class="home-car-card-bottom">
+                    <div class="home-car-card-price">
+                        <span th:text="${#numbers.formatInteger(car.pricePerDay, 0, 'WHITESPACE')} + ' ₽ /день'">
+                            45 000 ₽ /день
+                        </span>
+                    </div>
+
+                    <span class="home-car-card-btn">Аренда</span>
+                </div>
+            </div>
+        </article>
+    </a>
+</div>
+</body>
+</html>

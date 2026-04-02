@@ -1,7 +1,11 @@
 package ru.itis.semestr_work3.service;
 
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import ru.itis.semestr_work3.dto.BookingFilter;
 import ru.itis.semestr_work3.entity.Booking;
 import ru.itis.semestr_work3.entity.Car;
 import ru.itis.semestr_work3.entity.Insurance;
@@ -12,6 +16,7 @@ import ru.itis.semestr_work3.repository.BookingRepository;
 import ru.itis.semestr_work3.repository.CarRepository;
 import ru.itis.semestr_work3.repository.InsuranceRepository;
 import ru.itis.semestr_work3.repository.UserRepository;
+import ru.itis.semestr_work3.specifications.BookingSpecifications;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -27,6 +32,24 @@ public class BookingService {
     private final InsuranceRepository insuranceRepository;
     private final CarRepository carRepository;
     private final UserRepository userRepository;
+    private final EntityManager entityManager;
+
+    public List<Booking> findFilteredBookings(BookingFilter filter) {
+        if (filter == null) {
+            return bookingRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+        }
+
+        Specification<Booking> specification = Specification
+                .where(BookingSpecifications.hasUser(filter.getUserId()))
+                .and(BookingSpecifications.hasCar(filter.getCarId()))
+                .and(BookingSpecifications.hasStatus(filter.getStatus()))
+                .and(BookingSpecifications.totalPriceBetween(filter.getMinTotalPrice(), filter.getMaxTotalPrice()))
+                .and(BookingSpecifications.startDateAfter(filter.getStartDateFrom()))
+                .and(BookingSpecifications.endDateBefore(filter.getEndDateTo()))
+                .and(BookingSpecifications.createdBetween(filter.getCreatedFrom(), filter.getCreatedTo()));
+
+        return bookingRepository.findAll(specification, Sort.by(Sort.Direction.DESC, "createdAt"));
+    }
 
     public List<Booking> findAll() {
         return bookingRepository.findAll();
@@ -37,15 +60,18 @@ public class BookingService {
     }
 
     public List<Booking> findByUser(Long userId) {
-        return bookingRepository.findByUser(userId);
+        return bookingRepository.findAll(
+                BookingSpecifications.hasUser(userId),
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
     }
 
     public List<Booking> findByCar(Long carId) {
-        return bookingRepository.findByCar(carId);
+        return bookingRepository.findAll(BookingSpecifications.hasCar(carId));
     }
 
     public List<Booking> findByStatus(String status) {
-        return bookingRepository.findByStatus(status);
+        return bookingRepository.findAll(BookingSpecifications.hasStatus(status));
     }
 
     public Booking create(Booking booking, Set<Long> insuranceIds) {
@@ -141,7 +167,14 @@ public class BookingService {
     }
 
     public List<Object[]> findMostBooked() {
-        return bookingRepository.findMostBooked();
+        return entityManager.createQuery("""
+                SELECT b.car, COUNT(b)
+                FROM Booking b
+                WHERE b.status = 'COMPLETED'
+                GROUP BY b.car
+                ORDER BY COUNT(b) DESC
+                """, Object[].class)
+                .getResultList();
     }
 
     private void validateBookingForCreate(Booking booking) {
@@ -179,9 +212,10 @@ public class BookingService {
     }
 
     private void checkCarAvailabilityForPeriod(Long carId, LocalDate startDate, LocalDate endDate) {
-        List<Booking> overlappingBookings = bookingRepository.findOverlappingBookings(carId, startDate, endDate);
+        Specification<Booking> overlapSpecification =
+                BookingSpecifications.overlapsCarPeriod(carId, startDate, endDate);
 
-        if (!overlappingBookings.isEmpty()) {
+        if (bookingRepository.count(overlapSpecification) > 0) {
             throw new IllegalArgumentException("Автомобиль уже забронирован на выбранные даты");
         }
     }
