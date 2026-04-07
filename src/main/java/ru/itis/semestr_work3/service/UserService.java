@@ -3,6 +3,7 @@ package ru.itis.semestr_work3.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import ru.itis.semestr_work3.dto.UserDto;
 import ru.itis.semestr_work3.entity.Role;
 import ru.itis.semestr_work3.entity.User;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
@@ -20,16 +21,21 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public User register(String username, String email, String password, String phoneNumber) {
-        if (username == null || username.isBlank()) {
-            throw new IllegalArgumentException("Username обязателен");
-        }
-        if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("Email обязателен");
-        }
-        if (password == null || password.isBlank()) {
-            throw new IllegalArgumentException("Пароль обязателен");
-        }
+    public User register(UserDto userDto) {
+        String username = userDto.getUsername();
+        String password = userDto.getPassword();
+        String email = userDto.getEmail();
+        String phoneNumber = userDto.getPhoneNumber();
+
+//        if (username == null || username.isBlank()) {
+//            throw new IllegalArgumentException("Username обязателен");
+//        }
+//        if (email == null || email.isBlank()) {
+//            throw new IllegalArgumentException("Email обязателен");
+//        }
+//        if (password == null || password.isBlank()) {
+//            throw new IllegalArgumentException("Пароль обязателен");
+//        }
 
         if (userRepository.existsByUsername(username)) {
             throw new IllegalArgumentException("Username уже занят");

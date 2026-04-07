@@ -50,30 +50,6 @@ public class PageController {
         return "car-detail";
     }
 
-    @GetMapping("/login")
-    public String login() {
-        return "login";
-    }
-
-    @GetMapping("/register")
-    public String registerForm() {
-        return "register";
-    }
-
-    @PostMapping("/register")
-    public String register(@RequestParam String username,
-                           @RequestParam String email,
-                           @RequestParam String password,
-                           @RequestParam(required = false) String phoneNumber,
-                           Model model) {
-        try {
-            return "redirect:/login";
-        } catch (IllegalArgumentException e) {
-            model.addAttribute("error", e.getMessage());
-            return "register";
-        }
-    }
-
     @GetMapping("/bookings/new")
     public String bookingForm(@RequestParam Long carId, Model model) {
         model.addAttribute("car", carService.findById(carId)
