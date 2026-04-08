@@ -5,10 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import ru.itis.semestr_work3.controllers.AdminCarController;
 import ru.itis.semestr_work3.controllers.PageController;
 
 @Slf4j
-@ControllerAdvice(assignableTypes = PageController.class)
+@ControllerAdvice(assignableTypes = {PageController.class, AdminCarController.class})
 public class MvcExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
