@@ -20,6 +20,11 @@
         <div th:if="${param.logout}" style="background:#eef8f2;color:#1a7a3a;padding:12px 16px;border-radius:12px;font-size:0.85rem;margin-bottom:20px;">
             Вы успешно вышли из аккаунта
         </div>
+        <div th:if="${param.deleted}"
+             style="background:#eef8f2;color:#1a7a3a;padding:12px 16px;border-radius:12px;
+            font-size:0.85rem;margin-bottom:20px;">
+            Аккаунт успешно удалён
+        </div>
 
         <form th:action="@{/login}" method="post">
             <div class="form-group">

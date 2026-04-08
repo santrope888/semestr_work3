@@ -1,18 +1,123 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <header th:fragment="header">
     <div class="nav">
         <a th:href="@{/}" class="logo">Aura<span>Motum</span></a>
+
         <div class="navbar">
             <a th:href="@{/}" class="nav-link">Главная</a>
             <a th:href="@{/catalog}" class="nav-link">Каталог</a>
-            <a th:href="@{/favorites}" class="nav-link">Избранное</a>
-            <a th:href="@{/bookings}" class="nav-link">Мои брони</a>
-            <a th:href="@{/chat}" class="nav-link">ИИ-помощник</a>
+            <a th:href="@{/favorites}" class="nav-link" sec:authorize="isAuthenticated()">Избранное</a>
+            <a th:href="@{/bookings}" class="nav-link" sec:authorize="isAuthenticated()">Мои брони</a>
+            <a th:href="@{/chat}" class="nav-link" sec:authorize="isAuthenticated()">ИИ-помощник</a>
+            <a th:href="@{/admin/cars}" class="nav-link" sec:authorize="hasAuthority('ADMIN')"
+               style="color:var(--main-color);">Управление</a>
         </div>
+
         <div class="nav-icons">
-            <a th:href="@{/login}" class="btn btn-outline-light btn-sm">Войти</a>
+            <!-- Гость -->
+            <div sec:authorize="isAnonymous()" style="display:flex;gap:10px;align-items:center;">
+                <a th:href="@{/login}" class="btn btn-outline-light btn-sm">Войти</a>
+                <a th:href="@{/register}" class="btn btn-primary btn-sm">Регистрация</a>
+            </div>
+
+            <!-- Залогиненный -->
+            <div sec:authorize="isAuthenticated()"
+                 style="display:flex;align-items:center;gap:12px;">
+
+                <!-- Колокольчик -->
+                <button class="notif-btn" id="notifBtn"
+                        onclick="toggleNotif(event)" title="Уведомления">
+                    <i class='bx bx-bell'></i>
+                    <span class="notif-badge" id="notifBadge" style="display:none;">0</span>
+                </button>
+
+                <!-- Дропдаун уведомлений -->
+                <div class="notif-dropdown" id="notifDropdown">
+                    <div style="padding:14px 16px 10px;font-weight:600;font-size:0.9rem;
+                                border-bottom:1px solid rgba(0,0,0,0.07);">
+                        Уведомления
+                    </div>
+                    <div style="padding:32px 16px;text-align:center;
+                                color:#999;font-size:0.85rem;">
+                        <i class='bx bx-bell-off'
+                           style="font-size:2rem;display:block;margin-bottom:8px;"></i>
+                        Нет новых уведомлений
+                    </div>
+                </div>
+
+                <!-- Аватар пользователя -->
+                <div class="user-menu" id="userMenu">
+                    <button type="button" class="user-avatar-btn" id="userMenuBtn"
+                            onclick="toggleUserMenu(event)">
+                        <!-- Если аватар загружен — показываем фото -->
+                        <img th:if="${currentUser != null and currentUser.avatarPath != null}"
+                             th:src="${currentUser.avatarPath}"
+                             class="user-avatar-small user-avatar-img"
+                             alt="avatar">
+                        <!-- Иначе — первая буква имени -->
+                        <div th:unless="${currentUser != null and currentUser.avatarPath != null}"
+                             class="user-avatar-small">
+                            <span th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">A</span>
+                        </div>
+                    </button>
+
+                    <!-- Дропдаун меню -->
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="dropdown-user-info">
+                            <!-- Аватар в дропдауне -->
+                            <img th:if="${currentUser != null and currentUser.avatarPath != null}"
+                                 th:src="${currentUser.avatarPath}"
+                                 style="width:38px;height:38px;border-radius:50%;
+                                        object-fit:cover;flex-shrink:0;"
+                                 alt="avatar">
+                            <div th:unless="${currentUser != null and currentUser.avatarPath != null}"
+                                 class="dropdown-avatar">
+                                <span th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">A</span>
+                            </div>
+                            <div>
+                                <div class="dropdown-username" sec:authentication="name">username</div>
+                                <div class="dropdown-role">Пользователь</div>
+                            </div>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <a th:href="@{/profile}" class="dropdown-item">
+                            <i class='bx bx-user'></i> Профиль
+                        </a>
+                        <a th:href="@{/bookings}" class="dropdown-item">
+                            <i class='bx bx-calendar'></i> Мои брони
+                        </a>
+                        <a th:href="@{/favorites}" class="dropdown-item">
+                            <i class='bx bx-heart'></i> Избранное
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <form th:action="@{/logout}" method="post" style="margin:0;">
+                            <button type="submit" class="dropdown-item dropdown-item-danger">
+                                <i class='bx bx-log-out'></i> Выйти
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <script>
+        function toggleUserMenu(e) {
+            e.stopPropagation();
+            document.getElementById('notifDropdown').classList.remove('open');
+            document.getElementById('userDropdown').classList.toggle('open');
+        }
+        function toggleNotif(e) {
+            e.stopPropagation();
+            document.getElementById('userDropdown').classList.remove('open');
+            document.getElementById('notifDropdown').classList.toggle('open');
+        }
+        document.addEventListener('click', function () {
+            document.getElementById('userDropdown')?.classList.remove('open');
+            document.getElementById('notifDropdown')?.classList.remove('open');
+        });
+    </script>
 </header>
 </html>

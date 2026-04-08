@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -57,10 +58,7 @@
     </div>
     <div class="rentals-content">
         <div class="rental-box">
-            <div class="rental-top">
-                <h3>Sedan</h3>
-                <i class='bx bx-heart'></i>
-            </div>
+            <div class="rental-top"><h3>Sedan</h3><i class='bx bx-heart'></i></div>
             <img src="/images/rental-1.png" alt="">
             <h2>Rolls-Royce</h2>
             <h4>Automatic</h4>
@@ -70,10 +68,7 @@
             </div>
         </div>
         <div class="rental-box">
-            <div class="rental-top">
-                <h3>SUV</h3>
-                <i class='bx bx-heart'></i>
-            </div>
+            <div class="rental-top"><h3>SUV</h3><i class='bx bx-heart'></i></div>
             <img src="/images/rental-2.png" alt="">
             <h2>Macan 4</h2>
             <h4>Automatic</h4>
@@ -83,10 +78,7 @@
             </div>
         </div>
         <div class="rental-box">
-            <div class="rental-top">
-                <h3>Sport</h3>
-                <i class='bx bx-heart'></i>
-            </div>
+            <div class="rental-top"><h3>Sport</h3><i class='bx bx-heart'></i></div>
             <img src="/images/rental-3.png" alt="">
             <h2>Cayenne S</h2>
             <h4>Automatic</h4>
@@ -104,8 +96,15 @@
         <p style="color:var(--text-alter-color);margin-top:8px;">Наш ИИ-помощник подберёт автомобиль под вашу задачу</p>
     </div>
     <div style="text-align:center;">
-        <a href="/chat" class="btn btn-primary btn-lg" style="padding:16px 48px;font-size:1.1rem;">
+        <a th:href="@{/chat}" class="btn btn-primary btn-lg"
+           sec:authorize="isAuthenticated()"
+           style="padding:16px 48px;font-size:1.1rem;">
             <i class='bx bx-bot'></i> Открыть ИИ-помощник
+        </a>
+        <a th:href="@{/login}" class="btn btn-primary btn-lg"
+           sec:authorize="isAnonymous()"
+           style="padding:16px 48px;font-size:1.1rem;">
+            <i class='bx bx-lock-alt'></i> Войдите чтобы использовать ИИ
         </a>
     </div>
 </section>
@@ -114,17 +113,11 @@
 
 <script src="https://unpkg.com/scrollreveal"></script>
 <script>
-    const sr = ScrollReveal({
-        origin: 'top',
-        distance: '60px',
-        duration: 2500,
-        delay: 400,
-        reset: false
-    });
+    const sr = ScrollReveal({ origin:'top', distance:'60px', duration:2500, delay:400, reset:false });
     sr.reveal('.nav');
-    sr.reveal('.home-img', { delay: 600, origin: 'right' });
-    sr.reveal('.heading', { delay: 500 });
-    sr.reveal('.trend-box, .rental-box', { interval: 100, origin: 'bottom' });
+    sr.reveal('.home-img', { delay:600, origin:'right' });
+    sr.reveal('.heading', { delay:500 });
+    sr.reveal('.trend-box, .rental-box', { interval:100, origin:'bottom' });
 </script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -69,21 +70,34 @@
             </div>
 
             <div class="car-detail-actions">
-                <a th:href="@{/bookings/new(carId=${car.id})}" class="btn btn-primary btn-lg">Забронировать</a>
-                <button class="btn btn-secondary btn-lg" onclick="toggleFavorite()">
+                <a th:href="@{/bookings/new(carId=${car.id})}"
+                   class="btn btn-primary btn-lg"
+                   sec:authorize="isAuthenticated()">
+                    <i class='bx bx-calendar-check'></i> Забронировать
+                </a>
+
+                <a th:href="@{/login}"
+                   class="btn btn-primary btn-lg"
+                   sec:authorize="isAnonymous()">
+                    <i class='bx bx-lock-alt'></i> Войдите для брони
+                </a>
+
+                <button class="btn btn-secondary btn-lg"
+                        sec:authorize="isAuthenticated()"
+                        onclick="toggleFavorite()">
                     <i class='bx bx-heart'></i> В избранное
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Отзывы -->
     <div class="reviews-section">
         <h3>Отзывы</h3>
         <div th:each="review : ${reviews}" class="review-card">
             <div class="review-header">
                 <div class="review-author">
-                    <div class="review-avatar" th:text="${#strings.substring(review.user.username, 0, 1).toUpperCase()}">A</div>
+                    <div class="review-avatar"
+                         th:text="${#strings.substring(review.user.username, 0, 1).toUpperCase()}">A</div>
                     <div>
                         <div class="review-name" th:text="${review.user.username}">Иван</div>
                         <div class="review-date" th:text="${review.createdAt}">01.01.2026</div>

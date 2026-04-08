@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,42 +11,674 @@
 <body>
 <header th:replace="~{fragments/header :: header}"></header>
 
-<div class="profile-page container">
-    <div class="profile-header">
-        <img th:src="${user.avatarPath != null ? user.avatarPath : '/images/default-avatar.png'}"
-             class="profile-avatar-lg" alt="avatar">
-        <div>
-            <div class="profile-name" th:text="${user.username}">Username</div>
-            <div class="profile-email" th:text="${user.email}">email@example.com</div>
-            <div class="profile-stats">
-                <div>
-                    <div class="profile-stat-value" th:text="${bookingsCount}">0</div>
-                    <div class="profile-stat-label">Бронирований</div>
+<div class="profile-layout container" style="padding-top:100px;padding-bottom:60px;">
+
+    <!-- ══ БОКОВАЯ ПАНЕЛЬ ══════════════════════════════════════ -->
+    <aside class="profile-sidebar">
+
+        <!-- Аватар + username -->
+        <div class="sidebar-user-card">
+            <div style="position:relative;display:inline-block;">
+                <img th:src="${user.avatarPath != null ? user.avatarPath : '/images/default-avatar.png'}"
+                     id="avatarPreview"
+                     style="width:72px;height:72px;border-radius:50%;object-fit:cover;
+                            border:2.5px solid var(--main-color);
+                            box-shadow:0 0 0 4px rgba(255,140,0,0.15);" alt="avatar">
+                <label for="avatarUploadTrigger"
+                       style="position:absolute;bottom:0;right:0;width:24px;height:24px;
+                              background:var(--main-color);border-radius:50%;display:flex;
+                              align-items:center;justify-content:center;cursor:pointer;
+                              box-shadow:0 2px 8px rgba(0,0,0,0.2);"
+                       title="Сменить фото">
+                    <i class='bx bx-camera' style="color:#fff;font-size:0.75rem;"></i>
+                </label>
+            </div>
+            <form id="avatarForm" th:action="@{/profile}" method="post"
+                  enctype="multipart/form-data" style="display:none;">
+                <input type="file" id="avatarUploadTrigger" name="avatar"
+                       accept="image/jpeg,image/png,image/webp"
+                       onchange="submitAvatarForm()">
+            </form>
+            <div style="margin-top:12px;font-weight:700;font-size:1rem;
+                        letter-spacing:0.01em;" th:text="${user.username}">username</div>
+        </div>
+
+        <!-- Навигация -->
+        <nav class="sidebar-nav">
+            <div class="sidebar-nav-group">
+                <div class="sidebar-nav-label">Профиль</div>
+                <a th:href="@{/profile(section='info')}"
+                   th:classappend="${section == 'info'} ? ' active' : ''"
+                   class="sidebar-nav-item">
+                    <i class='bx bx-user'></i> Редактировать
+                </a>
+                <a th:href="@{/profile(section='docs')}"
+                   th:classappend="${section == 'docs'} ? ' active' : ''"
+                   class="sidebar-nav-item">
+                    <i class='bx bx-file'></i> Документы
+                    <span th:if="${user.licenseStatus == 'NOT_UPLOADED' or user.passportStatus == 'NOT_UPLOADED'}"
+                          style="margin-left:auto;width:8px;height:8px;border-radius:50%;
+                                 background:var(--main-color);flex-shrink:0;"></span>
+                </a>
+            </div>
+            <div class="sidebar-nav-group">
+                <div class="sidebar-nav-label">Активность</div>
+                <a th:href="@{/bookings}" class="sidebar-nav-item">
+                    <i class='bx bx-calendar'></i> Мои брони
+                    <span class="sidebar-badge" th:text="${bookingsCount}"
+                          th:if="${bookingsCount > 0}">0</span>
+                </a>
+                <a th:href="@{/favorites}" class="sidebar-nav-item">
+                    <i class='bx bx-heart'></i> Избранное
+                </a>
+            </div>
+            <div class="sidebar-nav-group">
+                <div class="sidebar-nav-label">Аккаунт</div>
+                <a th:href="@{/profile(section='security')}"
+                   th:classappend="${section == 'security'} ? ' active' : ''"
+                   class="sidebar-nav-item">
+                    <i class='bx bx-lock-alt'></i> Безопасность
+                </a>
+            </div>
+        </nav>
+
+        <!-- Выйти + Удалить -->
+        <div style="padding:0 12px;margin-top:auto;display:flex;flex-direction:column;gap:4px;">
+            <form th:action="@{/logout}" method="post">
+                <button type="submit"
+                        style="display:flex;align-items:center;gap:8px;width:100%;background:none;
+                               border:none;padding:10px 12px;border-radius:10px;color:#e05252;
+                               font-size:0.88rem;cursor:pointer;transition:background 0.15s;"
+                        onmouseover="this.style.background='rgba(224,82,82,0.1)'"
+                        onmouseout="this.style.background='none'">
+                    <i class='bx bx-log-out'></i> Выйти
+                </button>
+            </form>
+            <div style="height:1px;background:rgba(255,255,255,0.07);margin:4px 0;"></div>
+            <button onclick="confirmDelete()"
+                    style="display:flex;align-items:center;gap:8px;width:100%;background:none;
+                           border:none;padding:10px 12px;border-radius:10px;color:#aaa;
+                           font-size:0.82rem;cursor:pointer;transition:all 0.15s;"
+                    onmouseover="this.style.color='#e05252';this.style.background='rgba(224,82,82,0.07)'"
+                    onmouseout="this.style.color='#aaa';this.style.background='none'">
+                <i class='bx bx-trash'></i> Удалить аккаунт
+            </button>
+        </div>
+    </aside>
+
+    <!-- ══ ПРАВЫЙ КОНТЕНТ ══════════════════════════════════════ -->
+    <div class="profile-content">
+
+        <!-- Уведомления -->
+        <div th:if="${param.saved}"
+             style="background:#eef8f2;color:#1a7a3a;padding:12px 20px;border-radius:12px;
+                    margin-bottom:20px;font-size:0.9rem;display:flex;align-items:center;gap:8px;">
+            <i class='bx bx-check-circle'></i> Изменения успешно сохранены
+        </div>
+        <div th:if="${error}"
+             style="background:#fdeaea;color:#b83030;padding:12px 20px;border-radius:12px;
+                    margin-bottom:20px;font-size:0.9rem;display:flex;align-items:center;gap:8px;">
+            <i class='bx bx-error-circle'></i>
+            <span th:text="${error}"></span>
+        </div>
+
+        <!-- ══ СЕКЦИЯ: Редактировать ══ -->
+        <div th:if="${section == 'info'}">
+            <div style="display:grid;grid-template-columns:1fr 290px;gap:20px;align-items:start;">
+
+                <div style="display:flex;flex-direction:column;gap:20px;">
+
+                    <!-- Основная информация — просмотр -->
+                    <div class="profile-card" id="basicViewBlock">
+                        <div class="profile-card-header">
+                            <h3>Основная информация</h3>
+                            <button onclick="switchBlock('basicView','basicEdit')"
+                                    class="btn-edit-profile">
+                                <i class='bx bx-edit-alt'></i> Изменить
+                            </button>
+                        </div>
+                        <div class="info-grid-3">
+                            <div>
+                                <div class="info-label">Имя</div>
+                                <div class="info-value"
+                                     th:text="${user.firstName != null and !#strings.isEmpty(user.firstName) ? user.firstName : '—'}">—</div>
+                            </div>
+                            <div>
+                                <div class="info-label">Фамилия</div>
+                                <div class="info-value"
+                                     th:text="${user.lastName != null and !#strings.isEmpty(user.lastName) ? user.lastName : '—'}">—</div>
+                            </div>
+                            <div>
+                                <div class="info-label">Отчество</div>
+                                <div class="info-value"
+                                     th:text="${user.patronymic != null and !#strings.isEmpty(user.patronymic) ? user.patronymic : '—'}">—</div>
+                            </div>
+                            <div>
+                                <div class="info-label">Дата рождения</div>
+                                <div class="info-value"
+                                     th:text="${user.birthDate != null ? user.birthDate : '—'}">—</div>
+                            </div>
+                            <div>
+                                <div class="info-label">Город</div>
+                                <div class="info-value"
+                                     th:text="${user.city != null and !#strings.isEmpty(user.city) ? user.city : '—'}">—</div>
+                            </div>
+                            <div>
+                                <div class="info-label">Страна</div>
+                                <div class="info-value"
+                                     th:text="${user.country != null and !#strings.isEmpty(user.country) ? user.country : '—'}">—</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Основная информация — редактирование -->
+                    <div class="profile-card" id="basicEditBlock" style="display:none;">
+                        <div class="profile-card-header">
+                            <h3>Основная информация</h3>
+                            <button type="button" onclick="switchBlock('basicEdit','basicView')"
+                                    class="btn-edit-profile">
+                                <i class='bx bx-x'></i> Отмена
+                            </button>
+                        </div>
+                        <form th:action="@{/profile}" method="post" enctype="multipart/form-data">
+                            <div class="info-grid-2">
+                                <div class="form-group">
+                                    <label class="form-label">Имя</label>
+                                    <input type="text" name="firstName" class="form-input"
+                                           th:value="${user.firstName}" placeholder="Иван">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Фамилия</label>
+                                    <input type="text" name="lastName" class="form-input"
+                                           th:value="${user.lastName}" placeholder="Иванов">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Отчество</label>
+                                    <input type="text" name="patronymic" class="form-input"
+                                           th:value="${user.patronymic}" placeholder="Иванович">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Дата рождения</label>
+                                    <input type="date" name="birthDate" class="form-input"
+                                           th:value="${user.birthDate}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Город</label>
+                                    <input type="text" name="city" class="form-input"
+                                           th:value="${user.city}" placeholder="Москва">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Страна</label>
+                                    <input type="text" name="country" class="form-input"
+                                           th:value="${user.country}" placeholder="Россия">
+                                </div>
+                            </div>
+                            <div style="margin-top:16px;display:flex;gap:12px;">
+                                <button type="submit" class="btn btn-primary">Сохранить</button>
+                                <button type="button" onclick="switchBlock('basicEdit','basicView')"
+                                        class="btn btn-secondary">Отмена</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Контактные данные — просмотр (без username) -->
+                    <div class="profile-card" id="contactViewBlock">
+                        <div class="profile-card-header">
+                            <h3>Контактные данные</h3>
+                            <button onclick="switchBlock('contactView','contactEdit')"
+                                    class="btn-edit-profile">
+                                <i class='bx bx-edit-alt'></i> Изменить
+                            </button>
+                        </div>
+                        <div class="info-grid-2">
+                            <div>
+                                <div class="info-label">Email</div>
+                                <div class="info-value" th:text="${user.email}">—</div>
+                            </div>
+                            <div>
+                                <div class="info-label">Телефон</div>
+                                <div class="info-value"
+                                     th:text="${user.phoneNumber != null and !#strings.isEmpty(user.phoneNumber) ? user.phoneNumber : '—'}">—</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Контактные данные — редактирование -->
+                    <div class="profile-card" id="contactEditBlock" style="display:none;">
+                        <div class="profile-card-header">
+                            <h3>Контактные данные</h3>
+                            <button type="button" onclick="switchBlock('contactEdit','contactView')"
+                                    class="btn-edit-profile">
+                                <i class='bx bx-x'></i> Отмена
+                            </button>
+                        </div>
+                        <form th:action="@{/profile}" method="post">
+                            <div class="info-grid-2">
+                                <div class="form-group">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-input"
+                                           th:value="${user.email}" disabled
+                                           style="opacity:0.5;cursor:not-allowed;">
+                                    <small style="color:var(--text-alter-color);font-size:0.75rem;">
+                                        Нельзя изменить
+                                    </small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Телефон</label>
+                                    <input type="tel" name="phoneNumber" class="form-input"
+                                           th:value="${user.phoneNumber}"
+                                           placeholder="+7 999 000 00 00">
+                                </div>
+                            </div>
+                            <div style="margin-top:16px;display:flex;gap:12px;">
+                                <button type="submit" class="btn btn-primary">Сохранить</button>
+                                <button type="button" onclick="switchBlock('contactEdit','contactView')"
+                                        class="btn btn-secondary">Отмена</button>
+                            </div>
+                        </form>
+                    </div>
+
                 </div>
-                <div>
-                    <div class="profile-stat-value" th:text="${reviewsCount}">0</div>
-                    <div class="profile-stat-label">Отзывов</div>
+
+                <!-- Кольцо заполнения профиля -->
+                <div class="profile-card" style="position:sticky;top:100px;">
+                    <h3 style="font-size:0.95rem;margin-bottom:16px;">Заполни профиль</h3>
+                    <div style="display:flex;justify-content:center;margin-bottom:20px;">
+                        <div style="position:relative;width:110px;height:110px;">
+                            <svg width="110" height="110" style="transform:rotate(-90deg);">
+                                <circle cx="55" cy="55" r="44" fill="none"
+                                        stroke="rgba(255,255,255,0.08)" stroke-width="9"/>
+                                <circle cx="55" cy="55" r="44" fill="none"
+                                        stroke="var(--main-color)" stroke-width="9"
+                                        stroke-linecap="round" id="progressCircle"
+                                        stroke-dasharray="276.5" stroke-dashoffset="276.5"/>
+                            </svg>
+                            <div style="position:absolute;top:50%;left:50%;
+                                        transform:translate(-50%,-50%);text-align:center;">
+                                <div id="progressText"
+                                     style="font-size:1.4rem;font-weight:700;">0%</div>
+                                <div style="font-size:0.65rem;color:var(--text-alter-color);">
+                                    готово
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:8px;">
+
+                        <div class="profile-step" data-done="true">
+                            <i class='bx bx-check-circle step-icon-done'></i>
+                            <span style="flex:1;font-size:0.82rem;">Аккаунт создан</span>
+                            <span class="step-percent">10%</span>
+                        </div>
+
+                        <div class="profile-step"
+                             th:attr="data-done=${user.avatarPath != null}">
+                            <i class="bx"
+                               th:classappend="${user.avatarPath != null}
+                                   ? 'bx-check-circle step-icon-done'
+                                   : 'bx-circle step-icon-todo'"></i>
+                            <span style="flex:1;font-size:0.82rem;">Фото профиля</span>
+                            <span class="step-percent">10%</span>
+                        </div>
+
+                        <div class="profile-step"
+                             th:attr="data-done=${user.firstName != null and !#strings.isEmpty(user.firstName)}">
+                            <i class="bx"
+                               th:classappend="${user.firstName != null and !#strings.isEmpty(user.firstName)}
+                                   ? 'bx-check-circle step-icon-done'
+                                   : 'bx-circle step-icon-todo'"></i>
+                            <span style="flex:1;font-size:0.82rem;">Персональная информация</span>
+                            <span class="step-percent">10%</span>
+                        </div>
+
+                        <div class="profile-step"
+                             th:attr="data-done=${user.city != null and !#strings.isEmpty(user.city)}">
+                            <i class="bx"
+                               th:classappend="${user.city != null and !#strings.isEmpty(user.city)}
+                                   ? 'bx-check-circle step-icon-done'
+                                   : 'bx-circle step-icon-todo'"></i>
+                            <span style="flex:1;font-size:0.82rem;">Местоположение</span>
+                            <span class="step-percent">5%</span>
+                        </div>
+
+                        <div class="profile-step"
+                             th:attr="data-done=${user.phoneNumber != null and !#strings.isEmpty(user.phoneNumber)}">
+                            <i class="bx"
+                               th:classappend="${user.phoneNumber != null and !#strings.isEmpty(user.phoneNumber)}
+                                   ? 'bx-check-circle step-icon-done'
+                                   : 'bx-circle step-icon-todo'"></i>
+                            <span style="flex:1;font-size:0.82rem;">Номер телефона</span>
+                            <span class="step-percent">5%</span>
+                        </div>
+
+                        <!-- Email всегда есть -->
+                        <div class="profile-step" data-done="true">
+                            <i class='bx bx-check-circle step-icon-done'></i>
+                            <span style="flex:1;font-size:0.82rem;">Email</span>
+                            <span class="step-percent">5%</span>
+                        </div>
+
+                        <div class="profile-step"
+                             th:attr="data-done=${'CONFIRMED'.equals(user.licenseStatus)}">
+                            <i class="bx"
+                               th:classappend="${'CONFIRMED'.equals(user.licenseStatus)}
+                                   ? 'bx-check-circle step-icon-done'
+                                   : 'bx-circle step-icon-todo'"></i>
+                            <span style="flex:1;font-size:0.82rem;">Водит. удостоверение</span>
+                            <span class="step-percent" style="color:var(--main-color);">+30%</span>
+                        </div>
+
+                        <div class="profile-step"
+                             th:attr="data-done=${'CONFIRMED'.equals(user.passportStatus)}">
+                            <i class="bx"
+                               th:classappend="${'CONFIRMED'.equals(user.passportStatus)}
+                                   ? 'bx-check-circle step-icon-done'
+                                   : 'bx-circle step-icon-todo'"></i>
+                            <span style="flex:1;font-size:0.82rem;">Паспорт</span>
+                            <span class="step-percent" style="color:var(--main-color);">+25%</span>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ══ СЕКЦИЯ: Документы ══ -->
+        <div th:if="${section == 'docs'}">
+            <h2 style="font-size:1.4rem;margin-bottom:24px;">Документы</h2>
+
+            <div th:if="${docSuccess}"
+                 style="background:#eef8f2;color:#1a7a3a;padding:12px 20px;border-radius:12px;
+                        margin-bottom:20px;font-size:0.9rem;display:flex;align-items:center;gap:8px;">
+                <i class='bx bx-check-circle'></i>
+                <span th:text="${docSuccess}"></span>
+            </div>
+            <div th:if="${docError}"
+                 style="background:#fdeaea;color:#b83030;padding:12px 20px;border-radius:12px;
+                        margin-bottom:20px;font-size:0.9rem;display:flex;align-items:center;gap:8px;">
+                <i class='bx bx-error-circle'></i>
+                <span th:text="${docError}"></span>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:20px;">
+
+                <!-- Водительское удостоверение -->
+                <div class="profile-card">
+                    <div class="profile-card-header">
+                        <div style="display:flex;align-items:center;gap:14px;">
+                            <div style="width:48px;height:48px;border-radius:12px;
+                                        background:rgba(255,140,0,0.12);display:flex;
+                                        align-items:center;justify-content:center;flex-shrink:0;">
+                                <i class='bx bx-id-card'
+                                   style="font-size:1.5rem;color:var(--main-color);"></i>
+                            </div>
+                            <div>
+                                <div style="font-weight:600;">Водительское удостоверение</div>
+                                <div style="font-size:0.8rem;color:var(--text-alter-color);">
+                                    Обязательно для аренды автомобиля
+                                </div>
+                            </div>
+                        </div>
+                        <span th:switch="${user.licenseStatus}">
+                            <span th:case="'NOT_UPLOADED'" class="doc-status doc-status-none">
+                                <i class='bx bx-minus-circle'></i> Не загружено
+                            </span>
+                            <span th:case="'PENDING'" class="doc-status doc-status-pending">
+                                <i class='bx bx-time'></i> На проверке
+                            </span>
+                            <span th:case="'CONFIRMED'" class="doc-status doc-status-ok">
+                                <i class='bx bx-check-circle'></i> Подтверждено
+                            </span>
+                            <span th:case="'REJECTED'" class="doc-status doc-status-rejected">
+                                <i class='bx bx-x-circle'></i> Отклонено
+                            </span>
+                        </span>
+                    </div>
+                    <div style="margin-top:20px;padding-top:16px;
+                                border-top:1px solid rgba(255,255,255,0.07);">
+                        <div style="display:flex;gap:32px;margin-bottom:16px;flex-wrap:wrap;">
+                            <div th:if="${user.licenseUploadedAt != null}">
+                                <div class="info-label">Загружено</div>
+                                <div class="info-value" th:text="${user.licenseUploadedAt}">—</div>
+                            </div>
+                            <div>
+                                <div class="info-label">Допустимые форматы</div>
+                                <div class="info-value">JPG, PNG, PDF · макс. 5 МБ</div>
+                            </div>
+                            <div>
+                                <div class="info-label">Требования</div>
+                                <div class="info-value">Чёткое фото без бликов, все углы видны</div>
+                            </div>
+                        </div>
+                        <form th:action="@{/profile/document}" method="post"
+                              enctype="multipart/form-data"
+                              style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                            <input type="hidden" name="docType" value="license">
+                            <label style="cursor:pointer;">
+                                <input type="file" name="file" style="display:none;"
+                                       accept="image/jpeg,image/png,image/webp,application/pdf"
+                                       onchange="this.closest('form').submit()">
+                                <span class="btn btn-primary" style="font-size:0.85rem;">
+                                    <i class='bx bx-upload'></i>
+                                    <span th:text="${user.licenseStatus == 'NOT_UPLOADED'} ? 'Загрузить' : 'Заменить'">Загрузить</span>
+                                </span>
+                            </label>
+                            <a th:if="${user.licensePath != null}"
+                               th:href="${user.licensePath}" target="_blank"
+                               class="btn btn-secondary" style="font-size:0.85rem;">
+                                <i class='bx bx-show'></i> Посмотреть
+                            </a>
+                        </form>
+                        <div th:if="${'REJECTED'.equals(user.licenseStatus)}"
+                             style="margin-top:12px;background:rgba(224,82,82,0.08);
+                                    border:1px solid rgba(224,82,82,0.2);border-radius:10px;
+                                    padding:10px 14px;font-size:0.83rem;color:#e05252;">
+                            <i class='bx bx-info-circle'></i>
+                            Документ отклонён. Загрузите новый файл лучшего качества.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Паспорт -->
+                <div class="profile-card">
+                    <div class="profile-card-header">
+                        <div style="display:flex;align-items:center;gap:14px;">
+                            <div style="width:48px;height:48px;border-radius:12px;
+                                        background:rgba(255,140,0,0.12);display:flex;
+                                        align-items:center;justify-content:center;flex-shrink:0;">
+                                <i class='bx bx-book-open'
+                                   style="font-size:1.5rem;color:var(--main-color);"></i>
+                            </div>
+                            <div>
+                                <div style="font-weight:600;">Паспорт</div>
+                                <div style="font-size:0.8rem;color:var(--text-alter-color);">
+                                    Для верификации личности
+                                </div>
+                            </div>
+                        </div>
+                        <span th:switch="${user.passportStatus}">
+                            <span th:case="'NOT_UPLOADED'" class="doc-status doc-status-none">
+                                <i class='bx bx-minus-circle'></i> Не загружено
+                            </span>
+                            <span th:case="'PENDING'" class="doc-status doc-status-pending">
+                                <i class='bx bx-time'></i> На проверке
+                            </span>
+                            <span th:case="'CONFIRMED'" class="doc-status doc-status-ok">
+                                <i class='bx bx-check-circle'></i> Подтверждено
+                            </span>
+                            <span th:case="'REJECTED'" class="doc-status doc-status-rejected">
+                                <i class='bx bx-x-circle'></i> Отклонено
+                            </span>
+                        </span>
+                    </div>
+                    <div style="margin-top:20px;padding-top:16px;
+                                border-top:1px solid rgba(255,255,255,0.07);">
+                        <div style="display:flex;gap:32px;margin-bottom:16px;flex-wrap:wrap;">
+                            <div th:if="${user.passportUploadedAt != null}">
+                                <div class="info-label">Загружено</div>
+                                <div class="info-value" th:text="${user.passportUploadedAt}">—</div>
+                            </div>
+                            <div>
+                                <div class="info-label">Допустимые форматы</div>
+                                <div class="info-value">JPG, PNG, PDF · макс. 5 МБ</div>
+                            </div>
+                            <div>
+                                <div class="info-label">Требования</div>
+                                <div class="info-value">Разворот с фото, данные должны быть читаемы</div>
+                            </div>
+                        </div>
+                        <form th:action="@{/profile/document}" method="post"
+                              enctype="multipart/form-data"
+                              style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                            <input type="hidden" name="docType" value="passport">
+                            <label style="cursor:pointer;">
+                                <input type="file" name="file" style="display:none;"
+                                       accept="image/jpeg,image/png,image/webp,application/pdf"
+                                       onchange="this.closest('form').submit()">
+                                <span class="btn btn-primary" style="font-size:0.85rem;">
+                                    <i class='bx bx-upload'></i>
+                                    <span th:text="${user.passportStatus == 'NOT_UPLOADED'} ? 'Загрузить' : 'Заменить'">Загрузить</span>
+                                </span>
+                            </label>
+                            <a th:if="${user.passportPath != null}"
+                               th:href="${user.passportPath}" target="_blank"
+                               class="btn btn-secondary" style="font-size:0.85rem;">
+                                <i class='bx bx-show'></i> Посмотреть
+                            </a>
+                        </form>
+                        <div th:if="${'REJECTED'.equals(user.passportStatus)}"
+                             style="margin-top:12px;background:rgba(224,82,82,0.08);
+                                    border:1px solid rgba(224,82,82,0.2);border-radius:10px;
+                                    padding:10px 14px;font-size:0.83rem;color:#e05252;">
+                            <i class='bx bx-info-circle'></i>
+                            Документ отклонён. Загрузите новый файл лучшего качества.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ══ СЕКЦИЯ: Безопасность ══ -->
+        <div th:if="${section == 'security'}">
+            <h2 style="font-size:1.4rem;margin-bottom:24px;">Безопасность</h2>
+            <div class="profile-card">
+                <h3 style="margin-bottom:20px;font-size:1rem;">Изменить пароль</h3>
+                <div style="max-width:400px;display:flex;flex-direction:column;gap:14px;">
+                    <div class="form-group">
+                        <label class="form-label">Текущий пароль</label>
+                        <input type="password" class="form-input" placeholder="••••••••">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Новый пароль</label>
+                        <input type="password" class="form-input" placeholder="••••••••">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Повторите новый пароль</label>
+                        <input type="password" class="form-input" placeholder="••••••••">
+                    </div>
+                    <button class="btn btn-primary" style="margin-top:4px;width:fit-content;">
+                        Сменить пароль
+                    </button>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div style="background:#fff;border-radius:1.5rem;padding:32px;box-shadow:0 4px 20px rgba(0,0,0,0.06);">
-        <h3 style="margin-bottom:24px;">Редактировать профиль</h3>
-        <form th:action="@{/profile}" method="post" enctype="multipart/form-data">
-            <div class="form-group">
-                <label class="form-label">Телефон</label>
-                <input type="tel" name="phoneNumber" class="form-input" th:value="${user.phoneNumber}">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Аватар</label>
-                <input type="file" name="avatar" class="form-input" accept="image/*">
-            </div>
-            <button type="submit" class="btn btn-primary">Сохранить</button>
-        </form>
+    </div><!-- /profile-content -->
+</div><!-- /profile-layout -->
+
+<!-- Модальное окно удаления аккаунта -->
+<div id="deleteModal"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);
+            z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:var(--container-color);border-radius:20px;padding:36px;
+                max-width:420px;width:90%;text-align:center;
+                box-shadow:0 20px 60px rgba(0,0,0,0.4);">
+        <div style="width:56px;height:56px;border-radius:50%;
+                    background:rgba(224,82,82,0.12);display:flex;
+                    align-items:center;justify-content:center;margin:0 auto 16px;">
+            <i class='bx bx-trash' style="font-size:1.6rem;color:#e05252;"></i>
+        </div>
+        <h3 style="font-size:1.1rem;margin-bottom:10px;">Удалить аккаунт?</h3>
+        <p style="color:var(--text-alter-color);font-size:0.88rem;
+                  margin-bottom:28px;line-height:1.5;">
+            Это действие необратимо. Все ваши данные,<br>
+            бронирования и история будут удалены.
+        </p>
+        <div style="display:flex;gap:12px;justify-content:center;">
+            <button onclick="closeDelete()" class="btn btn-secondary"
+                    style="min-width:120px;">Отмена</button>
+            <form th:action="@{/profile/delete}" method="post" style="margin:0;">
+                <button type="submit"
+                        style="min-width:120px;background:#e05252;color:#fff;border:none;
+                               padding:10px 20px;border-radius:12px;font-size:0.9rem;
+                               font-weight:600;cursor:pointer;">
+                    Удалить
+                </button>
+            </form>
+        </div>
     </div>
 </div>
 
 <footer th:replace="~{fragments/footer :: footer}"></footer>
+
+<script>
+    function switchBlock(hideId, showId) {
+        document.getElementById(hideId + 'Block').style.display = 'none';
+        document.getElementById(showId + 'Block').style.display = 'block';
+    }
+
+    function submitAvatarForm() {
+        const input = document.getElementById('avatarUploadTrigger');
+        if (!input.files || !input.files[0]) return;
+        const file = input.files[0];
+        const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!allowed.includes(file.type)) {
+            alert('Разрешены только JPG, PNG, WEBP');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Файл слишком большой. Максимум 5 МБ');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = e => document.getElementById('avatarPreview').src = e.target.result;
+        reader.readAsDataURL(file);
+        document.getElementById('avatarForm').submit();
+    }
+
+    function confirmDelete() {
+        document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    function closeDelete() {
+        document.getElementById('deleteModal').style.display = 'none';
+    }
+
+    document.getElementById('deleteModal').addEventListener('click', function (e) {
+        if (e.target === this) closeDelete();
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        let total = 0;
+        document.querySelectorAll('.profile-step').forEach(step => {
+            if (step.dataset.done === 'true') {
+                const t = step.querySelector('.step-percent');
+                if (t) total += parseInt(t.textContent);
+            }
+        });
+        total = Math.min(total, 100);
+        const el = document.getElementById('progressText');
+        const circle = document.getElementById('progressCircle');
+        if (el) el.textContent = total + '%';
+        if (circle) {
+            circle.style.transition = 'stroke-dashoffset 1s ease';
+            setTimeout(() => {
+                circle.style.strokeDashoffset = 276.5 - (total / 100) * 276.5;
+            }, 100);
+        }
+    });
+</script>
 </body>
 </html>
