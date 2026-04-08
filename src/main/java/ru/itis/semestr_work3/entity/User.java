@@ -37,6 +37,42 @@ public class User {
     @Column(name = "created_at", nullable = false)
     private LocalDate createdAt;
 
+    @Column(name = "first_name")
+    private String firstName;
+
+    @Column(name = "last_name")
+    private String lastName;
+
+    @Column(name = "patronymic")
+    private String patronymic;
+
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
+
+    @Column(name = "city")
+    private String city;
+
+    @Column(name = "country")
+    private String country;
+
+    @Column(name = "license_path")
+    private String licensePath;
+
+    @Column(name = "license_status")
+    private String licenseStatus = "NOT_UPLOADED";
+
+    @Column(name = "license_uploaded_at")
+    private LocalDate licenseUploadedAt;
+
+    @Column(name = "passport_path")
+    private String passportPath;
+
+    @Column(name = "passport_status")
+    private String passportStatus = "NOT_UPLOADED";
+
+    @Column(name = "passport_uploaded_at")
+    private LocalDate passportUploadedAt;
+
     @ManyToOne
     @JoinColumn(name = "role_id")
     private Role role;

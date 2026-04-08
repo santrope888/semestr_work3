@@ -3,6 +3,7 @@ package ru.itis.semestr_work3.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import ru.itis.semestr_work3.dto.UserDto;
 import ru.itis.semestr_work3.entity.Role;
 import ru.itis.semestr_work3.entity.User;
@@ -20,40 +21,26 @@ public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final FileStorageService fileStorageService;
 
     public User register(UserDto userDto) {
-        String username = userDto.getUsername();
-        String password = userDto.getPassword();
-        String email = userDto.getEmail();
-        String phoneNumber = userDto.getPhoneNumber();
-
-//        if (username == null || username.isBlank()) {
-//            throw new IllegalArgumentException("Username обязателен");
-//        }
-//        if (email == null || email.isBlank()) {
-//            throw new IllegalArgumentException("Email обязателен");
-//        }
-//        if (password == null || password.isBlank()) {
-//            throw new IllegalArgumentException("Пароль обязателен");
-//        }
-
-        if (userRepository.existsByUsername(username)) {
+        if (userRepository.existsByUsername(userDto.getUsername())) {
             throw new IllegalArgumentException("Username уже занят");
         }
-        if (userRepository.existsByEmail(email)) {
+        if (userRepository.existsByEmail(userDto.getEmail())) {
             throw new IllegalArgumentException("Email уже занят");
         }
-
         User user = new User();
-        user.setUsername(username);
-        user.setEmail(email);
-        user.setPassword(passwordEncoder.encode(password));
-        user.setPhoneNumber(phoneNumber);
+        user.setUsername(userDto.getUsername());
+        user.setEmail(userDto.getEmail());
+        user.setPassword(passwordEncoder.encode(userDto.getPassword()));
+        user.setPhoneNumber(userDto.getPhoneNumber());
         user.setCreatedAt(LocalDate.now());
+        user.setLicenseStatus("NOT_UPLOADED");
+        user.setPassportStatus("NOT_UPLOADED");
 
         Role userRole = roleRepository.findByName("USER")
                 .orElseThrow(() -> new ResourceNotFoundException("Роль USER не найдена"));
-
         user.setRole(userRole);
         return userRepository.save(user);
     }
@@ -70,17 +57,65 @@ public class UserService {
         return userRepository.findById(id);
     }
 
-    public User updateProfile(Long id, String phoneNumber, String avatarPath) {
+    /**
+     * Обновление профиля с реальным сохранением аватара на диск.
+     */
+    public User updateFullProfile(Long id,
+                                  String firstName, String lastName, String patronymic,
+                                  LocalDate birthDate, String city, String country,
+                                  String phoneNumber, MultipartFile avatar) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
 
-        if (phoneNumber != null) {
-            user.setPhoneNumber(phoneNumber);
-        }
-        if (avatarPath != null) {
-            user.setAvatarPath(avatarPath);
+        if (firstName  != null) user.setFirstName(firstName);
+        if (lastName   != null) user.setLastName(lastName);
+        if (patronymic != null) user.setPatronymic(patronymic);
+        if (birthDate  != null) user.setBirthDate(birthDate);
+        if (city       != null) user.setCity(city);
+        if (country    != null) user.setCountry(country);
+        if (phoneNumber != null) user.setPhoneNumber(phoneNumber);
+
+        if (avatar != null && !avatar.isEmpty()) {
+            String path = fileStorageService.saveAvatar(avatar);
+            user.setAvatarPath(path);
         }
 
         return userRepository.save(user);
+    }
+
+    public User uploadDocument(Long id, String docType, MultipartFile file) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+
+        String path = fileStorageService.saveDocument(file, "documents");
+
+        if ("license".equals(docType)) {
+            user.setLicensePath(path);
+            user.setLicenseStatus("PENDING");
+            user.setLicenseUploadedAt(LocalDate.now());
+        } else if ("passport".equals(docType)) {
+            user.setPassportPath(path);
+            user.setPassportStatus("PENDING");
+            user.setPassportUploadedAt(LocalDate.now());
+        } else {
+            throw new IllegalArgumentException("Неизвестный тип документа: " + docType);
+        }
+
+        return userRepository.save(user);
+    }
+
+    public User updateProfile(Long id, String phoneNumber, String avatarPath) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+        if (phoneNumber != null) user.setPhoneNumber(phoneNumber);
+        if (avatarPath  != null) user.setAvatarPath(avatarPath);
+        return userRepository.save(user);
+    }
+
+    public void deleteById(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Пользователь не найден");
+        }
+        userRepository.deleteById(id);
     }
 }
