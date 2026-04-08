@@ -1,6 +1,5 @@
 package ru.itis.semestr_work3.config;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -13,22 +12,32 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, UserDetailsService userDetailsService) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http,
+                                           UserDetailsService userDetailsService) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/catalog", "/cars/**", "/css/**", "/images/**", "/js/**",
-                                "/login", "/register", "/api/**").permitAll()
-                        .anyRequest().permitAll()  // TODO: поменять на authenticated() после настройки
+                                "/login", "/register").permitAll()
+
+                        .requestMatchers("/admin/**").hasAuthority("ADMIN")
+
+                        .requestMatchers("/profile/**", "/favorites/**", "/bookings/**",
+                                "/payments/**", "/notifications/**", "/chat/**").authenticated()
+
+                        .requestMatchers("/api/**").authenticated()
+
+                        .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-//                        .defaultSuccessUrl("/",  true)
+                        .defaultSuccessUrl("/", true)
                         .permitAll()
                 )
                 .logout(logout -> logout
@@ -36,9 +45,10 @@ public class SecurityConfig {
                         .permitAll()
                 )
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/**")  // CSRF отключен только для REST API
+                        .ignoringRequestMatchers("/api/**")
                 )
                 .userDetailsService(userDetailsService);
+
         return http.build();
     }
 }
