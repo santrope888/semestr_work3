@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserDto {
+
     @NotBlank(message = "Username is required")
     @Size(min = 5, max = 20, message = "Username between 5 and 20 characters")
     private String username;
@@ -21,11 +22,13 @@ public class UserDto {
     private String email;
 
     @NotBlank(message = "Password is required")
-    @Size(min = 6, message = "Password must be at least 8 characters")
+    @Size(min = 6, message = "Password must be at least 6 characters")
     private String password;
 
     @NotBlank(message = "Phone number is required")
-    @Pattern(regexp = "^(\\+?7|\\+?375|\\+?380|\\+?77)[\\s\\-]?\\(?\\d{3}\\)?[\\s\\-]?\\d{3}[\\s\\-]?\\d{2}[\\s\\-]?\\d{2}$\n",
-            message = "Invalid phone number")
+    @Pattern(
+            regexp = "^(\\+?7|\\+?375|\\+?380|\\+?77)[\\s\\-]?\\(?\\d{3}\\)?[\\s\\-]?\\d{3}[\\s\\-]?\\d{2}[\\s\\-]?\\d{2}$",
+            message = "Invalid phone number"
+    )
     private String phoneNumber;
 }
