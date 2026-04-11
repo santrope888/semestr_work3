@@ -23,13 +23,22 @@ public class SecurityConfig {
                                            UserDetailsService userDetailsService) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/catalog", "/cars/**", "/css/**", "/images/**", "/js/**",
-                                "/login", "/register").permitAll()
-
+                        .requestMatchers(
+                                "/", "/catalog", "/cars/**",
+                                "/css/**", "/images/**", "/js/**", "/uploads/**",
+                                "/login", "/register",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs.yaml"
+                        ).permitAll()
                         .requestMatchers("/admin/**").hasAuthority("ADMIN")
 
-                        .requestMatchers("/profile/**", "/favorites/**", "/bookings/**",
-                                "/payments/**", "/notifications/**", "/chat/**").authenticated()
+                        .requestMatchers(
+                                "/profile/**", "/favorites/**", "/bookings/**",
+                                "/payments/**", "/notifications/**", "/chat/**"
+                        ).authenticated()
 
                         .requestMatchers("/api/**").authenticated()
 
