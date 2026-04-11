@@ -224,4 +224,16 @@ public class PageController {
 
         return "chat";
     }
+
+    @PostMapping("/payments/{id}/pay")
+    public String payPayment(@PathVariable Long id,
+                             @RequestParam String method,
+                             @AuthenticationPrincipal UserDetails userDetails,
+                             RedirectAttributes ra) {
+        if (userDetails == null) return "redirect:/login";
+
+        paymentService.pay(id, method);
+        ra.addFlashAttribute("success", "Оплата прошла успешно");
+        return "redirect:/bookings";
+    }
 }
