@@ -1,0 +1,377 @@
+package ru.itis.semestr_work3.service;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import ru.itis.semestr_work3.dto.BookingFilter;
+import ru.itis.semestr_work3.entity.Booking;
+import ru.itis.semestr_work3.entity.Car;
+import ru.itis.semestr_work3.entity.Insurance;
+import ru.itis.semestr_work3.entity.Payment;
+import ru.itis.semestr_work3.entity.User;
+import ru.itis.semestr_work3.exception.ResourceNotFoundException;
+import ru.itis.semestr_work3.repository.BookingRepository;
+import ru.itis.semestr_work3.repository.CarRepository;
+import ru.itis.semestr_work3.repository.InsuranceRepository;
+import ru.itis.semestr_work3.repository.UserRepository;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class BookingServiceTest {
+
+    @Mock
+    private BookingRepository bookingRepository;
+    @Mock
+    private InsuranceRepository insuranceRepository;
+    @Mock
+    private CarRepository carRepository;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private EntityManager entityManager;
+
+    @InjectMocks
+    private BookingService bookingService;
+
+    private Car car;
+    private User user;
+    private Booking booking;
+
+    @BeforeEach
+    void setUp() {
+        car = new Car();
+        car.setId(1L);
+        car.setPricePerDay(1000);
+        car.setAvailable(true);
+
+        user = new User();
+        user.setId(1L);
+
+        booking = new Booking();
+        booking.setId(1L);
+        booking.setCar(car);
+        booking.setUser(user);
+        booking.setStartDate(LocalDate.now().plusDays(1));
+        booking.setEndDate(LocalDate.now().plusDays(3));
+    }
+
+    @Test
+    void findFilteredBookings_withNullFilter_returnsAllSorted() {
+        when(bookingRepository.findAll(any(Sort.class))).thenReturn(List.of(booking));
+
+        List<Booking> result = bookingService.findFilteredBookings(null);
+
+        assertThat(result).containsExactly(booking);
+        verify(bookingRepository).findAll(any(Sort.class));
+    }
+
+    @Test
+    void findFilteredBookings_withFilter_usesSpecification() {
+        when(bookingRepository.findAll(any(Specification.class), any(Sort.class))).thenReturn(List.of(booking));
+
+        List<Booking> result = bookingService.findFilteredBookings(new BookingFilter());
+
+        assertThat(result).containsExactly(booking);
+        verify(bookingRepository).findAll(any(Specification.class), any(Sort.class));
+    }
+
+    @Test
+    void findAll_returnsAllBookings() {
+        when(bookingRepository.findAll()).thenReturn(List.of(booking));
+
+        assertThat(bookingService.findAll()).containsExactly(booking);
+    }
+
+    @Test
+    void findById_whenExists_returnsBooking() {
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+
+        assertTrue(bookingService.findById(1L).isPresent());
+    }
+
+    @Test
+    void findById_whenMissing_returnsEmpty() {
+        when(bookingRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThat(bookingService.findById(99L)).isEmpty();
+    }
+
+    @Test
+    void findByUser_returnsUserBookings() {
+        when(bookingRepository.findAll(any(Specification.class), any(Sort.class))).thenReturn(List.of(booking));
+
+        assertThat(bookingService.findByUser(1L)).containsExactly(booking);
+    }
+
+    @Test
+    void findByCar_returnsCarBookings() {
+        when(bookingRepository.findAll(any(Specification.class))).thenReturn(List.of(booking));
+
+        assertThat(bookingService.findByCar(1L)).containsExactly(booking);
+    }
+
+    @Test
+    void findByStatus_returnsBookingsByStatus() {
+        when(bookingRepository.findAll(any(Specification.class))).thenReturn(List.of(booking));
+
+        assertThat(bookingService.findByStatus("PENDING")).containsExactly(booking);
+    }
+
+    @Test
+    void create_withValidDataAndNoInsurances_createsPendingBookingAndPayment() {
+        when(carRepository.findById(1L)).thenReturn(Optional.of(car));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(bookingRepository.count(any(Specification.class))).thenReturn(0L);
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Booking result = bookingService.create(booking, null);
+
+        assertThat(result.getCar()).isEqualTo(car);
+        assertThat(result.getUser()).isEqualTo(user);
+        assertThat(result.getStatus()).isEqualTo("PENDING");
+        assertThat(result.getTotalPrice()).isEqualTo(3000);
+        assertThat(result.getInsurances()).isEmpty();
+        assertThat(result.getCreatedAt()).isEqualTo(LocalDate.now());
+        assertNotNull(result.getPayment());
+        assertThat(result.getPayment().getAmount()).isEqualTo(3000);
+        assertThat(result.getPayment().getCurrency()).isEqualTo("RUB");
+        assertThat(result.getPayment().getStatus()).isEqualTo("PENDING");
+        assertThat(result.getPayment().getBooking()).isEqualTo(result);
+    }
+
+    @Test
+    void create_withValidInsurances_addsInsuranceCost() {
+        Insurance insurance = new Insurance();
+        insurance.setId(100L);
+        insurance.setPricePerDay(200);
+
+        when(carRepository.findById(1L)).thenReturn(Optional.of(car));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(bookingRepository.count(any(Specification.class))).thenReturn(0L);
+        when(insuranceRepository.findAllById(Set.of(100L))).thenReturn(List.of(insurance));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Booking result = bookingService.create(booking, Set.of(100L));
+
+        assertThat(result.getTotalPrice()).isEqualTo(3600);
+        assertThat(result.getInsurances()).containsExactly(insurance);
+        assertThat(result.getPayment().getAmount()).isEqualTo(3600);
+    }
+
+    @Test
+    void create_whenBookingIsNull_throwsException() {
+        assertThrows(IllegalArgumentException.class, () -> bookingService.create(null, null));
+    }
+
+    @Test
+    void create_whenStartDateIsNull_throwsException() {
+        booking.setStartDate(null);
+
+        assertThrows(IllegalArgumentException.class, () -> bookingService.create(booking, null));
+    }
+
+    @Test
+    void create_whenEndDateIsNull_throwsException() {
+        booking.setEndDate(null);
+
+        assertThrows(IllegalArgumentException.class, () -> bookingService.create(booking, null));
+    }
+
+    @Test
+    void create_whenCarIsNull_throwsException() {
+        booking.setCar(null);
+
+        assertThrows(IllegalArgumentException.class, () -> bookingService.create(booking, null));
+    }
+
+    @Test
+    void create_whenCarIdIsNull_throwsException() {
+        car.setId(null);
+
+        assertThrows(IllegalArgumentException.class, () -> bookingService.create(booking, null));
+    }
+
+    @Test
+    void create_whenUserIsNull_throwsException() {
+        booking.setUser(null);
+
+        assertThrows(IllegalArgumentException.class, () -> bookingService.create(booking, null));
+    }
+
+    @Test
+    void create_whenUserIdIsNull_throwsException() {
+        user.setId(null);
+
+        assertThrows(IllegalArgumentException.class, () -> bookingService.create(booking, null));
+    }
+
+    @Test
+    void create_whenEndDateBeforeStartDate_throwsException() {
+        booking.setStartDate(LocalDate.now().plusDays(5));
+        booking.setEndDate(LocalDate.now().plusDays(3));
+
+        assertThrows(IllegalArgumentException.class, () -> bookingService.create(booking, null));
+    }
+
+    @Test
+    void create_whenStartDateInPast_throwsException() {
+        booking.setStartDate(LocalDate.now().minusDays(1));
+
+        assertThrows(IllegalArgumentException.class, () -> bookingService.create(booking, null));
+    }
+
+    @Test
+    void create_whenCarNotFound_throwsException() {
+        when(carRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> bookingService.create(booking, null));
+    }
+
+    @Test
+    void create_whenUserNotFound_throwsException() {
+        when(carRepository.findById(1L)).thenReturn(Optional.of(car));
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> bookingService.create(booking, null));
+    }
+
+    @Test
+    void create_whenCarUnavailable_throwsException() {
+        car.setAvailable(false);
+        when(carRepository.findById(1L)).thenReturn(Optional.of(car));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        assertThrows(IllegalArgumentException.class, () -> bookingService.create(booking, null));
+    }
+
+    @Test
+    void create_whenCarAlreadyBookedForPeriod_throwsException() {
+        when(carRepository.findById(1L)).thenReturn(Optional.of(car));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(bookingRepository.count(any(Specification.class))).thenReturn(1L);
+
+        assertThrows(IllegalArgumentException.class, () -> bookingService.create(booking, null));
+    }
+
+    @Test
+    void create_whenSomeInsuranceMissing_throwsException() {
+        when(carRepository.findById(1L)).thenReturn(Optional.of(car));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(bookingRepository.count(any(Specification.class))).thenReturn(0L);
+        when(insuranceRepository.findAllById(Set.of(1L, 2L))).thenReturn(List.<Insurance>of());
+
+        assertThrows(IllegalArgumentException.class, () -> bookingService.create(booking, Set.of(1L, 2L)));
+    }
+
+    @Test
+    void confirm_whenBookingExists_setsConfirmedStatus() {
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Booking result = bookingService.confirm(1L);
+
+        assertThat(result.getStatus()).isEqualTo("CONFIRMED");
+    }
+
+    @Test
+    void confirm_whenBookingMissing_throwsException() {
+        when(bookingRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> bookingService.confirm(1L));
+    }
+
+    @Test
+    void cancel_whenOwnerCancelsAndPaymentExists_refundsPayment() {
+        Payment payment = new Payment();
+        payment.setStatus("PENDING");
+        booking.setPayment(payment);
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Booking result = bookingService.cancel(1L, 1L);
+
+        assertThat(result.getStatus()).isEqualTo("CANCELLED");
+        assertThat(result.getPayment().getStatus()).isEqualTo("REFUNDED");
+    }
+
+    @Test
+    void cancel_whenOwnerCancelsWithoutPayment_justCancelsBooking() {
+        booking.setPayment(null);
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Booking result = bookingService.cancel(1L, 1L);
+
+        assertThat(result.getStatus()).isEqualTo("CANCELLED");
+    }
+
+    @Test
+    void cancel_whenAnotherUserCancels_throwsSecurityException() {
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+
+        assertThrows(SecurityException.class, () -> bookingService.cancel(1L, 99L));
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    @Test
+    void cancel_whenBookingMissing_throwsException() {
+        when(bookingRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> bookingService.cancel(1L, 1L));
+    }
+
+    @Test
+    void complete_whenBookingExists_setsCompletedStatus() {
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Booking result = bookingService.complete(1L);
+
+        assertThat(result.getStatus()).isEqualTo("COMPLETED");
+    }
+
+    @Test
+    void complete_whenBookingMissing_throwsException() {
+        when(bookingRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> bookingService.complete(1L));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void findMostBooked_returnsQueryResult() {
+        TypedQuery<Object[]> query = mock(TypedQuery.class);
+        Object[] row = new Object[]{car, 3L};
+        when(entityManager.createQuery(anyString(), eq(Object[].class))).thenReturn(query);
+        when(query.getResultList()).thenReturn(java.util.Collections.singletonList(row));
+
+        List<Object[]> result = bookingService.findMostBooked();
+
+        assertThat(result).containsExactly(row);
+        verify(entityManager).createQuery(anyString(), eq(Object[].class));
+    }
+}
