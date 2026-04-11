@@ -1,4 +1,3 @@
-// ─── ReviewController.java ────────────────────────────────────────────────────
 package ru.itis.semestr_work3.controllers.api;
 
 import io.swagger.v3.oas.annotations.Operation;
