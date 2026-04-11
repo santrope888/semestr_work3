@@ -13,10 +13,15 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import ru.itis.semestr_work3.dto.BookingFilter;
 import ru.itis.semestr_work3.dto.CarFilter;
+import ru.itis.semestr_work3.entity.Booking;
+import ru.itis.semestr_work3.entity.Car;
+import ru.itis.semestr_work3.entity.ChatSession;
+import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.service.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 @Controller
 @RequiredArgsConstructor
@@ -29,6 +34,8 @@ public class PageController {
     private final FavoriteService favoriteService;
     private final ReviewService reviewService;
     private final UserService userService;
+    private final PaymentService paymentService;
+    private final AiChatService aiChatService;
 
     @GetMapping("/")
     public String index() {
@@ -52,7 +59,7 @@ public class PageController {
     @GetMapping("/cars/{id}")
     public String carDetail(@PathVariable Long id, Model model) {
         model.addAttribute("car", carService.findById(id)
-                .orElseThrow(() -> new RuntimeException("Car not found")));
+                .orElseThrow(() -> new ResourceNotFoundException("Автомобиль не найден")));
         model.addAttribute("reviews", reviewService.findByCar(id));
         return "car-detail";
     }
@@ -60,14 +67,39 @@ public class PageController {
     @GetMapping("/bookings/new")
     public String bookingForm(@RequestParam Long carId, Model model) {
         model.addAttribute("car", carService.findById(carId)
-                .orElseThrow(() -> new RuntimeException("Car not found")));
+                .orElseThrow(() -> new ResourceNotFoundException("Автомобиль не найден")));
         model.addAttribute("insurances", insuranceService.findAll());
         return "booking-new";
     }
 
+    @PostMapping("/bookings")
+    public String createBooking(@AuthenticationPrincipal UserDetails userDetails,
+                                @RequestParam Long carId,
+                                @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+                                @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+                                @RequestParam(required = false) Set<Long> insuranceIds,
+                                RedirectAttributes ra) {
+        if (userDetails == null) return "redirect:/login";
+
+        userService.findByUsername(userDetails.getUsername()).ifPresent(user -> {
+            Booking booking = new Booking();
+            Car car = new Car();
+            car.setId(carId);
+            booking.setCar(car);
+            booking.setUser(user);
+            booking.setStartDate(startDate);
+            booking.setEndDate(endDate);
+            bookingService.create(booking, insuranceIds != null ? insuranceIds : Set.of());
+        });
+
+        ra.addFlashAttribute("success", "Бронирование успешно создано");
+        return "redirect:/bookings";
+    }
+
     @GetMapping("/bookings")
     public String bookings(@AuthenticationPrincipal UserDetails userDetails,
-                           BookingFilter filter, Model model) {
+                           BookingFilter filter,
+                           Model model) {
         if (filter == null) filter = new BookingFilter();
         model.addAttribute("filter", filter);
         if (userDetails != null) {
@@ -80,6 +112,22 @@ public class PageController {
             model.addAttribute("bookings", List.of());
         }
         return "bookings";
+    }
+
+    @GetMapping("/payments/{id}")
+    public String paymentPage(@PathVariable Long id,
+                              @AuthenticationPrincipal UserDetails userDetails,
+                              Model model) {
+        if (userDetails == null) return "redirect:/login";
+
+        var payment = paymentService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Платёж не найден"));
+        var booking = bookingService.findById(payment.getBooking().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Бронирование не найдено"));
+
+        model.addAttribute("payment", payment);
+        model.addAttribute("booking", booking);
+        return "payment";
     }
 
     @GetMapping("/favorites")
@@ -143,8 +191,7 @@ public class PageController {
         try {
             userService.findByUsername(userDetails.getUsername()).ifPresent(user ->
                     userService.uploadDocument(user.getId(), docType, file));
-            ra.addFlashAttribute("docSuccess",
-                    "Документ загружен и отправлен на проверку");
+            ra.addFlashAttribute("docSuccess", "Документ загружен и отправлен на проверку");
         } catch (IllegalArgumentException e) {
             ra.addFlashAttribute("docError", e.getMessage());
         }
@@ -165,7 +212,16 @@ public class PageController {
     @GetMapping("/chat")
     public String chat(@AuthenticationPrincipal UserDetails userDetails, Model model) {
         if (userDetails == null) return "redirect:/login";
-        model.addAttribute("sessionId", 1);
+
+        userService.findByUsername(userDetails.getUsername()).ifPresent(user -> {
+            List<ChatSession> sessions = aiChatService.getUserSessions(user.getId());
+            ChatSession session = sessions.isEmpty()
+                    ? aiChatService.createSession(user, "Подбор автомобиля")
+                    : sessions.get(0);
+            model.addAttribute("sessionId", session.getId());
+            model.addAttribute("messages", aiChatService.getSessionMessages(session.getId()));
+        });
+
         return "chat";
     }
 }
