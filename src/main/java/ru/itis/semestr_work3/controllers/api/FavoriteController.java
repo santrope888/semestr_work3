@@ -6,8 +6,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.itis.semestr_work3.converter.FavoriteMapper;
+import ru.itis.semestr_work3.dto.FavoriteDto;
 import ru.itis.semestr_work3.entity.Car;
-import ru.itis.semestr_work3.entity.Favorite;
 import ru.itis.semestr_work3.entity.User;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.service.CarService;
@@ -26,11 +27,12 @@ public class FavoriteController {
     private final FavoriteService favoriteService;
     private final UserService userService;
     private final CarService carService;
+    private final FavoriteMapper favoriteMapper;
 
     @Operation(summary = "Получить избранное пользователя")
     @GetMapping("/user/{userId}")
-    public List<Favorite> findByUser(@PathVariable Long userId) {
-        return favoriteService.findByUser(userId);
+    public List<FavoriteDto> findByUser(@PathVariable Long userId) {
+        return favoriteMapper.toDtoList(favoriteService.findByUser(userId));
     }
 
     @Operation(summary = "Проверить, добавлен ли автомобиль в избранное")
@@ -42,12 +44,12 @@ public class FavoriteController {
     @Operation(summary = "Добавить в избранное")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Favorite add(@RequestParam Long userId, @RequestParam Long carId) {
+    public FavoriteDto add(@RequestParam Long userId, @RequestParam Long carId) {
         User user = userService.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
         Car car = carService.findById(carId)
                 .orElseThrow(() -> new ResourceNotFoundException("Автомобиль не найден"));
-        return favoriteService.add(user, car);
+        return favoriteMapper.toDto(favoriteService.add(user, car));
     }
 
     @Operation(summary = "Удалить из избранного")

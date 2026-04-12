@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.itis.semestr_work3.converter.ReviewMapper;
+import ru.itis.semestr_work3.dto.ReviewDto;
 import ru.itis.semestr_work3.entity.Review;
 import ru.itis.semestr_work3.service.ReviewService;
 
@@ -18,30 +20,31 @@ import java.util.List;
 public class ReviewController {
 
     private final ReviewService reviewService;
+    private final ReviewMapper reviewMapper;
 
     @Operation(summary = "Получить все отзывы")
     @GetMapping
-    public List<Review> findAll() {
-        return reviewService.findAll();
+    public List<ReviewDto> findAll() {
+        return reviewMapper.toDtoList(reviewService.findAll());
     }
 
     @Operation(summary = "Отзывы по автомобилю")
     @GetMapping("/car/{carId}")
-    public List<Review> findByCar(@PathVariable Long carId) {
-        return reviewService.findByCar(carId);
+    public List<ReviewDto> findByCar(@PathVariable Long carId) {
+        return reviewMapper.toDtoList(reviewService.findByCar(carId));
     }
 
     @Operation(summary = "Отзывы по пользователю")
     @GetMapping("/user/{userId}")
-    public List<Review> findByUser(@PathVariable Long userId) {
-        return reviewService.findByUser(userId);
+    public List<ReviewDto> findByUser(@PathVariable Long userId) {
+        return reviewMapper.toDtoList(reviewService.findByUser(userId));
     }
 
     @Operation(summary = "Оставить отзыв")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Review create(@RequestBody Review review) {
-        return reviewService.create(review);
+    public ReviewDto create(@RequestBody Review review) {
+        return reviewMapper.toDto(reviewService.create(review));
     }
 
     @Operation(summary = "Удалить отзыв")
