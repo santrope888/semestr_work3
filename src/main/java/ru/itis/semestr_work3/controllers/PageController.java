@@ -236,4 +236,59 @@ public class PageController {
         ra.addFlashAttribute("success", "Оплата прошла успешно");
         return "redirect:/bookings";
     }
+
+    @PostMapping("/bookings/{id}/cancel")
+    public String cancelBooking(@PathVariable Long id,
+                                @AuthenticationPrincipal UserDetails userDetails,
+                                RedirectAttributes ra) {
+        if (userDetails == null) return "redirect:/login";
+
+        userService.findByUsername(userDetails.getUsername()).ifPresent(user -> {
+            bookingService.cancel(id, user.getId());
+            ra.addFlashAttribute("success", "Бронирование отменено");
+        });
+        return "redirect:/bookings";
+    }
+
+    @GetMapping("/admin/bookings")
+    public String adminBookings(BookingFilter filter, Model model) {
+        if (filter == null) filter = new BookingFilter();
+        model.addAttribute("filter", filter);
+        model.addAttribute("bookings", bookingService.findFilteredBookings(filter));
+        return "admin/bookings";
+    }
+
+    @PostMapping("/admin/bookings/{id}/confirm")
+    public String adminConfirm(@PathVariable Long id, RedirectAttributes ra) {
+        bookingService.confirm(id);
+        ra.addFlashAttribute("success", "Бронирование подтверждено");
+        return "redirect:/admin/bookings";
+    }
+
+    @PostMapping("/admin/bookings/{id}/complete")
+    public String adminComplete(@PathVariable Long id, RedirectAttributes ra) {
+        bookingService.complete(id);
+        ra.addFlashAttribute("success", "Бронирование завершено");
+        return "redirect:/admin/bookings";
+    }
+
+    @PostMapping("/admin/bookings/{id}/cancel")
+    public String adminCancel(@PathVariable Long id, RedirectAttributes ra) {
+        Booking booking = bookingService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Бронирование не найдено"));
+        bookingService.cancel(id, booking.getUser().getId());
+        ra.addFlashAttribute("success", "Бронирование отменено");
+        return "redirect:/admin/bookings";
+    }
+
+    @PostMapping("/admin/bookings/{id}/refund")
+    public String adminRefund(@PathVariable Long id, RedirectAttributes ra) {
+        Booking booking = bookingService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Бронирование не найдено"));
+        if (booking.getPayment() != null) {
+            paymentService.refund(booking.getPayment().getId());
+        }
+        ra.addFlashAttribute("success", "Возврат оформлен");
+        return "redirect:/admin/bookings";
+    }
 }
