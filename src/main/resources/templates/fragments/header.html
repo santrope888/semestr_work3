@@ -12,28 +12,26 @@
             <a th:href="@{/bookings}" class="nav-link" sec:authorize="isAuthenticated()">Мои брони</a>
             <a th:href="@{/chat}" class="nav-link" sec:authorize="isAuthenticated()">ИИ-помощник</a>
             <a th:href="@{/admin/cars}" class="nav-link" sec:authorize="hasAuthority('ADMIN')"
-               style="color:var(--main-color);">Управление</a>
+               style="color:var(--main-color);">Автомобили</a>
+            <a th:href="@{/admin/bookings}" class="nav-link" sec:authorize="hasAuthority('ADMIN')"
+               style="color:var(--main-color);">Брони</a>
         </div>
 
         <div class="nav-icons">
-            <!-- Гость -->
             <div sec:authorize="isAnonymous()" style="display:flex;gap:10px;align-items:center;">
                 <a th:href="@{/login}" class="btn btn-outline-light btn-sm">Войти</a>
                 <a th:href="@{/register}" class="btn btn-primary btn-sm">Регистрация</a>
             </div>
 
-            <!-- Залогиненный -->
             <div sec:authorize="isAuthenticated()"
                  style="display:flex;align-items:center;gap:12px;">
 
-                <!-- Колокольчик -->
                 <button class="notif-btn" id="notifBtn"
                         onclick="toggleNotif(event)" title="Уведомления">
                     <i class='bx bx-bell'></i>
                     <span class="notif-badge" id="notifBadge" style="display:none;">0</span>
                 </button>
 
-                <!-- Дропдаун уведомлений -->
                 <div class="notif-dropdown" id="notifDropdown">
                     <div style="padding:14px 16px 10px;font-weight:600;font-size:0.9rem;
                                 border-bottom:1px solid rgba(0,0,0,0.07);">
@@ -47,7 +45,6 @@
                     </div>
                 </div>
 
-                <!-- Аватар пользователя -->
                 <div class="user-menu" id="userMenu">
                     <button type="button" class="user-avatar-btn" id="userMenuBtn"
                             onclick="toggleUserMenu(event)">
@@ -63,7 +60,6 @@
                         </div>
                     </button>
 
-                    <!-- Дропдаун меню -->
                     <div class="user-dropdown" id="userDropdown">
                         <div class="dropdown-user-info">
                             <!-- Аватар в дропдауне -->

@@ -31,6 +31,9 @@
                     <input type="date" name="endDate" class="form-input" required>
                 </div>
 
+                <div id="date-warning" style="display:none;background:#fff3e0;color:#e65100;padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:14px;">
+                </div>
+
                 <h3 style="margin-bottom:16px;">Страховки</h3>
                 <div class="insurance-list">
                     <label class="insurance-item" th:each="ins : ${insurances}">
@@ -46,7 +49,8 @@
                     </label>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-lg btn-block">
+                <button type="submit" class="btn btn-primary btn-lg btn-block" id="submit-btn"
+                        onclick="if(checkOverlap()){event.preventDefault();alert('Выбранные даты заняты. Выберите другой период.');}">
                     Подтвердить бронирование
                 </button>
             </form>
@@ -93,7 +97,9 @@
 
 <script th:inline="javascript">
     const carPricePerDayRub = Number([[${car.pricePerDay}]]);
+    const carId = Number([[${car.id}]]);
     let currentCurrency = 'RUB';
+    let bookedPeriods = [];
 
     const startDateInput = document.querySelector('input[name="startDate"]');
     const endDateInput = document.querySelector('input[name="endDate"]');
@@ -107,6 +113,61 @@
     const currencyRateCache = {
         RUB: 1
     };
+
+    /* ── Загружаем занятые периоды при открытии страницы ── */
+    async function loadBookedPeriods() {
+        try {
+            const res = await fetch(`/api/bookings/car/${carId}/booked-periods`);
+            if (res.ok) {
+                bookedPeriods = await res.json();
+            }
+        } catch (e) {
+            console.error('Не удалось загрузить занятые даты', e);
+        }
+        // Устанавливаем минимальную дату — сегодня
+        const today = new Date().toISOString().split('T')[0];
+        startDateInput.setAttribute('min', today);
+        endDateInput.setAttribute('min', today);
+    }
+
+    /* ── Проверка пересечения выбранных дат с занятыми ── */
+    function checkOverlap() {
+        const startVal = startDateInput.value;
+        const endVal = endDateInput.value;
+        const warningEl = document.getElementById('date-warning');
+
+        if (!startVal || !endVal || !warningEl) {
+            if (warningEl) warningEl.style.display = 'none';
+            return false;
+        }
+
+        const start = new Date(startVal);
+        const end = new Date(endVal);
+
+        for (const period of bookedPeriods) {
+            const bStart = new Date(period.start);
+            const bEnd = new Date(period.end);
+            if (start <= bEnd && end >= bStart) {
+                warningEl.textContent = `Даты пересекаются с бронированием ${period.start} — ${period.end}`;
+                warningEl.style.display = 'block';
+                return true;
+            }
+        }
+
+        warningEl.style.display = 'none';
+        return false;
+    }
+
+    startDateInput.addEventListener('change', () => {
+        // Дата окончания не может быть раньше даты начала
+        if (startDateInput.value) {
+            endDateInput.setAttribute('min', startDateInput.value);
+        }
+        checkOverlap();
+    });
+    endDateInput.addEventListener('change', checkOverlap);
+
+    loadBookedPeriods();
 
     function calculateDays() {
         const startValue = startDateInput.value;

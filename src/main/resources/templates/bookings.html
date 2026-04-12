@@ -54,6 +54,21 @@
                 <i class='bx bx-calendar'></i>
                 <span th:text="${booking.startDate + ' — ' + booking.endDate}">01.01 — 05.01</span>
             </div>
+            <div class="booking-card-actions" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+                <a th:if="${booking.status == 'PENDING' and booking.payment != null and booking.payment.status == 'PENDING'}"
+                   th:href="@{/payments/{id}(id=${booking.payment.id})}"
+                   class="btn btn-sm btn-primary">
+                    <i class='bx bx-credit-card'></i> Оплатить
+                </a>
+                <form th:if="${booking.status == 'PENDING' or booking.status == 'CONFIRMED'}"
+                      th:action="@{/bookings/{id}/cancel(id=${booking.id})}" method="post"
+                      style="display:inline;">
+                    <button type="submit" class="btn btn-sm btn-danger"
+                            onclick="return confirm('Отменить бронирование?')">
+                        <i class='bx bx-x'></i> Отменить
+                    </button>
+                </form>
+            </div>
         </div>
         <div class="booking-card-right">
             <span class="badge"
