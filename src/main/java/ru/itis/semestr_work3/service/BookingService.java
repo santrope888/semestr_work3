@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.itis.semestr_work3.dto.BookingFilter;
 import ru.itis.semestr_work3.entity.Booking;
 import ru.itis.semestr_work3.entity.Car;
@@ -21,6 +22,7 @@ import ru.itis.semestr_work3.specifications.BookingSpecifications;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -34,6 +36,7 @@ public class BookingService {
     private final UserRepository userRepository;
     private final EntityManager entityManager;
 
+    @Transactional(readOnly = true)
     public List<Booking> findFilteredBookings(BookingFilter filter) {
         if (filter == null) {
             return bookingRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -51,10 +54,12 @@ public class BookingService {
         return bookingRepository.findAll(specification, Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 
+    @Transactional(readOnly = true)
     public List<Booking> findAll() {
         return bookingRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Optional<Booking> findById(Long id) {
         return bookingRepository.findById(id);
     }
@@ -74,6 +79,24 @@ public class BookingService {
         return bookingRepository.findAll(BookingSpecifications.hasStatus(status));
     }
 
+    /**
+     * Возвращает занятые периоды (startDate, endDate) для конкретного автомобиля.
+     * Учитываются только активные бронирования (не CANCELLED, не COMPLETED).
+     */
+    public List<Map<String, String>> getBookedPeriods(Long carId) {
+        Specification<Booking> spec = Specification
+                .where(BookingSpecifications.hasCar(carId))
+                .and((root, query, cb) ->
+                        cb.not(root.get("status").in("CANCELLED", "COMPLETED")));
+
+        return bookingRepository.findAll(spec).stream()
+                .map(b -> Map.of(
+                        "start", b.getStartDate().toString(),
+                        "end", b.getEndDate().toString()))
+                .toList();
+    }
+
+    @Transactional
     public Booking create(Booking booking, Set<Long> insuranceIds) {
         validateBookingForCreate(booking);
 
@@ -133,6 +156,7 @@ public class BookingService {
         return bookingRepository.save(booking);
     }
 
+    @Transactional
     public Booking confirm(Long id) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Бронирование не найдено"));
@@ -141,6 +165,7 @@ public class BookingService {
         return bookingRepository.save(booking);
     }
 
+    @Transactional
     public Booking cancel(Long id, Long userId) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Бронирование не найдено"));
@@ -158,6 +183,7 @@ public class BookingService {
         return bookingRepository.save(booking);
     }
 
+    @Transactional
     public Booking complete(Long id) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Бронирование не найдено"));
