@@ -54,6 +54,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/bookings/*/complete").hasAuthority("ADMIN")
                         .requestMatchers("/api/payments/*/refund").hasAuthority("ADMIN")
 
+
+
                         .anyRequest().authenticated()
                 )
                 .csrf(csrf -> csrf.disable())
@@ -86,15 +88,18 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/", "/catalog", "/cars/**",
                                 "/css/**", "/images/**", "/js/**", "/uploads/**",
-                                "/login", "/register",
-                                "/swagger-ui/**", "/swagger-ui.html",
-                                "/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml"
+                                "/login", "/register"
                         ).permitAll()
                         .requestMatchers("/admin/**").hasAuthority("ADMIN")
                         .requestMatchers(
                                 "/profile/**", "/favorites/**", "/bookings/**",
                                 "/payments/**", "/notifications/**", "/chat/**"
                         ).authenticated()
+                        .requestMatchers("/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs.yaml").hasAuthority("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
