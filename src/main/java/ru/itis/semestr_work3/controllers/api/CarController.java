@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,9 +14,12 @@ import org.springframework.web.bind.annotation.*;
 import ru.itis.semestr_work3.converter.CarMapper;
 import ru.itis.semestr_work3.dto.CarDto;
 import ru.itis.semestr_work3.dto.CarFilter;
+import ru.itis.semestr_work3.dto.CarRequest;
 import ru.itis.semestr_work3.entity.Car;
+import ru.itis.semestr_work3.entity.Category;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.service.CarService;
+import ru.itis.semestr_work3.service.CategoryService;
 
 import java.util.List;
 
@@ -27,6 +31,7 @@ public class CarController {
 
     private final CarService carService;
     private final CarMapper carMapper;
+    private final CategoryService categoryService;
 
     @Operation(summary = "Получить все автомобили")
     @GetMapping("/all")
@@ -59,13 +64,15 @@ public class CarController {
     @ApiResponse(responseCode = "201", description = "Автомобиль создан")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CarDto create(@RequestBody Car car) {
+    public CarDto create(@Valid @RequestBody CarRequest request) {
+        Car car = mapRequestToCar(request, new Car());
         return carMapper.toDto(carService.create(car));
     }
 
     @Operation(summary = "Обновить автомобиль (только ADMIN)")
     @PutMapping("/{id}")
-    public CarDto update(@PathVariable Long id, @RequestBody Car car) {
+    public CarDto update(@PathVariable Long id, @Valid @RequestBody CarRequest request) {
+        Car car = mapRequestToCar(request, new Car());
         return carMapper.toDto(carService.update(id, car));
     }
 
@@ -75,5 +82,31 @@ public class CarController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         carService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private Car mapRequestToCar(CarRequest request, Car car) {
+        car.setBrand(request.getBrand());
+        car.setModel(request.getModel());
+        car.setYear(request.getYear());
+        car.setColor(request.getColor());
+        car.setPricePerDay(request.getPricePerDay());
+        car.setSeats(request.getSeats());
+        car.setTransmission(request.getTransmission());
+        car.setEngine(request.getEngine());
+        car.setDrive(request.getDrive());
+        car.setDescription(request.getDescription());
+        car.setImagePath(request.getImagePath());
+        car.setAvailable(request.getAvailable());
+
+        if (request.getCategoryId() != null) {
+            Category category = categoryService.findAll().stream()
+                    .filter(c -> c.getId().equals(request.getCategoryId()))
+                    .findFirst()
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Категория не найдена: " + request.getCategoryId()));
+            car.setCategory(category);
+        }
+
+        return car;
     }
 }

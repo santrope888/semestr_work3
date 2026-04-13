@@ -2,14 +2,22 @@ package ru.itis.semestr_work3.controllers.api;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import ru.itis.semestr_work3.converter.ReviewMapper;
 import ru.itis.semestr_work3.dto.ReviewDto;
+import ru.itis.semestr_work3.dto.ReviewRequest;
+import ru.itis.semestr_work3.entity.Car;
 import ru.itis.semestr_work3.entity.Review;
+import ru.itis.semestr_work3.entity.User;
+import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.service.ReviewService;
+import ru.itis.semestr_work3.service.UserService;
 
 import java.util.List;
 
@@ -21,6 +29,7 @@ public class ReviewController {
 
     private final ReviewService reviewService;
     private final ReviewMapper reviewMapper;
+    private final UserService userService;
 
     @Operation(summary = "Получить все отзывы")
     @GetMapping
@@ -40,10 +49,24 @@ public class ReviewController {
         return reviewMapper.toDtoList(reviewService.findByUser(userId));
     }
 
-    @Operation(summary = "Оставить отзыв")
+    @Operation(summary = "Оставить отзыв (текущий пользователь)")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ReviewDto create(@RequestBody Review review) {
+    public ReviewDto create(@Valid @RequestBody ReviewRequest request,
+                            @AuthenticationPrincipal UserDetails principal) {
+        User user = userService.findByUsername(principal.getUsername())
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+
+        Review review = new Review();
+        review.setUser(user);
+
+        Car car = new Car();
+        car.setId(request.getCarId());
+        review.setCar(car);
+
+        review.setRating(request.getRating());
+        review.setComment(request.getComment());
+
         return reviewMapper.toDto(reviewService.create(review));
     }
 
