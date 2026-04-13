@@ -6,6 +6,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import ru.itis.semestr_work3.dto.CarFilter;
 import ru.itis.semestr_work3.entity.Car;
+import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.repository.CarRepository;
 import ru.itis.semestr_work3.specifications.CarSpecifications;
 
@@ -106,7 +107,7 @@ public class CarService {
 
     public Car update(Long id, Car carData) {
         Car car = carRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Car not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Автомобиль не найден: " + id));
 
         car.setBrand(carData.getBrand());
         car.setModel(carData.getModel());
@@ -130,7 +131,7 @@ public class CarService {
 
     public void delete(Long id) {
         if (!carRepository.existsById(id)) {
-            throw new RuntimeException("Car not found: " + id);
+            throw new ResourceNotFoundException("Автомобиль не найден: " + id);
         }
         carRepository.deleteById(id);
     }

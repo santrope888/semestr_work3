@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.itis.semestr_work3.entity.Car;
 import ru.itis.semestr_work3.entity.Category;
+import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.service.CarService;
 import ru.itis.semestr_work3.service.CategoryService;
 
@@ -68,7 +69,7 @@ public class AdminCarController {
     @GetMapping("/{id}/edit")
     public String editCarForm(@PathVariable Long id, Model model) {
         Car car = carService.findById(id)
-                .orElseThrow(() -> new RuntimeException("Автомобиль не найден: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Автомобиль не найден: " + id));
 
         model.addAttribute("car", car);
         model.addAttribute("categories", categoryService.findAll());
@@ -91,7 +92,7 @@ public class AdminCarController {
                             @RequestParam(required = false) MultipartFile image) throws IOException {
 
         Car existingCar = carService.findById(id)
-                .orElseThrow(() -> new RuntimeException("Автомобиль не найден: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Автомобиль не найден: " + id));
 
         Car carData = new Car();
         fillCarFields(carData, brand, model, year, color, pricePerDay, seats,
@@ -131,7 +132,7 @@ public class AdminCarController {
         Category category = categoryService.findAll().stream()
                 .filter(cat -> cat.getId().equals(categoryId))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Категория не найдена: " + categoryId));
+                .orElseThrow(() -> new ResourceNotFoundException("Категория не найдена: " + categoryId));
 
         car.setBrand(brand);
         car.setModel(model);

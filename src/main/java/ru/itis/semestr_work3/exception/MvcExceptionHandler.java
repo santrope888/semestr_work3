@@ -5,17 +5,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import ru.itis.semestr_work3.controllers.AdminCarController;
-import ru.itis.semestr_work3.controllers.PageController;
 
 @Slf4j
-@ControllerAdvice(assignableTypes = {PageController.class, AdminCarController.class})
+@ControllerAdvice(basePackages = "ru.itis.semestr_work3.controllers",
+        basePackageClasses = {})
 public class MvcExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public String handleNotFound(ResourceNotFoundException e,
                                  Model model,
                                  HttpServletResponse response) {
+        log.warn("Resource not found: {}", e.getMessage());
         response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         model.addAttribute("errorMessage", e.getMessage());
         return "error/404";
@@ -25,6 +25,7 @@ public class MvcExceptionHandler {
     public String handleBadRequest(IllegalArgumentException e,
                                    Model model,
                                    HttpServletResponse response) {
+        log.warn("Bad request: {}", e.getMessage());
         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         model.addAttribute("errorMessage", e.getMessage());
         return "error/400";
@@ -34,6 +35,7 @@ public class MvcExceptionHandler {
     public String handleForbidden(SecurityException e,
                                   Model model,
                                   HttpServletResponse response) {
+        log.warn("Access denied: {}", e.getMessage());
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         model.addAttribute("errorMessage", e.getMessage());
         return "error/403";
