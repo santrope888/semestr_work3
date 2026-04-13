@@ -36,6 +36,12 @@ public class NotificationService {
         notificationRepository.save(notification);
     }
 
+    public void markAllRead(Long userId) {
+        List<Notification> unread = notificationRepository.findUnread(userId);
+        unread.forEach(n -> n.setIsRead(true));
+        notificationRepository.saveAll(unread);
+    }
+
     public void send(User user, String type, String message) {
         Notification notification = new Notification();
         notification.setUser(user);
