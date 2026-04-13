@@ -114,7 +114,6 @@
         RUB: 1
     };
 
-    /* ── Загружаем занятые периоды при открытии страницы ── */
     async function loadBookedPeriods() {
         try {
             const res = await fetch(`/api/bookings/car/${carId}/booked-periods`);
@@ -124,13 +123,11 @@
         } catch (e) {
             console.error('Не удалось загрузить занятые даты', e);
         }
-        // Устанавливаем минимальную дату — сегодня
         const today = new Date().toISOString().split('T')[0];
         startDateInput.setAttribute('min', today);
         endDateInput.setAttribute('min', today);
     }
 
-    /* ── Проверка пересечения выбранных дат с занятыми ── */
     function checkOverlap() {
         const startVal = startDateInput.value;
         const endVal = endDateInput.value;
@@ -159,7 +156,6 @@
     }
 
     startDateInput.addEventListener('change', () => {
-        // Дата окончания не может быть раньше даты начала
         if (startDateInput.value) {
             endDateInput.setAttribute('min', startDateInput.value);
         }

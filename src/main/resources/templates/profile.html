@@ -13,10 +13,8 @@
 
 <div class="profile-layout container" style="padding-top:100px;padding-bottom:60px;">
 
-    <!-- ══ БОКОВАЯ ПАНЕЛЬ ══════════════════════════════════════ -->
     <aside class="profile-sidebar">
 
-        <!-- Аватар + username -->
         <div class="sidebar-user-card">
             <div style="position:relative;display:inline-block;">
                 <img th:src="${user.avatarPath != null ? user.avatarPath : '/images/default-avatar.png'}"
@@ -43,7 +41,6 @@
                         letter-spacing:0.01em;" th:text="${user.username}">username</div>
         </div>
 
-        <!-- Навигация -->
         <nav class="sidebar-nav">
             <div class="sidebar-nav-group">
                 <div class="sidebar-nav-label">Профиль</div>
@@ -82,7 +79,6 @@
             </div>
         </nav>
 
-        <!-- Выйти + Удалить -->
         <div style="padding:0 12px;margin-top:auto;display:flex;flex-direction:column;gap:4px;">
             <form th:action="@{/logout}" method="post">
                 <button type="submit"
@@ -106,10 +102,8 @@
         </div>
     </aside>
 
-    <!-- ══ ПРАВЫЙ КОНТЕНТ ══════════════════════════════════════ -->
     <div class="profile-content">
 
-        <!-- Уведомления -->
         <div th:if="${param.saved}"
              style="background:#eef8f2;color:#1a7a3a;padding:12px 20px;border-radius:12px;
                     margin-bottom:20px;font-size:0.9rem;display:flex;align-items:center;gap:8px;">
@@ -122,13 +116,11 @@
             <span th:text="${error}"></span>
         </div>
 
-        <!-- ══ СЕКЦИЯ: Редактировать ══ -->
         <div th:if="${section == 'info'}">
             <div style="display:grid;grid-template-columns:1fr 290px;gap:20px;align-items:start;">
 
                 <div style="display:flex;flex-direction:column;gap:20px;">
 
-                    <!-- Основная информация — просмотр -->
                     <div class="profile-card" id="basicViewBlock">
                         <div class="profile-card-header">
                             <h3>Основная информация</h3>
@@ -171,7 +163,6 @@
                         </div>
                     </div>
 
-                    <!-- Основная информация — редактирование -->
                     <div class="profile-card" id="basicEditBlock" style="display:none;">
                         <div class="profile-card-header">
                             <h3>Основная информация</h3>
@@ -221,7 +212,6 @@
                         </form>
                     </div>
 
-                    <!-- Контактные данные — просмотр (без username) -->
                     <div class="profile-card" id="contactViewBlock">
                         <div class="profile-card-header">
                             <h3>Контактные данные</h3>
@@ -243,7 +233,6 @@
                         </div>
                     </div>
 
-                    <!-- Контактные данные — редактирование -->
                     <div class="profile-card" id="contactEditBlock" style="display:none;">
                         <div class="profile-card-header">
                             <h3>Контактные данные</h3>
@@ -280,7 +269,6 @@
 
                 </div>
 
-                <!-- Кольцо заполнения профиля -->
                 <div class="profile-card" style="position:sticky;top:100px;">
                     <h3 style="font-size:0.95rem;margin-bottom:16px;">Заполни профиль</h3>
                     <div style="display:flex;justify-content:center;margin-bottom:20px;">
@@ -351,7 +339,6 @@
                             <span class="step-percent">5%</span>
                         </div>
 
-                        <!-- Email всегда есть -->
                         <div class="profile-step" data-done="true">
                             <i class='bx bx-check-circle step-icon-done'></i>
                             <span style="flex:1;font-size:0.82rem;">Email</span>
@@ -384,7 +371,6 @@
             </div>
         </div>
 
-        <!-- ══ СЕКЦИЯ: Документы ══ -->
         <div th:if="${section == 'docs'}">
             <h2 style="font-size:1.4rem;margin-bottom:24px;">Документы</h2>
 
@@ -403,7 +389,6 @@
 
             <div style="display:flex;flex-direction:column;gap:20px;">
 
-                <!-- Водительское удостоверение -->
                 <div class="profile-card">
                     <div class="profile-card-header">
                         <div style="display:flex;align-items:center;gap:14px;">
@@ -480,7 +465,6 @@
                     </div>
                 </div>
 
-                <!-- Паспорт -->
                 <div class="profile-card">
                     <div class="profile-card-header">
                         <div style="display:flex;align-items:center;gap:14px;">
@@ -560,7 +544,6 @@
             </div>
         </div>
 
-        <!-- ══ СЕКЦИЯ: Безопасность ══ -->
         <div th:if="${section == 'security'}">
             <h2 style="font-size:1.4rem;margin-bottom:24px;">Безопасность</h2>
             <div class="profile-card">
@@ -585,10 +568,9 @@
             </div>
         </div>
 
-    </div><!-- /profile-content -->
-</div><!-- /profile-layout -->
+    </div>
+</div>
 
-<!-- Модальное окно удаления аккаунта -->
 <div id="deleteModal"
      style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);
             z-index:9999;align-items:center;justify-content:center;">

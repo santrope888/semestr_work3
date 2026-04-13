@@ -57,9 +57,6 @@ public class UserService {
         return userRepository.findById(id);
     }
 
-    /**
-     * Обновление профиля с реальным сохранением аватара на диск.
-     */
     public User updateFullProfile(Long id,
                                   String firstName, String lastName, String patronymic,
                                   LocalDate birthDate, String city, String country,
