@@ -34,26 +34,27 @@
 
                 <div class="notif-dropdown" id="notifDropdown">
                     <div style="padding:14px 16px 10px;font-weight:600;font-size:0.9rem;
-                                border-bottom:1px solid rgba(0,0,0,0.07);">
-                        Уведомления
+                                border-bottom:1px solid rgba(0,0,0,0.07);display:flex;justify-content:space-between;align-items:center;">
+                        <span>Уведомления</span>
+                        <button onclick="markAllRead()" style="background:none;border:none;color:var(--main-color);cursor:pointer;font-size:0.8rem;">
+                            Прочитать все
+                        </button>
                     </div>
-                    <div style="padding:32px 16px;text-align:center;
-                                color:#999;font-size:0.85rem;">
-                        <i class='bx bx-bell-off'
-                           style="font-size:2rem;display:block;margin-bottom:8px;"></i>
-                        Нет новых уведомлений
+                    <div id="notifList" style="max-height:320px;overflow-y:auto;">
+                        <div id="notifEmpty" style="padding:32px 16px;text-align:center;color:#999;font-size:0.85rem;">
+                            <i class='bx bx-bell-off' style="font-size:2rem;display:block;margin-bottom:8px;"></i>
+                            Нет новых уведомлений
+                        </div>
                     </div>
                 </div>
 
                 <div class="user-menu" id="userMenu">
                     <button type="button" class="user-avatar-btn" id="userMenuBtn"
                             onclick="toggleUserMenu(event)">
-                        <!-- Если аватар загружен — показываем фото -->
                         <img th:if="${currentUser != null and currentUser.avatarPath != null}"
                              th:src="${currentUser.avatarPath}"
                              class="user-avatar-small user-avatar-img"
                              alt="avatar">
-                        <!-- Иначе — первая буква имени -->
                         <div th:unless="${currentUser != null and currentUser.avatarPath != null}"
                              class="user-avatar-small">
                             <span th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">A</span>
@@ -62,11 +63,9 @@
 
                     <div class="user-dropdown" id="userDropdown">
                         <div class="dropdown-user-info">
-                            <!-- Аватар в дропдауне -->
                             <img th:if="${currentUser != null and currentUser.avatarPath != null}"
                                  th:src="${currentUser.avatarPath}"
-                                 style="width:38px;height:38px;border-radius:50%;
-                                        object-fit:cover;flex-shrink:0;"
+                                 style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;"
                                  alt="avatar">
                             <div th:unless="${currentUser != null and currentUser.avatarPath != null}"
                                  class="dropdown-avatar">
@@ -99,6 +98,31 @@
         </div>
     </div>
 
+    <style>
+        .notif-item {
+            display: flex; gap: 10px; padding: 12px 16px;
+            border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer;
+            transition: background 0.15s; align-items: flex-start;
+        }
+        .notif-item:hover { background: rgba(0,0,0,0.03); }
+        .notif-item.unread { background: rgba(var(--main-color-rgb, 255,107,53), 0.06); }
+        .notif-item-icon {
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; flex-shrink: 0;
+        }
+        .notif-item-icon.booking { background: #e3f2fd; color: #1976d2; }
+        .notif-item-icon.payment { background: #e8f5e9; color: #388e3c; }
+        .notif-item-icon.cancel { background: #fce4ec; color: #c62828; }
+        .notif-item-icon.info { background: #fff3e0; color: #e65100; }
+        .notif-item-text { font-size: 0.82rem; line-height: 1.35; flex: 1; }
+        .notif-item-time { font-size: 0.7rem; color: #999; margin-top: 3px; }
+        .notif-item-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--main-color); flex-shrink: 0; margin-top: 5px;
+        }
+    </style>
+
     <script>
         function toggleUserMenu(e) {
             e.stopPropagation();
@@ -109,11 +133,108 @@
             e.stopPropagation();
             document.getElementById('userDropdown').classList.remove('open');
             document.getElementById('notifDropdown').classList.toggle('open');
+            if (document.getElementById('notifDropdown').classList.contains('open')) {
+                loadNotifications();
+            }
         }
         document.addEventListener('click', function () {
             document.getElementById('userDropdown')?.classList.remove('open');
             document.getElementById('notifDropdown')?.classList.remove('open');
         });
+
+        function getNotifIcon(type) {
+            if (type?.includes('CONFIRM')) return { cls: 'booking', icon: 'bx-check-circle' };
+            if (type?.includes('CANCEL')) return { cls: 'cancel', icon: 'bx-x-circle' };
+            if (type?.includes('PAYMENT') || type?.includes('PAID')) return { cls: 'payment', icon: 'bx-credit-card' };
+            if (type?.includes('COMPLETE')) return { cls: 'payment', icon: 'bx-check-double' };
+            if (type?.includes('BOOKING')) return { cls: 'booking', icon: 'bx-calendar-plus' };
+            return { cls: 'info', icon: 'bx-info-circle' };
+        }
+
+        function timeAgo(dateStr) {
+            const diff = Date.now() - new Date(dateStr).getTime();
+            const mins = Math.floor(diff / 60000);
+            if (mins < 1) return 'только что';
+            if (mins < 60) return mins + ' мин. назад';
+            const hours = Math.floor(mins / 60);
+            if (hours < 24) return hours + ' ч. назад';
+            const days = Math.floor(hours / 24);
+            return days + ' дн. назад';
+        }
+
+        async function loadNotifications() {
+            try {
+                const res = await fetch('/api/notifications/my');
+                if (!res.ok) return;
+                const notifications = await res.json();
+
+                const list = document.getElementById('notifList');
+                const empty = document.getElementById('notifEmpty');
+
+                if (notifications.length === 0) {
+                    empty.style.display = 'block';
+                    return;
+                }
+                empty.style.display = 'none';
+
+                list.innerHTML = '';
+                notifications.slice(0, 20).forEach(n => {
+                    const icon = getNotifIcon(n.type);
+                    const item = document.createElement('div');
+                    item.className = 'notif-item' + (n.isRead ? '' : ' unread');
+                    item.onclick = () => markRead(n.id, item);
+                    item.innerHTML = `
+                        <div class="notif-item-icon ${icon.cls}"><i class='bx ${icon.icon}'></i></div>
+                        <div class="notif-item-text">
+                            ${document.createElement('span').textContent = n.message, ''}
+                            <div class="notif-item-time">${timeAgo(n.createdAt)}</div>
+                        </div>
+                        ${n.isRead ? '' : '<div class="notif-item-dot"></div>'}
+                    `;
+                    item.querySelector('.notif-item-text').childNodes[0].textContent = n.message;
+                    list.appendChild(item);
+                });
+            } catch (e) {
+                console.error('Failed to load notifications', e);
+            }
+        }
+
+        async function markRead(id, el) {
+            try {
+                await fetch(`/api/notifications/${id}/read`, { method: 'PATCH' });
+                el.classList.remove('unread');
+                el.querySelector('.notif-item-dot')?.remove();
+                updateBadge();
+            } catch (e) {}
+        }
+
+        async function markAllRead() {
+            try {
+                await fetch('/api/notifications/read-all', { method: 'PATCH' });
+                document.querySelectorAll('.notif-item.unread').forEach(el => {
+                    el.classList.remove('unread');
+                    el.querySelector('.notif-item-dot')?.remove();
+                });
+                updateBadge();
+            } catch (e) {}
+        }
+
+        async function updateBadge() {
+            try {
+                const res = await fetch('/api/notifications/count');
+                if (!res.ok) return;
+                const data = await res.json();
+                const badge = document.getElementById('notifBadge');
+                if (data.count > 0) {
+                    badge.textContent = data.count > 99 ? '99+' : data.count;
+                    badge.style.display = 'flex';
+                } else {
+                    badge.style.display = 'none';
+                }
+            } catch (e) {}
+        }
+
+        document.addEventListener('DOMContentLoaded', updateBadge);
     </script>
 </header>
 </html>
