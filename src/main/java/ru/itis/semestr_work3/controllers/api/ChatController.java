@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import ru.itis.semestr_work3.converter.ChatMapper;
 import ru.itis.semestr_work3.dto.ChatMessageDto;
@@ -26,10 +28,11 @@ public class ChatController {
     private final UserService userService;
     private final ChatMapper chatMapper;
 
-    @Operation(summary = "Получить все сессии пользователя")
-    @GetMapping("/sessions/user/{userId}")
-    public List<ChatSessionDto> getUserSessions(@PathVariable Long userId) {
-        return chatMapper.toSessionDtoList(aiChatService.getUserSessions(userId));
+    @Operation(summary = "Получить сессии текущего пользователя")
+    @GetMapping("/sessions")
+    public List<ChatSessionDto> getMySessions(@AuthenticationPrincipal UserDetails principal) {
+        User user = resolveUser(principal);
+        return chatMapper.toSessionDtoList(aiChatService.getUserSessions(user.getId()));
     }
 
     @Operation(summary = "Получить сообщения сессии")
@@ -41,10 +44,9 @@ public class ChatController {
     @Operation(summary = "Создать новую сессию")
     @PostMapping("/sessions")
     @ResponseStatus(HttpStatus.CREATED)
-    public ChatSessionDto createSession(@RequestParam Long userId,
+    public ChatSessionDto createSession(@AuthenticationPrincipal UserDetails principal,
                                         @RequestParam(required = false) String title) {
-        User user = userService.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+        User user = resolveUser(principal);
         return chatMapper.toDto(aiChatService.createSession(user, title));
     }
 
@@ -58,5 +60,10 @@ public class ChatController {
         }
         String response = aiChatService.sendMessage(sessionId, userMessage);
         return Map.of("response", response);
+    }
+
+    private User resolveUser(UserDetails principal) {
+        return userService.findByUsername(principal.getUsername())
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
     }
 }
