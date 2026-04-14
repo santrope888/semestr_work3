@@ -61,7 +61,7 @@ public class FileStorageService {
         try {
             Files.createDirectories(dir);
         } catch (IOException e) {
-            throw new RuntimeException("Не удалось создать папку: " + dir, e);
+            throw new IllegalStateException("Не удалось создать папку: " + dir, e);
         }
         return dir;
     }
@@ -70,7 +70,7 @@ public class FileStorageService {
         try {
             Files.copy(file.getInputStream(), dest, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            throw new RuntimeException("Ошибка сохранения файла", e);
+            throw new IllegalStateException("Ошибка сохранения файла", e);
         }
     }
 
