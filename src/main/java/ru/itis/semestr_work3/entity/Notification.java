@@ -23,7 +23,7 @@ public class Notification {
     private String message;
 
     @Column(nullable = false)
-    private String type; // BOOKING_CONFIRMED, BOOKING_CANCELLED, REMINDER, REVIEW_REPLY
+    private String type;
 
     @Column(name = "is_read", nullable = false)
     private Boolean isRead = false;

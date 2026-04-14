@@ -23,13 +23,13 @@ public class Payment {
     private Integer amount;
 
     @Column(nullable = false)
-    private String currency; // RUB, USD, EUR
+    private String currency;
 
     @Column(nullable = false)
-    private String status; // PENDING, PAID, REFUNDED
+    private String status;
 
     @Column
-    private String method; // CARD, CASH
+    private String method;
 
     @Column(name = "paid_at")
     private LocalDateTime paidAt;

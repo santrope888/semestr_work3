@@ -30,7 +30,7 @@ public class Booking {
     private Integer totalPrice;
 
     @Column(nullable = false)
-    private String status; // PENDING, CONFIRMED, COMPLETED, CANCELLED
+    private String status;
 
     @Column(name = "created_at", nullable = false)
     private LocalDate createdAt;
