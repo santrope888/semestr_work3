@@ -2,6 +2,7 @@ package ru.itis.semestr_work3.service;
 
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BookingService {
@@ -35,7 +37,6 @@ public class BookingService {
     private final CarRepository carRepository;
     private final UserRepository userRepository;
     private final EntityManager entityManager;
-    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public List<Booking> findFilteredBookings(BookingFilter filter) {
@@ -80,7 +81,7 @@ public class BookingService {
         return bookingRepository.findAll(BookingSpecifications.hasStatus(status));
     }
 
-    public List<Map<String, String>> getBookedPeriods(Long carId) {
+   public List<Map<String, String>> getBookedPeriods(Long carId) {
         Specification<Booking> spec = Specification
                 .where(BookingSpecifications.hasCar(carId))
                 .and((root, query, cb) ->
@@ -150,14 +151,7 @@ public class BookingService {
 
         booking.setPayment(payment);
 
-        Booking saved = bookingRepository.save(booking);
-
-        notificationService.send(actualUser, "BOOKING_CREATED",
-                "Бронирование #" + saved.getId() + " создано: "
-                        + actualCar.getBrand() + " " + actualCar.getModel()
-                        + " (" + startDate + " — " + endDate + "). Ожидает оплаты.");
-
-        return saved;
+        return bookingRepository.save(booking);
     }
 
     @Transactional
@@ -166,13 +160,7 @@ public class BookingService {
                 .orElseThrow(() -> new ResourceNotFoundException("Бронирование не найдено"));
 
         booking.setStatus("CONFIRMED");
-        Booking saved = bookingRepository.save(booking);
-
-        notificationService.send(booking.getUser(), "BOOKING_CONFIRMED",
-                "Бронирование #" + id + " подтверждено: "
-                        + booking.getCar().getBrand() + " " + booking.getCar().getModel() + ".");
-
-        return saved;
+        return bookingRepository.save(booking);
     }
 
     @Transactional
@@ -190,13 +178,7 @@ public class BookingService {
             booking.getPayment().setStatus("REFUNDED");
         }
 
-        Booking saved = bookingRepository.save(booking);
-
-        notificationService.send(booking.getUser(), "BOOKING_CANCELLED",
-                "Бронирование #" + id + " отменено: "
-                        + booking.getCar().getBrand() + " " + booking.getCar().getModel() + ".");
-
-        return saved;
+        return bookingRepository.save(booking);
     }
 
     @Transactional
@@ -205,14 +187,7 @@ public class BookingService {
                 .orElseThrow(() -> new ResourceNotFoundException("Бронирование не найдено"));
 
         booking.setStatus("COMPLETED");
-        Booking saved = bookingRepository.save(booking);
-
-        notificationService.send(booking.getUser(), "BOOKING_COMPLETED",
-                "Бронирование #" + id + " завершено. Спасибо за использование "
-                        + booking.getCar().getBrand() + " " + booking.getCar().getModel()
-                        + "! Оставьте отзыв.");
-
-        return saved;
+        return bookingRepository.save(booking);
     }
 
     public List<Object[]> findMostBooked() {
@@ -230,18 +205,31 @@ public class BookingService {
         if (booking == null) {
             throw new IllegalArgumentException("Данные бронирования отсутствуют");
         }
+
         if (booking.getStartDate() == null || booking.getEndDate() == null) {
             throw new IllegalArgumentException("Нужно указать даты начала и окончания бронирования");
         }
-        if (booking.getCar() == null || booking.getCar().getId() == null) {
+
+        if (booking.getCar() == null) {
             throw new IllegalArgumentException("Для бронирования необходимо указать автомобиль");
         }
-        if (booking.getUser() == null || booking.getUser().getId() == null) {
+
+        if (booking.getCar().getId() == null) {
+            throw new IllegalArgumentException("Не указан id автомобиля");
+        }
+
+        if (booking.getUser() == null) {
             throw new IllegalArgumentException("Для бронирования необходимо указать пользователя");
         }
+
+        if (booking.getUser().getId() == null) {
+            throw new IllegalArgumentException("Не указан id пользователя");
+        }
+
         if (booking.getEndDate().isBefore(booking.getStartDate())) {
             throw new IllegalArgumentException("Дата окончания не может быть раньше даты начала");
         }
+
         if (booking.getStartDate().isBefore(LocalDate.now())) {
             throw new IllegalArgumentException("Дата начала не может быть в прошлом");
         }

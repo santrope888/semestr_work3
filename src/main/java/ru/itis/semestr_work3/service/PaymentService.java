@@ -1,6 +1,7 @@
 package ru.itis.semestr_work3.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.itis.semestr_work3.entity.Payment;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
@@ -9,6 +10,7 @@ import ru.itis.semestr_work3.repository.PaymentRepository;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
@@ -32,6 +34,7 @@ public class PaymentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Платёж не найден"));
 
         payment.setStatus("PAID");
+        log.info("Платёж #{} оплачен методом {}", paymentId, method);
         payment.setMethod(method);
         payment.setPaidAt(LocalDateTime.now());
         return paymentRepository.save(payment);
