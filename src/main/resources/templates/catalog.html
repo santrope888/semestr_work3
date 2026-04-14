@@ -484,6 +484,16 @@
 
                     <h2 th:text="${car.brand + ' ' + car.model}">Rolls-Royce</h2>
 
+                    <div style="display:flex;align-items:center;gap:4px;margin:4px 0 6px;">
+                        <i th:each="i : ${#numbers.sequence(1, 5)}"
+                           class="bx"
+                           th:classappend="${avgRatings != null and avgRatings.containsKey(car.id) and i <= avgRatings.get(car.id)} ? 'bxs-star' : 'bx-star'"
+                           th:style="${avgRatings != null and avgRatings.containsKey(car.id) and i <= avgRatings.get(car.id)} ? 'color:#f5a623;font-size:0.85rem;' : 'color:#ccc;font-size:0.85rem;'"></i>
+                        <span th:if="${reviewCounts != null and reviewCounts.containsKey(car.id) and reviewCounts.get(car.id) > 0}"
+                              style="font-size:0.75rem;color:#999;"
+                              th:text="'(' + ${reviewCounts.get(car.id)} + ')'"></span>
+                    </div>
+
                     <h4 th:text="${car.transmission != null and !#strings.isEmpty(car.transmission) ? car.transmission : 'Automatic'}">
                         Automatic
                     </h4>

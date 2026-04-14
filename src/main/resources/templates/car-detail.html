@@ -7,6 +7,32 @@
     <title th:text="${car.brand + ' ' + car.model + ' — Aura Motum'}">Детали</title>
     <link rel="stylesheet" href="/css/style.css">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        .avg-rating { display:flex; align-items:center; gap:8px; margin:12px 0; }
+        .avg-rating i { color:#f5a623; font-size:1.2rem; }
+        .avg-rating i.empty { color:#ddd; }
+        .avg-rating-value { font-size:1.1rem; font-weight:700; }
+        .avg-rating-count { color:#999; font-size:0.85rem; }
+
+        .review-form { background:#fff; border-radius:1.2rem; padding:24px; margin-bottom:24px;
+            box-shadow:0 2px 12px rgba(0,0,0,0.06); }
+        .review-form h4 { margin-bottom:16px; }
+
+        .star-select { display:flex; gap:4px; margin-bottom:16px; }
+        .star-select i { font-size:1.6rem; color:#ddd; cursor:pointer; transition:color 0.15s; }
+        .star-select i.active { color:#f5a623; }
+        .star-select i:hover { color:#f5a623; }
+
+        .review-textarea { width:100%; border:1px solid #ddd; border-radius:10px; padding:12px;
+            font-size:0.9rem; resize:vertical; min-height:80px; font-family:inherit; }
+        .review-textarea:focus { border-color:var(--main-color); outline:none; }
+
+        .review-form .btn { margin-top:12px; }
+
+        .review-alert { padding:10px 16px; border-radius:10px; margin-bottom:16px; font-size:0.85rem; }
+        .review-alert-success { background:#e8f5e9; color:#2e7d32; }
+        .review-alert-error { background:#fce4ec; color:#c62828; }
+    </style>
 </head>
 <body>
 <header th:replace="~{fragments/header :: header}"></header>
@@ -19,6 +45,18 @@
         <div class="car-detail-info">
             <span class="car-detail-category" th:text="${car.category != null ? car.category.name : ''}">Комфорт</span>
             <h1 th:text="${car.brand + ' ' + car.model}">Toyota Camry</h1>
+
+            <div class="avg-rating">
+                <i th:each="i : ${#numbers.sequence(1, 5)}"
+                   class="bx"
+                   th:classappend="${i <= avgRating} ? 'bxs-star' : 'bx-star empty'"></i>
+                <span class="avg-rating-value" th:text="${#numbers.formatDecimal(avgRating, 1, 1)}">4.5</span>
+                <span class="avg-rating-count"
+                      th:text="'(' + ${reviewCount} + ' ' + ${reviewCount == 1 ? 'отзыв' : (reviewCount >= 2 and reviewCount <= 4 ? 'отзыва' : 'отзывов')} + ')'">
+                    (12 отзывов)
+                </span>
+            </div>
+
             <div class="car-detail-price">
                 <span th:text="${#numbers.formatInteger(car.pricePerDay, 1, 'COMMA')}">5000</span> ₽ <span>/день</span>
             </div>
@@ -27,45 +65,27 @@
             <div class="specs-grid">
                 <div class="spec-item">
                     <i class='bx bx-calendar'></i>
-                    <div>
-                        <div class="spec-label">Год</div>
-                        <div class="spec-value" th:text="${car.year}">2024</div>
-                    </div>
+                    <div><div class="spec-label">Год</div><div class="spec-value" th:text="${car.year}">2024</div></div>
                 </div>
                 <div class="spec-item">
                     <i class='bx bx-user'></i>
-                    <div>
-                        <div class="spec-label">Мест</div>
-                        <div class="spec-value" th:text="${car.seats}">5</div>
-                    </div>
+                    <div><div class="spec-label">Мест</div><div class="spec-value" th:text="${car.seats}">5</div></div>
                 </div>
                 <div class="spec-item">
                     <i class='bx bx-cog'></i>
-                    <div>
-                        <div class="spec-label">Коробка</div>
-                        <div class="spec-value" th:text="${car.transmission}">Автомат</div>
-                    </div>
+                    <div><div class="spec-label">Коробка</div><div class="spec-value" th:text="${car.transmission}">Автомат</div></div>
                 </div>
                 <div class="spec-item">
                     <i class='bx bx-gas-pump'></i>
-                    <div>
-                        <div class="spec-label">Двигатель</div>
-                        <div class="spec-value" th:text="${car.engine}">Бензин</div>
-                    </div>
+                    <div><div class="spec-label">Двигатель</div><div class="spec-value" th:text="${car.engine}">Бензин</div></div>
                 </div>
                 <div class="spec-item">
                     <i class='bx bx-palette'></i>
-                    <div>
-                        <div class="spec-label">Цвет</div>
-                        <div class="spec-value" th:text="${car.color}">Белый</div>
-                    </div>
+                    <div><div class="spec-label">Цвет</div><div class="spec-value" th:text="${car.color}">Белый</div></div>
                 </div>
                 <div class="spec-item">
                     <i class='bx bx-transfer'></i>
-                    <div>
-                        <div class="spec-label">Привод</div>
-                        <div class="spec-value" th:text="${car.drive}">FWD</div>
-                    </div>
+                    <div><div class="spec-label">Привод</div><div class="spec-value" th:text="${car.drive}">FWD</div></div>
                 </div>
             </div>
 
@@ -75,13 +95,11 @@
                    sec:authorize="isAuthenticated()">
                     <i class='bx bx-calendar-check'></i> Забронировать
                 </a>
-
                 <a th:href="@{/login}"
                    class="btn btn-primary btn-lg"
                    sec:authorize="isAnonymous()">
                     <i class='bx bx-lock-alt'></i> Войдите для брони
                 </a>
-
                 <button class="btn btn-secondary btn-lg"
                         sec:authorize="isAuthenticated()"
                         onclick="toggleFavorite()">
@@ -92,7 +110,12 @@
     </div>
 
     <div class="reviews-section">
-        <h3>Отзывы</h3>
+        <h3 th:text="'Отзывы (' + ${reviewCount} + ')'">Отзывы</h3>
+
+        <div th:if="${reviewSuccess}" class="review-alert review-alert-success" th:text="${reviewSuccess}"></div>
+        <div th:if="${reviewError}" class="review-alert review-alert-error" th:text="${reviewError}"></div>
+
+
         <div th:each="review : ${reviews}" class="review-card">
             <div class="review-header">
                 <div class="review-author">
@@ -109,15 +132,32 @@
                        th:classappend="${i <= review.rating} ? 'bxs-star' : 'bx-star empty'"></i>
                 </div>
             </div>
-            <p class="review-text" th:text="${review.comment}">Отличный автомобиль!</p>
+            <p class="review-text" th:if="${review.comment != null and !#strings.isEmpty(review.comment)}"
+               th:text="${review.comment}">Отличный автомобиль!</p>
         </div>
+
         <div class="empty-state" th:if="${#lists.isEmpty(reviews)}" style="padding:32px;">
-            <p class="text-muted">Пока нет отзывов</p>
+            <p class="text-muted">Пока нет отзывов. Будьте первым!</p>
         </div>
     </div>
 </section>
 
 <footer th:replace="~{fragments/footer :: footer}"></footer>
 <div th:replace="~{fragments/chat-widget :: chat-widget}"></div>
+
+<script>
+    function setRating(value) {
+        document.getElementById('ratingInput').value = value;
+        const stars = document.querySelectorAll('#starSelect i');
+        stars.forEach((star, index) => {
+            if (index < value) {
+                star.className = 'bx bxs-star active';
+            } else {
+                star.className = 'bx bx-star';
+            }
+        });
+    }
+    setRating(5);
+</script>
 </body>
 </html>

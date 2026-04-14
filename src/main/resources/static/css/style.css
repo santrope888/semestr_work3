@@ -871,7 +871,7 @@ footer {
 }
 
 .rating .bx.empty {
-    color: var(--container-color);
+    color: #ccc;
 }
 
 .rating-value {
@@ -2549,6 +2549,7 @@ footer {
     box-shadow: 0 12px 40px rgba(0,0,0,0.3);
     z-index: 1000;
     animation: dropdownFadeIn 0.15s ease;
+    color: #333;
 }
 
 .notif-dropdown.open {
