@@ -11,7 +11,9 @@ import ru.itis.semestr_work3.repository.ReviewRepository;
 import ru.itis.semestr_work3.specifications.ReviewSpecifications;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -51,6 +53,45 @@ public class ReviewService {
 
     public List<Review> findByUser(Long userId) {
         return reviewRepository.findAll(ReviewSpecifications.hasUser(userId));
+    }
+
+    public double getAverageRating(Long carId) {
+        List<Review> reviews = findByCar(carId);
+        if (reviews.isEmpty()) return 0.0;
+        return reviews.stream()
+                .mapToInt(Review::getRating)
+                .average()
+                .orElse(0.0);
+    }
+
+    public long getReviewCount(Long carId) {
+        return reviewRepository.count(ReviewSpecifications.hasCar(carId));
+    }
+
+    public Map<Long, Double> getAverageRatings(List<Long> carIds) {
+        Map<Long, Double> result = new HashMap<>();
+        List<Review> allReviews = reviewRepository.findAll();
+        for (Long carId : carIds) {
+            double avg = allReviews.stream()
+                    .filter(r -> r.getCar().getId().equals(carId))
+                    .mapToInt(Review::getRating)
+                    .average()
+                    .orElse(0.0);
+            result.put(carId, avg);
+        }
+        return result;
+    }
+
+    public Map<Long, Long> getReviewCounts(List<Long> carIds) {
+        Map<Long, Long> result = new HashMap<>();
+        List<Review> allReviews = reviewRepository.findAll();
+        for (Long carId : carIds) {
+            long count = allReviews.stream()
+                    .filter(r -> r.getCar().getId().equals(carId))
+                    .count();
+            result.put(carId, count);
+        }
+        return result;
     }
 
     public Review create(Review review) {

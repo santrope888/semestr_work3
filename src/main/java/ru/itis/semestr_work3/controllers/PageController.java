@@ -47,21 +47,58 @@ public class PageController {
                           @PageableDefault(size = 12) Pageable pageable,
                           Model model) {
         var carsPage = carService.findCars(filter, pageable);
-        model.addAttribute("cars", carsPage.getContent());
+        var cars = carsPage.getContent();
+        model.addAttribute("cars", cars);
         model.addAttribute("carsPage", carsPage);
         model.addAttribute("filter", filter);
         model.addAttribute("categories", categoryService.findAll());
         model.addAttribute("brands", carService.findDistinctBrands());
         model.addAttribute("colors", carService.findDistinctColors());
+
+        List<Long> carIds = cars.stream().map(Car::getId).toList();
+        model.addAttribute("avgRatings", reviewService.getAverageRatings(carIds));
+        model.addAttribute("reviewCounts", reviewService.getReviewCounts(carIds));
+
         return "catalog";
     }
 
     @GetMapping("/cars/{id}")
-    public String carDetail(@PathVariable Long id, Model model) {
+    public String carDetail(@PathVariable Long id,
+                            @AuthenticationPrincipal UserDetails userDetails,
+                            Model model) {
         model.addAttribute("car", carService.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Автомобиль не найден")));
         model.addAttribute("reviews", reviewService.findByCar(id));
+        model.addAttribute("avgRating", reviewService.getAverageRating(id));
+        model.addAttribute("reviewCount", reviewService.getReviewCount(id));
         return "car-detail";
+    }
+
+    @PostMapping("/cars/{id}/reviews")
+    public String submitReview(@PathVariable Long id,
+                               @RequestParam Integer rating,
+                               @RequestParam(required = false) String comment,
+                               @AuthenticationPrincipal UserDetails userDetails,
+                               RedirectAttributes ra) {
+        if (userDetails == null) return "redirect:/login";
+
+        userService.findByUsername(userDetails.getUsername()).ifPresent(user -> {
+            ru.itis.semestr_work3.entity.Review review = new ru.itis.semestr_work3.entity.Review();
+            review.setUser(user);
+            Car car = new Car();
+            car.setId(id);
+            review.setCar(car);
+            review.setRating(rating);
+            review.setComment(comment);
+            try {
+                reviewService.create(review);
+                ra.addFlashAttribute("reviewSuccess", "Отзыв опубликован!");
+            } catch (IllegalArgumentException e) {
+                ra.addFlashAttribute("reviewError", e.getMessage());
+            }
+        });
+
+        return "redirect:/bookings";
     }
 
     @GetMapping("/bookings/new")
@@ -107,6 +144,9 @@ public class PageController {
             userService.findByUsername(userDetails.getUsername()).ifPresent(user -> {
                 f.setUserId(user.getId());
                 model.addAttribute("bookings", bookingService.findFilteredBookings(f));
+                List<Long> reviewedCarIds = reviewService.findByUser(user.getId())
+                        .stream().map(r -> r.getCar().getId()).toList();
+                model.addAttribute("reviewedCarIds", reviewedCarIds);
             });
         } else {
             model.addAttribute("bookings", List.of());
