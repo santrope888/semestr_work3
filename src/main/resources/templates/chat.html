@@ -75,7 +75,7 @@
         <div class="chat-messages" id="chat-messages">
             <div th:each="msg : ${messages}" class="chat-message"
                  th:classappend="${msg.role == 'USER' ? 'user' : 'assistant'}"
-                 th:text="${msg.content}">
+                 th:utext="${msg.role == 'USER' ? #strings.escapeXml(msg.content) : msg.content}">
             </div>
             <div th:if="${#lists.isEmpty(messages)}" class="chat-message assistant">
                 Привет! Я помогу подобрать автомобиль. Опишите, для чего вам нужна машина.
@@ -97,11 +97,23 @@
 <script th:inline="javascript">
     const chatSessionId = [[${sessionId}]];
 
+    function renderMarkdown(text) {
+        return text
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.+?)\*/g, '<em>$1</em>')
+            .replace(/\n/g, '<br>');
+    }
+
     function appendMessage(role, text) {
         const messages = document.getElementById('chat-messages');
         const div = document.createElement('div');
         div.className = 'chat-message ' + role;
-        div.textContent = text;
+        if (role === 'assistant') {
+            div.innerHTML = renderMarkdown(text);
+        } else {
+            div.textContent = text;
+        }
         messages.appendChild(div);
         messages.scrollTop = messages.scrollHeight;
     }
