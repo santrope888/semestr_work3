@@ -1,11 +1,12 @@
 package ru.itis.semestr_work3.controllers;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
 import ru.itis.semestr_work3.entity.Car;
 import ru.itis.semestr_work3.entity.Category;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
@@ -25,6 +26,9 @@ public class AdminCarController {
 
     private final CarService carService;
     private final CategoryService categoryService;
+
+    @Value("${app.upload.dir:uploads}")
+    private String uploadDir;
 
     @GetMapping
     public String listCars(Model model) {
@@ -162,12 +166,12 @@ public class AdminCarController {
 
         String newFilename = UUID.randomUUID() + extension;
 
-        Path uploadDir = Path.of("images", "cars");
-        Files.createDirectories(uploadDir);
+        Path carsUploadDir = Path.of(uploadDir, "cars");
+        Files.createDirectories(carsUploadDir);
 
-        Path filePath = uploadDir.resolve(newFilename);
+        Path filePath = carsUploadDir.resolve(newFilename);
         Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-        return "/images/cars/" + newFilename;
+        return "/uploads/cars/" + newFilename;
     }
 }
