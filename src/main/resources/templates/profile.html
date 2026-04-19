@@ -450,7 +450,7 @@
                                 </span>
                             </label>
                             <a th:if="${user.licensePath != null}"
-                               th:href="${user.licensePath}" target="_blank"
+                               th:href="@{/profile/documents/license}" target="_blank"
                                class="btn btn-secondary" style="font-size:0.85rem;">
                                 <i class='bx bx-show'></i> Посмотреть
                             </a>
@@ -526,7 +526,7 @@
                                 </span>
                             </label>
                             <a th:if="${user.passportPath != null}"
-                               th:href="${user.passportPath}" target="_blank"
+                               th:href="@{/profile/documents/passport}" target="_blank"
                                class="btn btn-secondary" style="font-size:0.85rem;">
                                 <i class='bx bx-show'></i> Посмотреть
                             </a>
