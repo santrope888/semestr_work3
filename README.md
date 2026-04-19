@@ -4,13 +4,29 @@
 
 ## Технологии
 
-- Java 25, Spring Boot 4.x
+- Java 21, Spring Boot 4.x
 - Spring MVC, Spring Security, Spring Data JPA
 - Thymeleaf, PostgreSQL, Flyway
 - Docker Compose, Ollama (локальный ИИ)
 - springdoc-openapi / Swagger UI
 
 ## Запуск через Docker
+
+1. Скопировать переменные окружения для Google OAuth:
+
+```bash
+cp .env.example .env
+```
+
+Заполнить в `.env` значения:
+
+```dotenv
+OAUTH_GOOGLE_CLIENT_ID=your-google-client-id
+OAUTH_GOOGLE_CLIENT_SECRET=your-google-client-secret
+OAUTH_GOOGLE_REDIRECT_URI=http://localhost:8080/oauth/google/callback
+```
+
+2. Запустить контейнеры:
 
 ```bash
 docker compose up --build
@@ -25,21 +41,33 @@ docker compose up --build
 
 ## Локальный запуск
 
-**Требования:** Java 25, Maven, PostgreSQL
+**Требования:** Java 21, Maven, PostgreSQL
 
 1. Создать базу данных:
 ```sql
 CREATE DATABASE carrent;
 ```
 
-2. Проверить настройки в `application.properties`:
+2. Создать локальный файл `.env` на основе шаблона:
+```bash
+cp .env.example .env
+```
+
+3. Заполнить Google OAuth переменные в `.env`:
+```dotenv
+OAUTH_GOOGLE_CLIENT_ID=your-google-client-id
+OAUTH_GOOGLE_CLIENT_SECRET=your-google-client-secret
+OAUTH_GOOGLE_REDIRECT_URI=http://localhost:8080/oauth/google/callback
+```
+
+4. Проверить настройки БД в `application.properties`:
 ```properties
 spring.datasource.url=jdbc:postgresql://localhost:5433/carrent
 spring.datasource.username=postgres
 spring.datasource.password=postgres
 ```
 
-3. Запустить приложение:
+5. Запустить приложение:
 ```bash
 ./mvnw spring-boot:run
 ```
@@ -104,3 +132,8 @@ src/
 │       └── db/migration/    — Flyway миграции V1–V13
 └── test/                    — Unit-тесты сервисов
 ```
+
+## Безопасность OAuth
+
+Google OAuth client secret не хранится в репозитории и должен передаваться через переменные окружения.
+Если секрет уже был опубликован, его нужно перевыпустить в Google Cloud Console.

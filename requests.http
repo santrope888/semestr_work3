@@ -1,0 +1,251 @@
+# Aura Motum — API requests
+# 1. Запустить приложение: ./mvnw spring-boot:run
+# 2. Выполнить Login request из раздела AUTH
+# 3. После логина выполнять остальные запросы в той же сессии IDEA
+
+@host = http://localhost:8080
+
+### --------------------------------------------------
+### AUTH
+### --------------------------------------------------
+
+### Login as admin
+POST {{host}}/login
+Content-Type: application/x-www-form-urlencoded
+
+username=admin&password=admin
+
+### Login as user
+POST {{host}}/login
+Content-Type: application/x-www-form-urlencoded
+
+username=testuser&password=password123
+
+### Register new user
+POST {{host}}/register
+Content-Type: application/x-www-form-urlencoded
+
+username=testuser&email=test@mail.ru&password=password123&confirmPassword=password123
+
+### Logout
+POST {{host}}/logout
+
+### --------------------------------------------------
+### CARS
+### --------------------------------------------------
+
+### Get all cars
+GET {{host}}/api/cars
+
+### Get cars with filter
+GET {{host}}/api/cars?brand=Toyota&minPrice=1000&maxPrice=5000&seats=5
+
+### Get car by id
+GET {{host}}/api/cars/1
+
+### Create car (ADMIN only)
+POST {{host}}/api/cars
+Content-Type: application/json
+
+{
+  "brand": "Toyota",
+  "model": "Camry",
+  "year": 2022,
+  "color": "Белый",
+  "pricePerDay": 3500,
+  "seats": 5,
+  "transmission": "AUTOMATIC",
+  "engine": "2.5L",
+  "drive": "FWD",
+  "description": "Комфортный седан",
+  "available": true,
+  "categoryId": 1
+}
+
+### Update car (ADMIN only)
+PUT {{host}}/api/cars/1
+Content-Type: application/json
+
+{
+  "brand": "Toyota",
+  "model": "Camry",
+  "year": 2023,
+  "color": "Чёрный",
+  "pricePerDay": 4000,
+  "seats": 5,
+  "transmission": "AUTOMATIC",
+  "engine": "2.5L",
+  "drive": "FWD",
+  "description": "Обновлённый комфортный седан",
+  "available": true,
+  "categoryId": 1
+}
+
+### Delete car (ADMIN only)
+DELETE {{host}}/api/cars/1
+
+### --------------------------------------------------
+### BOOKINGS
+### --------------------------------------------------
+
+### Get my bookings (user sees own, admin sees all)
+GET {{host}}/api/bookings
+
+### Get booking by id
+GET {{host}}/api/bookings/1
+
+### Get booked periods for car
+GET {{host}}/api/bookings/car/1/booked-periods
+
+### Create booking
+POST {{host}}/api/bookings
+Content-Type: application/json
+
+{
+  "carId": 1,
+  "startDate": "2026-06-01",
+  "endDate": "2026-06-07",
+  "insuranceIds": [1]
+}
+
+### Create booking without insurance
+POST {{host}}/api/bookings
+Content-Type: application/json
+
+{
+  "carId": 1,
+  "startDate": "2026-07-01",
+  "endDate": "2026-07-05",
+  "insuranceIds": []
+}
+
+### Cancel booking
+POST {{host}}/api/bookings/1/cancel
+
+### Confirm booking (ADMIN only)
+POST {{host}}/api/bookings/1/confirm
+
+### Complete booking (ADMIN only)
+POST {{host}}/api/bookings/1/complete
+
+### --------------------------------------------------
+### PAYMENTS
+### --------------------------------------------------
+
+### Get payment by id
+GET {{host}}/api/payments/1
+
+### Get payment by booking id
+GET {{host}}/api/payments/booking/1
+
+### Pay by card
+POST {{host}}/api/payments/1/pay?method=CARD
+
+### Pay by cash
+POST {{host}}/api/payments/1/pay?method=CASH
+
+### Refund payment (ADMIN only)
+POST {{host}}/api/payments/1/refund
+
+### Convert currency
+GET {{host}}/api/payments/convert?amount=5000&currency=EUR
+
+### Convert to USD
+GET {{host}}/api/payments/convert?amount=5000&currency=USD
+
+### --------------------------------------------------
+### REVIEWS
+### --------------------------------------------------
+
+### Get all reviews
+GET {{host}}/api/reviews
+
+### Get reviews by car
+GET {{host}}/api/reviews/car/1
+
+### Get reviews by user
+GET {{host}}/api/reviews/user/1
+
+### Create review
+POST {{host}}/api/reviews
+Content-Type: application/json
+
+{
+  "carId": 1,
+  "rating": 5,
+  "comment": "Отличный автомобиль, всё понравилось"
+}
+
+### Create review without comment
+POST {{host}}/api/reviews
+Content-Type: application/json
+
+{
+  "carId": 2,
+  "rating": 4,
+  "comment": ""
+}
+
+### Delete review
+DELETE {{host}}/api/reviews/1
+
+### --------------------------------------------------
+### FAVORITES
+### --------------------------------------------------
+
+### Get my favorites
+GET {{host}}/api/favorites
+
+### Check if car is in favorites
+GET {{host}}/api/favorites/check?carId=1
+
+### Add to favorites
+POST {{host}}/api/favorites?carId=1
+
+### Remove from favorites
+DELETE {{host}}/api/favorites?carId=1
+
+### --------------------------------------------------
+### NOTIFICATIONS
+### --------------------------------------------------
+
+### Get my notifications
+GET {{host}}/api/notifications/my
+
+### Get unread count
+GET {{host}}/api/notifications/count
+
+### Mark notification as read
+PATCH {{host}}/api/notifications/1/read
+
+### Mark all as read
+PATCH {{host}}/api/notifications/read-all
+
+### --------------------------------------------------
+### CHAT
+### --------------------------------------------------
+
+### Get my sessions
+GET {{host}}/api/chat/sessions
+
+### Create new session
+POST {{host}}/api/chat/sessions?title=Подбор автомобиля
+
+### Get messages of session
+GET {{host}}/api/chat/sessions/1/messages
+
+### Send message
+POST {{host}}/api/chat/sessions/1/send
+Content-Type: application/json
+
+{
+  "message": "Посоветуй автомобиль для семьи с двумя детьми"
+}
+
+### Send another message
+POST {{host}}/api/chat/sessions/1/send
+Content-Type: application/json
+
+{
+  "message": "Нужен автомобиль с автоматической коробкой до 4000 рублей в день"
+}
