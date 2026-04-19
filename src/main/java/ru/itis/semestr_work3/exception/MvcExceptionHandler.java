@@ -2,6 +2,7 @@ package ru.itis.semestr_work3.exception;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -32,12 +33,22 @@ public class MvcExceptionHandler {
     }
 
     @ExceptionHandler(SecurityException.class)
-    public String handleForbidden(SecurityException e,
-                                  Model model,
-                                  HttpServletResponse response) {
-        log.warn("Access denied: {}", e.getMessage());
+    public String handleSecurity(SecurityException e,
+                                 Model model,
+                                 HttpServletResponse response) {
+        log.warn("Security exception: {}", e.getMessage());
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         model.addAttribute("errorMessage", e.getMessage());
+        return "error/403";
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public String handleAccessDenied(AccessDeniedException e,
+                                     Model model,
+                                     HttpServletResponse response) {
+        log.warn("Access denied: {}", e.getMessage());
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        model.addAttribute("errorMessage", "Доступ запрещён");
         return "error/403";
     }
 

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -16,6 +17,8 @@ import ru.itis.semestr_work3.dto.CarFilter;
 import ru.itis.semestr_work3.entity.Booking;
 import ru.itis.semestr_work3.entity.Car;
 import ru.itis.semestr_work3.entity.ChatSession;
+import ru.itis.semestr_work3.entity.Payment;
+import ru.itis.semestr_work3.entity.User;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.service.*;
 
@@ -160,14 +163,34 @@ public class PageController {
                               Model model) {
         if (userDetails == null) return "redirect:/login";
 
-        var payment = paymentService.findById(id)
+        Payment payment = paymentService.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Платёж не найден"));
-        var booking = bookingService.findById(payment.getBooking().getId())
+
+        checkPaymentOwner(payment, userDetails);
+
+        Booking booking = bookingService.findById(payment.getBooking().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Бронирование не найдено"));
 
         model.addAttribute("payment", payment);
         model.addAttribute("booking", booking);
         return "payment";
+    }
+
+    @PostMapping("/payments/{id}/pay")
+    public String payPayment(@PathVariable Long id,
+                             @RequestParam String method,
+                             @AuthenticationPrincipal UserDetails userDetails,
+                             RedirectAttributes ra) {
+        if (userDetails == null) return "redirect:/login";
+
+        Payment payment = paymentService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Платёж не найден"));
+
+        checkPaymentOwner(payment, userDetails);
+
+        paymentService.pay(id, method);
+        ra.addFlashAttribute("success", "Оплата прошла успешно");
+        return "redirect:/bookings";
     }
 
     @GetMapping("/favorites")
@@ -265,18 +288,6 @@ public class PageController {
         return "chat";
     }
 
-    @PostMapping("/payments/{id}/pay")
-    public String payPayment(@PathVariable Long id,
-                             @RequestParam String method,
-                             @AuthenticationPrincipal UserDetails userDetails,
-                             RedirectAttributes ra) {
-        if (userDetails == null) return "redirect:/login";
-
-        paymentService.pay(id, method);
-        ra.addFlashAttribute("success", "Оплата прошла успешно");
-        return "redirect:/bookings";
-    }
-
     @PostMapping("/bookings/{id}/cancel")
     public String cancelBooking(@PathVariable Long id,
                                 @AuthenticationPrincipal UserDetails userDetails,
@@ -330,5 +341,13 @@ public class PageController {
         }
         ra.addFlashAttribute("success", "Возврат оформлен");
         return "redirect:/admin/bookings";
+    }
+
+    private void checkPaymentOwner(Payment payment, UserDetails principal) {
+        boolean isAdmin = principal.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ADMIN"));
+        if (!isAdmin && !payment.getBooking().getUser().getUsername().equals(principal.getUsername())) {
+            throw new AccessDeniedException("Доступ запрещён");
+        }
     }
 }

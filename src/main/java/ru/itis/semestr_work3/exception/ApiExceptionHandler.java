@@ -5,6 +5,7 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -32,6 +33,12 @@ public class ApiExceptionHandler {
     @ExceptionHandler(SecurityException.class)
     public ResponseEntity<ApiError> handleSecurity(SecurityException e,
                                                    HttpServletRequest request) {
+        return buildError(HttpStatus.FORBIDDEN, e.getMessage(), request);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiError> handleAccessDenied(AccessDeniedException e,
+                                                       HttpServletRequest request) {
         return buildError(HttpStatus.FORBIDDEN, e.getMessage(), request);
     }
 
@@ -67,11 +74,7 @@ public class ApiExceptionHandler {
     public ResponseEntity<ApiError> handleOther(Exception e,
                                                 HttpServletRequest request) {
         log.error("Unexpected API error on {}: {}", request.getRequestURI(), e.getMessage(), e);
-        return buildError(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "Внутренняя ошибка сервера",
-                request
-        );
+        return buildError(HttpStatus.INTERNAL_SERVER_ERROR, "Внутренняя ошибка сервера", request);
     }
 
     private ResponseEntity<ApiError> buildError(HttpStatus status,

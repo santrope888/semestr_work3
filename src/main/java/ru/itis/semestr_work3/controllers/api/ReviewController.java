@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -72,7 +73,15 @@ public class ReviewController {
 
     @Operation(summary = "Удалить отзыв")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable Long id,
+                                       @AuthenticationPrincipal UserDetails principal) {
+        Review review = reviewService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Отзыв не найден"));
+        boolean isAdmin = principal.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ADMIN"));
+        if (!isAdmin && !review.getUser().getUsername().equals(principal.getUsername())) {
+            throw new AccessDeniedException("Доступ запрещён");
+        }
         reviewService.delete(id);
         return ResponseEntity.noContent().build();
     }

@@ -3,11 +3,13 @@ package ru.itis.semestr_work3.controllers.api;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import ru.itis.semestr_work3.converter.NotificationMapper;
 import ru.itis.semestr_work3.dto.NotificationDto;
+import ru.itis.semestr_work3.entity.Notification;
 import ru.itis.semestr_work3.entity.User;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.service.NotificationService;
@@ -42,7 +44,13 @@ public class NotificationController {
 
     @Operation(summary = "Отметить уведомление как прочитанное")
     @PatchMapping("/{id}/read")
-    public void markAsRead(@PathVariable Long id) {
+    public void markAsRead(@PathVariable Long id,
+                           @AuthenticationPrincipal UserDetails principal) {
+        Notification notification = notificationService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Уведомление не найдено"));
+        if (!notification.getUser().getUsername().equals(principal.getUsername())) {
+            throw new AccessDeniedException("Доступ запрещён");
+        }
         notificationService.markAsRead(id);
     }
 

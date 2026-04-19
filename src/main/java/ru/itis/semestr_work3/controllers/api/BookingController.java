@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -39,15 +40,23 @@ public class BookingController {
 
     @Operation(summary = "Получить все бронирования")
     @GetMapping
-    public List<BookingDto> findAll() {
-        return bookingMapper.toDtoList(bookingService.findAll());
+    public List<BookingDto> findAll(@AuthenticationPrincipal UserDetails principal) {
+        User user = resolveUser(principal);
+        if (isAdmin(principal)) {
+            return bookingMapper.toDtoList(bookingService.findAll());
+        }
+        return bookingMapper.toDtoList(bookingService.findByUser(user.getId()));
     }
 
     @Operation(summary = "Получить бронирование по ID")
     @GetMapping("/{id}")
-    public BookingDto findById(@PathVariable Long id) {
+    public BookingDto findById(@PathVariable Long id,
+                               @AuthenticationPrincipal UserDetails principal) {
         Booking booking = bookingService.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Бронирование не найдено"));
+        if (!isAdmin(principal) && !booking.getUser().getUsername().equals(principal.getUsername())) {
+            throw new AccessDeniedException("Доступ запрещён");
+        }
         return bookingMapper.toDto(booking);
     }
 
@@ -59,11 +68,9 @@ public class BookingController {
         User user = resolveUser(principal);
 
         Booking booking = new Booking();
-
         Car car = new Car();
         car.setId(request.getCarId());
         booking.setCar(car);
-
         booking.setUser(user);
         booking.setStartDate(request.getStartDate());
         booking.setEndDate(request.getEndDate());
@@ -94,5 +101,10 @@ public class BookingController {
     private User resolveUser(UserDetails principal) {
         return userService.findByUsername(principal.getUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+    }
+
+    private boolean isAdmin(UserDetails principal) {
+        return principal.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ADMIN"));
     }
 }
