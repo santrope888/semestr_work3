@@ -1,5 +1,8 @@
 package ru.itis.semestr_work3.service;
 
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import java.net.MalformedURLException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,6 +45,49 @@ public class FileStorageService {
         return "/uploads/" + subFolder + "/" + filename;
     }
 
+    public String saveCarImage(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return null;
+        }
+        validate(file, ALLOWED_IMAGE_TYPES);
+        String filename = UUID.randomUUID() + getExtension(file);
+        Path dest = resolveAndCreate("cars").resolve(filename);
+        copy(file, dest);
+        return "/uploads/cars/" + filename;
+    }
+
+    public Resource loadAsResourceFromStoredPath(String storedPath) {
+        if (storedPath == null || storedPath.isBlank() || !storedPath.startsWith("/uploads/")) {
+            throw new IllegalArgumentException("Некорректный путь к файлу");
+        }
+
+        String relativePath = storedPath.substring("/uploads/".length());
+
+        Path root = Paths.get(uploadDir).toAbsolutePath().normalize();
+        Path file = root.resolve(relativePath).normalize();
+
+        if (!file.startsWith(root)) {
+            throw new IllegalArgumentException("Недопустимый путь к файлу");
+        }
+
+        if (!Files.exists(file) || !Files.isRegularFile(file)) {
+            throw new IllegalArgumentException("Файл не найден");
+        }
+
+        try {
+            return new UrlResource(file.toUri());
+        } catch (MalformedURLException e) {
+            throw new IllegalStateException("Не удалось открыть файл", e);
+        }
+    }
+
+    public String getFileNameFromStoredPath(String storedPath) {
+        if (storedPath == null || storedPath.isBlank()) {
+            throw new IllegalArgumentException("Путь к файлу пустой");
+        }
+        return Paths.get(storedPath).getFileName().toString();
+    }
+
     private void validate(MultipartFile file, List<String> allowed) {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Файл не выбран");
@@ -82,11 +128,11 @@ public class FileStorageService {
         String ct = file.getContentType();
         if (ct == null) return ".bin";
         return switch (ct) {
-            case "image/jpeg"       -> ".jpg";
-            case "image/png"        -> ".png";
-            case "image/webp"       -> ".webp";
-            case "application/pdf"  -> ".pdf";
-            default                 -> ".bin";
+            case "image/jpeg"      -> ".jpg";
+            case "image/png"       -> ".png";
+            case "image/webp"      -> ".webp";
+            case "application/pdf" -> ".pdf";
+            default                -> ".bin";
         };
     }
 }

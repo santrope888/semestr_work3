@@ -1,23 +1,19 @@
 package ru.itis.semestr_work3.controllers;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.ui.Model;
-import org.springframework.util.StringUtils;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import ru.itis.semestr_work3.dto.CarForm;
 import ru.itis.semestr_work3.entity.Car;
-import ru.itis.semestr_work3.entity.Category;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.service.CarService;
 import ru.itis.semestr_work3.service.CategoryService;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.UUID;
+import ru.itis.semestr_work3.service.FileStorageService;
 
 @Controller
 @RequiredArgsConstructor
@@ -26,9 +22,7 @@ public class AdminCarController {
 
     private final CarService carService;
     private final CategoryService categoryService;
-
-    @Value("${app.upload.dir:uploads}")
-    private String uploadDir;
+    private final FileStorageService fileStorageService;
 
     @GetMapping
     public String listCars(Model model) {
@@ -38,35 +32,30 @@ public class AdminCarController {
 
     @GetMapping("/new")
     public String newCarForm(Model model) {
-        model.addAttribute("car", new Car());
+        model.addAttribute("carForm", new CarForm());
         model.addAttribute("categories", categoryService.findAll());
         return "admin/car-form";
     }
 
     @PostMapping
-    public String createCar(@RequestParam String brand,
-                            @RequestParam String model,
-                            @RequestParam Integer year,
-                            @RequestParam String color,
-                            @RequestParam Integer pricePerDay,
-                            @RequestParam Integer seats,
-                            @RequestParam String transmission,
-                            @RequestParam String engine,
-                            @RequestParam String drive,
-                            @RequestParam(required = false) String description,
-                            @RequestParam Long categoryId,
-                            @RequestParam(required = false) MultipartFile image) throws IOException {
+    public String createCar(@Valid @ModelAttribute("carForm") CarForm form,
+                            BindingResult bindingResult,
+                            @RequestParam(required = false) MultipartFile image,
+                            Model model,
+                            RedirectAttributes ra) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("categories", categoryService.findAll());
+            return "admin/car-form";
+        }
 
-        Car car = new Car();
-        fillCarFields(car, brand, model, year, color, pricePerDay, seats,
-                transmission, engine, drive, description, categoryId);
-
-        String imagePath = saveImage(image);
+        Car car = buildCar(form, new Car());
+        String imagePath = fileStorageService.saveCarImage(image);
         if (imagePath != null) {
             car.setImagePath(imagePath);
         }
 
         carService.create(car);
+        ra.addFlashAttribute("success", "Автомобиль добавлен");
         return "redirect:/admin/cars";
     }
 
@@ -75,103 +64,74 @@ public class AdminCarController {
         Car car = carService.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Автомобиль не найден: " + id));
 
-        model.addAttribute("car", car);
+        CarForm form = new CarForm();
+        form.setBrand(car.getBrand());
+        form.setModel(car.getModel());
+        form.setYear(car.getYear());
+        form.setColor(car.getColor());
+        form.setPricePerDay(car.getPricePerDay());
+        form.setSeats(car.getSeats());
+        form.setTransmission(car.getTransmission());
+        form.setEngine(car.getEngine());
+        form.setDrive(car.getDrive());
+        form.setDescription(car.getDescription());
+        form.setCategoryId(car.getCategory() != null ? car.getCategory().getId() : null);
+
+        model.addAttribute("carForm", form);
+        model.addAttribute("carId", id);
         model.addAttribute("categories", categoryService.findAll());
         return "admin/car-form";
     }
 
     @PostMapping("/{id}/edit")
     public String updateCar(@PathVariable Long id,
-                            @RequestParam String brand,
-                            @RequestParam String model,
-                            @RequestParam Integer year,
-                            @RequestParam String color,
-                            @RequestParam Integer pricePerDay,
-                            @RequestParam Integer seats,
-                            @RequestParam String transmission,
-                            @RequestParam String engine,
-                            @RequestParam String drive,
-                            @RequestParam(required = false) String description,
-                            @RequestParam Long categoryId,
-                            @RequestParam(required = false) MultipartFile image) throws IOException {
+                            @Valid @ModelAttribute("carForm") CarForm form,
+                            BindingResult bindingResult,
+                            @RequestParam(required = false) MultipartFile image,
+                            Model model,
+                            RedirectAttributes ra) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("carId", id);
+            model.addAttribute("categories", categoryService.findAll());
+            return "admin/car-form";
+        }
 
-        Car existingCar = carService.findById(id)
+        Car existing = carService.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Автомобиль не найден: " + id));
 
-        Car carData = new Car();
-        fillCarFields(carData, brand, model, year, color, pricePerDay, seats,
-                transmission, engine, drive, description, categoryId);
+        Car carData = buildCar(form, new Car());
+        carData.setAvailable(existing.getAvailable());
+        carData.setImagePath(existing.getImagePath());
 
-        carData.setAvailable(existingCar.getAvailable());
-        carData.setImagePath(existingCar.getImagePath());
-
-        String newImagePath = saveImage(image);
+        String newImagePath = fileStorageService.saveCarImage(image);
         if (newImagePath != null) {
             carData.setImagePath(newImagePath);
         }
 
         carService.update(id, carData);
+        ra.addFlashAttribute("success", "Автомобиль обновлён");
         return "redirect:/admin/cars";
     }
 
     @PostMapping("/{id}/delete")
-    public String deleteCar(@PathVariable Long id) {
+    public String deleteCar(@PathVariable Long id, RedirectAttributes ra) {
         carService.delete(id);
+        ra.addFlashAttribute("success", "Автомобиль удалён");
         return "redirect:/admin/cars";
     }
 
-    private void fillCarFields(Car car,
-                               String brand,
-                               String model,
-                               Integer year,
-                               String color,
-                               Integer pricePerDay,
-                               Integer seats,
-                               String transmission,
-                               String engine,
-                               String drive,
-                               String description,
-                               Long categoryId) {
-
-        Category category = categoryService.findAll().stream()
-                .filter(cat -> cat.getId().equals(categoryId))
-                .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Категория не найдена: " + categoryId));
-
-        car.setBrand(brand);
-        car.setModel(model);
-        car.setYear(year);
-        car.setColor(color);
-        car.setPricePerDay(pricePerDay);
-        car.setSeats(seats);
-        car.setTransmission(transmission);
-        car.setEngine(engine);
-        car.setDrive(drive);
-        car.setDescription(description);
-        car.setCategory(category);
-    }
-
-    private String saveImage(MultipartFile image) throws IOException {
-        if (image == null || image.isEmpty()) {
-            return null;
-        }
-
-        String originalFilename = StringUtils.cleanPath(image.getOriginalFilename());
-        String extension = "";
-
-        int dotIndex = originalFilename.lastIndexOf('.');
-        if (dotIndex >= 0) {
-            extension = originalFilename.substring(dotIndex);
-        }
-
-        String newFilename = UUID.randomUUID() + extension;
-
-        Path carsUploadDir = Path.of(uploadDir, "cars");
-        Files.createDirectories(carsUploadDir);
-
-        Path filePath = carsUploadDir.resolve(newFilename);
-        Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-        return "/uploads/cars/" + newFilename;
+    private Car buildCar(CarForm form, Car car) {
+        car.setBrand(form.getBrand());
+        car.setModel(form.getModel());
+        car.setYear(form.getYear());
+        car.setColor(form.getColor());
+        car.setPricePerDay(form.getPricePerDay());
+        car.setSeats(form.getSeats());
+        car.setTransmission(form.getTransmission());
+        car.setEngine(form.getEngine());
+        car.setDrive(form.getDrive());
+        car.setDescription(form.getDescription());
+        car.setCategory(categoryService.findById(form.getCategoryId()));
+        return car;
     }
 }
