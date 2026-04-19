@@ -1,22 +1,43 @@
 services:
   postgres:
-    image: 'postgres:16'
+    image: postgres:16
     environment:
-      - 'POSTGRES_DB=carrent'
-      - 'POSTGRES_PASSWORD=postgres'
-      - 'POSTGRES_USER=postgres'
+      POSTGRES_DB: carrent
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
-      - '5433:5432'
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d carrent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   ollama:
-    image: 'ollama/ollama:latest'
+    image: ollama/ollama:latest
     ports:
-      - '11434:11434'
+      - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
+
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      OAUTH_GOOGLE_CLIENT_ID: ${OAUTH_GOOGLE_CLIENT_ID:-}
+      OAUTH_GOOGLE_CLIENT_SECRET: ${OAUTH_GOOGLE_CLIENT_SECRET:-}
+      OAUTH_GOOGLE_REDIRECT_URI: ${OAUTH_GOOGLE_REDIRECT_URI:-http://localhost:8080/oauth/google/callback}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - uploads:/app/uploads
 
 volumes:
   pgdata:
   ollama_data:
+  uploads:
