@@ -17,6 +17,7 @@ import ru.itis.semestr_work3.repository.ReviewRepository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -44,6 +45,7 @@ class ReviewServiceTest {
         car.setId(2L);
 
         review = new Review();
+        review.setId(1L);
         review.setUser(user);
         review.setCar(car);
         review.setRating(5);
@@ -92,6 +94,95 @@ class ReviewServiceTest {
         when(reviewRepository.findAll(any(Specification.class))).thenReturn(List.of(review));
 
         assertThat(reviewService.findByUser(1L)).containsExactly(review);
+    }
+
+    @Test
+    void getAverageRating_whenReviewsExist_returnsAverage() {
+        Review second = new Review();
+        second.setCar(review.getCar());
+        second.setRating(3);
+
+        when(reviewRepository.findAll(any(Specification.class), any(Sort.class)))
+                .thenReturn(List.of(review, second));
+
+        double result = reviewService.getAverageRating(2L);
+
+        assertThat(result).isEqualTo(4.0);
+    }
+
+    @Test
+    void getAverageRating_whenNoReviews_returnsZero() {
+        when(reviewRepository.findAll(any(Specification.class), any(Sort.class)))
+                .thenReturn(List.of());
+
+        double result = reviewService.getAverageRating(2L);
+
+        assertThat(result).isEqualTo(0.0);
+    }
+
+    @Test
+    void getReviewCount_returnsCount() {
+        when(reviewRepository.count(any(Specification.class))).thenReturn(3L);
+
+        long result = reviewService.getReviewCount(2L);
+
+        assertThat(result).isEqualTo(3L);
+    }
+
+    @Test
+    void getAverageRatings_returnsMapWithAverages() {
+        Car secondCar = new Car();
+        secondCar.setId(3L);
+
+        Review secondReviewForFirstCar = new Review();
+        secondReviewForFirstCar.setCar(review.getCar());
+        secondReviewForFirstCar.setRating(3);
+
+        Review reviewForSecondCar = new Review();
+        reviewForSecondCar.setCar(secondCar);
+        reviewForSecondCar.setRating(4);
+
+        when(reviewRepository.findAll()).thenReturn(List.of(review, secondReviewForFirstCar, reviewForSecondCar));
+
+        var result = reviewService.getAverageRatings(List.of(2L, 3L, 4L));
+
+        assertThat(result.get(2L)).isEqualTo(4.0);
+        assertThat(result.get(3L)).isEqualTo(4.0);
+        assertThat(result.get(4L)).isEqualTo(0.0);
+    }
+
+    @Test
+    void getReviewCounts_returnsMapWithCounts() {
+        Car secondCar = new Car();
+        secondCar.setId(3L);
+
+        Review secondReviewForFirstCar = new Review();
+        secondReviewForFirstCar.setCar(review.getCar());
+
+        Review reviewForSecondCar = new Review();
+        reviewForSecondCar.setCar(secondCar);
+
+        when(reviewRepository.findAll()).thenReturn(List.of(review, secondReviewForFirstCar, reviewForSecondCar));
+
+        var result = reviewService.getReviewCounts(List.of(2L, 3L, 4L));
+
+        assertThat(result.get(2L)).isEqualTo(2L);
+        assertThat(result.get(3L)).isEqualTo(1L);
+        assertThat(result.get(4L)).isEqualTo(0L);
+    }
+
+    @Test
+    void findById_whenExists_returnsReview() {
+        when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
+
+        assertThat(reviewService.findById(1L)).contains(review);
+    }
+
+    @Test
+    void findById_whenMissing_returnsEmpty() {
+        when(reviewRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThat(reviewService.findById(99L)).isEmpty();
     }
 
     @Test

@@ -29,6 +29,23 @@ class NotificationServiceTest {
     private NotificationService notificationService;
 
     @Test
+    void findById_whenExists_returnsNotification() {
+        Notification notification = new Notification();
+        notification.setId(1L);
+
+        when(notificationRepository.findById(1L)).thenReturn(Optional.of(notification));
+
+        assertThat(notificationService.findById(1L)).contains(notification);
+    }
+
+    @Test
+    void findById_whenMissing_returnsEmpty() {
+        when(notificationRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThat(notificationService.findById(99L)).isEmpty();
+    }
+
+    @Test
     void findByUser_returnsNotifications() {
         Notification notification = new Notification();
         when(notificationRepository.findByUser(1L)).thenReturn(List.of(notification));
@@ -68,6 +85,32 @@ class NotificationServiceTest {
         when(notificationRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> notificationService.markAsRead(1L));
+    }
+
+    @Test
+    void markAllRead_whenUnreadExists_marksAllAndSaves() {
+        Notification first = new Notification();
+        first.setIsRead(false);
+
+        Notification second = new Notification();
+        second.setIsRead(false);
+
+        when(notificationRepository.findUnread(1L)).thenReturn(List.of(first, second));
+
+        notificationService.markAllRead(1L);
+
+        assertThat(first.getIsRead()).isTrue();
+        assertThat(second.getIsRead()).isTrue();
+        verify(notificationRepository).saveAll(List.of(first, second));
+    }
+
+    @Test
+    void markAllRead_whenUnreadEmpty_savesEmptyList() {
+        when(notificationRepository.findUnread(1L)).thenReturn(List.of());
+
+        notificationService.markAllRead(1L);
+
+        verify(notificationRepository).saveAll(List.of());
     }
 
     @Test

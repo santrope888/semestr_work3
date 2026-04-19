@@ -240,12 +240,14 @@ class UserServiceTest {
     }
 
     @Test
-    void uploadDocument_withUnknownType_throwsExceptionAfterSavingFile() {
+    void uploadDocument_withUnknownType_throwsExceptionAndDoesNotSaveFile() {
         MockMultipartFile file = new MockMultipartFile("file", "doc.jpg", "image/jpeg", new byte[]{1, 2, 3});
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(fileStorageService.saveDocument(any(), eq("documents"))).thenReturn("/uploads/documents/doc.jpg");
 
         assertThrows(IllegalArgumentException.class, () -> userService.uploadDocument(1L, "unknown", file));
+
+        verify(fileStorageService, never()).saveDocument(any(), eq("documents"));
+        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test

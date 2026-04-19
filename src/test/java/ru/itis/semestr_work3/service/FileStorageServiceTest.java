@@ -15,7 +15,10 @@ import java.nio.file.Paths;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
 class FileStorageServiceTest {
 
@@ -205,6 +208,154 @@ class FileStorageServiceTest {
         );
 
         assertThat(ex.getMessage()).contains("Недопустимый формат файла");
+    }
+
+    @Test
+    void saveCarImage_whenFileIsNull_returnsNull() {
+        String path = fileStorageService.saveCarImage(null);
+
+        assertThat(path).isNull();
+    }
+
+    @Test
+    void saveCarImage_whenFileIsEmpty_returnsNull() {
+        MockMultipartFile file = new MockMultipartFile(
+                "image",
+                "car.png",
+                "image/png",
+                new byte[0]
+        );
+
+        String path = fileStorageService.saveCarImage(file);
+
+        assertThat(path).isNull();
+    }
+
+    @Test
+    void saveCarImage_withValidImage_returnsPathAndCreatesFile() {
+        MockMultipartFile file = new MockMultipartFile(
+                "image",
+                "car.png",
+                "image/png",
+                new byte[]{1, 2, 3}
+        );
+
+        String path = fileStorageService.saveCarImage(file);
+
+        assertThat(path).startsWith("/uploads/cars/").endsWith(".png");
+
+        String fileName = path.substring("/uploads/cars/".length());
+        Path savedFile = tempDir.resolve("cars").resolve(fileName);
+        assertThat(Files.exists(savedFile)).isTrue();
+    }
+
+    @Test
+    void saveCarImage_withInvalidType_throwsException() {
+        MockMultipartFile file = new MockMultipartFile(
+                "image",
+                "car.gif",
+                "image/gif",
+                new byte[]{1, 2, 3}
+        );
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> fileStorageService.saveCarImage(file)
+        );
+
+        assertThat(ex.getMessage()).contains("Недопустимый формат файла");
+    }
+
+    @Test
+    void loadAsResourceFromStoredPath_whenValidPath_returnsResource() throws Exception {
+        Path documentsDir = tempDir.resolve("documents");
+        Files.createDirectories(documentsDir);
+
+        Path file = documentsDir.resolve("test.pdf");
+        Files.write(file, new byte[]{1, 2, 3});
+
+        var resource = fileStorageService.loadAsResourceFromStoredPath("/uploads/documents/test.pdf");
+
+        assertThat(resource).isNotNull();
+        assertThat(resource.exists()).isTrue();
+        assertThat(resource.getFilename()).isEqualTo("test.pdf");
+    }
+
+    @Test
+    void loadAsResourceFromStoredPath_whenStoredPathIsNull_throwsException() {
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> fileStorageService.loadAsResourceFromStoredPath(null)
+        );
+
+        assertThat(ex.getMessage()).isEqualTo("Некорректный путь к файлу");
+    }
+
+    @Test
+    void loadAsResourceFromStoredPath_whenStoredPathIsBlank_throwsException() {
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> fileStorageService.loadAsResourceFromStoredPath(" ")
+        );
+
+        assertThat(ex.getMessage()).isEqualTo("Некорректный путь к файлу");
+    }
+
+    @Test
+    void loadAsResourceFromStoredPath_whenPathDoesNotStartWithUploads_throwsException() {
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> fileStorageService.loadAsResourceFromStoredPath("/documents/test.pdf")
+        );
+
+        assertThat(ex.getMessage()).isEqualTo("Некорректный путь к файлу");
+    }
+
+    @Test
+    void loadAsResourceFromStoredPath_whenPathEscapesUploadRoot_throwsException() {
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> fileStorageService.loadAsResourceFromStoredPath("/uploads/../../secret.txt")
+        );
+
+        assertThat(ex.getMessage()).isEqualTo("Недопустимый путь к файлу");
+    }
+
+    @Test
+    void loadAsResourceFromStoredPath_whenFileMissing_throwsException() {
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> fileStorageService.loadAsResourceFromStoredPath("/uploads/documents/missing.pdf")
+        );
+
+        assertThat(ex.getMessage()).isEqualTo("Файл не найден");
+    }
+
+    @Test
+    void getFileNameFromStoredPath_returnsFileName() {
+        String fileName = fileStorageService.getFileNameFromStoredPath("/uploads/documents/test.pdf");
+
+        assertThat(fileName).isEqualTo("test.pdf");
+    }
+
+    @Test
+    void getFileNameFromStoredPath_whenPathIsNull_throwsException() {
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> fileStorageService.getFileNameFromStoredPath(null)
+        );
+
+        assertThat(ex.getMessage()).isEqualTo("Путь к файлу пустой");
+    }
+
+    @Test
+    void getFileNameFromStoredPath_whenPathIsBlank_throwsException() {
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> fileStorageService.getFileNameFromStoredPath(" ")
+        );
+
+        assertThat(ex.getMessage()).isEqualTo("Путь к файлу пустой");
     }
 
     @Test

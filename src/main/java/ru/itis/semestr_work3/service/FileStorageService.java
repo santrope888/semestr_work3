@@ -1,9 +1,8 @@
 package ru.itis.semestr_work3.service;
 
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import java.net.MalformedURLException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.PathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -74,11 +73,7 @@ public class FileStorageService {
             throw new IllegalArgumentException("Файл не найден");
         }
 
-        try {
-            return new UrlResource(file.toUri());
-        } catch (MalformedURLException e) {
-            throw new IllegalStateException("Не удалось открыть файл", e);
-        }
+        return new PathResource(file);
     }
 
     public String getFileNameFromStoredPath(String storedPath) {
@@ -126,13 +121,15 @@ public class FileStorageService {
             return original.substring(original.lastIndexOf('.'));
         }
         String ct = file.getContentType();
-        if (ct == null) return ".bin";
+        if (ct == null) {
+            return ".bin";
+        }
         return switch (ct) {
-            case "image/jpeg"      -> ".jpg";
-            case "image/png"       -> ".png";
-            case "image/webp"      -> ".webp";
+            case "image/jpeg" -> ".jpg";
+            case "image/png" -> ".png";
+            case "image/webp" -> ".webp";
             case "application/pdf" -> ".pdf";
-            default                -> ".bin";
+            default -> ".bin";
         };
     }
 }

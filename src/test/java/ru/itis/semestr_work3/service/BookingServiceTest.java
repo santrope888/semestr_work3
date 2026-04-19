@@ -2,6 +2,11 @@ package ru.itis.semestr_work3.service;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +29,7 @@ import ru.itis.semestr_work3.repository.UserRepository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -138,6 +144,64 @@ class BookingServiceTest {
         when(bookingRepository.findAll(any(Specification.class))).thenReturn(List.of(booking));
 
         assertThat(bookingService.findByStatus("PENDING")).containsExactly(booking);
+    }
+
+    @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void getBookedPeriods_returnsPeriodsForActiveBookings() {
+        Root<Booking> root = mock(Root.class);
+        CriteriaQuery<?> query = mock(CriteriaQuery.class);
+        CriteriaBuilder cb = mock(CriteriaBuilder.class);
+
+        Path<Object> carPath = mock(Path.class);
+        Path<Object> carIdPath = mock(Path.class);
+        Path<Object> statusPath = mock(Path.class);
+
+        Predicate carPredicate = mock(Predicate.class);
+        Predicate statusInPredicate = mock(Predicate.class);
+        Predicate notCancelledCompleted = mock(Predicate.class);
+        Predicate combinedPredicate = mock(Predicate.class);
+
+        when(root.get("car")).thenReturn((Path) carPath);
+        when(carPath.get("id")).thenReturn((Path) carIdPath);
+        when(cb.equal(carIdPath, 1L)).thenReturn(carPredicate);
+
+        when(root.get("status")).thenReturn((Path) statusPath);
+        when(statusPath.in("CANCELLED", "COMPLETED")).thenReturn(statusInPredicate);
+        when(cb.not(statusInPredicate)).thenReturn(notCancelledCompleted);
+
+        when(cb.and(carPredicate, notCancelledCompleted)).thenReturn(combinedPredicate);
+
+        when(bookingRepository.findAll(any(Specification.class))).thenAnswer(invocation -> {
+            Specification<Booking> spec = invocation.getArgument(0);
+            Predicate predicate = spec.toPredicate(root, query, cb);
+            assertThat(predicate).isEqualTo(combinedPredicate);
+            return List.of(booking);
+        });
+
+        List<Map<String, String>> result = bookingService.getBookedPeriods(1L);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0)).containsEntry("start", booking.getStartDate().toString());
+        assertThat(result.get(0)).containsEntry("end", booking.getEndDate().toString());
+
+        verify(root).get("car");
+        verify(carPath).get("id");
+        verify(cb).equal(carIdPath, 1L);
+        verify(root).get("status");
+        verify(statusPath).in("CANCELLED", "COMPLETED");
+        verify(cb).not(statusInPredicate);
+        verify(cb).and(carPredicate, notCancelledCompleted);
+    }
+
+    @Test
+    void getBookedPeriods_whenNoBookings_returnsEmptyList() {
+        when(bookingRepository.findAll(any(Specification.class))).thenReturn(List.of());
+
+        List<Map<String, String>> result = bookingService.getBookedPeriods(1L);
+
+        assertThat(result).isEmpty();
+        verify(bookingRepository).findAll(any(Specification.class));
     }
 
     @Test
@@ -281,7 +345,7 @@ class BookingServiceTest {
         when(carRepository.findById(1L)).thenReturn(Optional.of(car));
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(bookingRepository.count(any(Specification.class))).thenReturn(0L);
-        when(insuranceRepository.findAllById(Set.of(1L, 2L))).thenReturn(List.<Insurance>of());
+        when(insuranceRepository.findAllById(Set.of(1L, 2L))).thenReturn(List.of());
 
         assertThrows(IllegalArgumentException.class, () -> bookingService.create(booking, Set.of(1L, 2L)));
     }
@@ -366,6 +430,7 @@ class BookingServiceTest {
     void findMostBooked_returnsQueryResult() {
         TypedQuery<Object[]> query = mock(TypedQuery.class);
         Object[] row = new Object[]{car, 3L};
+
         when(entityManager.createQuery(anyString(), eq(Object[].class))).thenReturn(query);
         when(query.getResultList()).thenReturn(java.util.Collections.singletonList(row));
 

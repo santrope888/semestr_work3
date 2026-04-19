@@ -285,7 +285,7 @@ class CarServiceTest {
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> carService.update(1L, car));
 
-        assertThat(ex.getMessage()).isEqualTo("Car not found: 1");
+        assertThat(ex.getMessage()).isEqualTo("Автомобиль не найден: 1");
         verify(carRepository, never()).save(any(Car.class));
     }
 
@@ -304,7 +304,7 @@ class CarServiceTest {
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> carService.delete(1L));
 
-        assertThat(ex.getMessage()).isEqualTo("Car not found: 1");
+        assertThat(ex.getMessage()).isEqualTo("Автомобиль не найден: 1");
         verify(carRepository, never()).deleteById(1L);
     }
 
