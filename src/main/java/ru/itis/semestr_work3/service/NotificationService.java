@@ -9,12 +9,17 @@ import ru.itis.semestr_work3.repository.NotificationRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+
+    public Optional<Notification> findById(Long id) {
+        return notificationRepository.findById(id);
+    }
 
     public List<Notification> findByUser(Long userId) {
         return notificationRepository.findByUser(userId);
@@ -31,7 +36,6 @@ public class NotificationService {
     public void markAsRead(Long notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Уведомление не найдено"));
-
         notification.setIsRead(true);
         notificationRepository.save(notification);
     }

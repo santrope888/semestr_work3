@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -125,5 +126,9 @@ public class ReviewService {
         }
 
         reviewRepository.deleteById(id);
+    }
+
+    public Optional<Review> findById(Long id) {
+        return reviewRepository.findById(id);
     }
 }

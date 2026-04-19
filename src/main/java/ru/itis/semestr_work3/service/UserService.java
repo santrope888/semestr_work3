@@ -86,18 +86,20 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
 
+        if (!"license".equals(docType) && !"passport".equals(docType)) {
+            throw new IllegalArgumentException("Неизвестный тип документа: " + docType);
+        }
+
         String path = fileStorageService.saveDocument(file, "documents");
 
         if ("license".equals(docType)) {
             user.setLicensePath(path);
             user.setLicenseStatus("PENDING");
             user.setLicenseUploadedAt(LocalDate.now());
-        } else if ("passport".equals(docType)) {
+        } else {
             user.setPassportPath(path);
             user.setPassportStatus("PENDING");
             user.setPassportUploadedAt(LocalDate.now());
-        } else {
-            throw new IllegalArgumentException("Неизвестный тип документа: " + docType);
         }
 
         return userRepository.save(user);
