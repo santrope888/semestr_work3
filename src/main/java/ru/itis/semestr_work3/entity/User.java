@@ -73,6 +73,12 @@ public class User {
     @Column(name = "passport_uploaded_at")
     private LocalDate passportUploadedAt;
 
+    @Column(name = "oauth_provider")
+    private String oauthProvider;
+
+    @Column(name = "oauth_subject")
+    private String oauthSubject;
+
     @ManyToOne
     @JoinColumn(name = "role_id")
     private Role role;
