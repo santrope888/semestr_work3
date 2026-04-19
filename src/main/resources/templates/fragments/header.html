@@ -2,6 +2,10 @@
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <header th:fragment="header">
+
+    <meta th:name="_csrf"        th:content="${_csrf.token}"/>
+    <meta th:name="_csrf_header" th:content="${_csrf.headerName}"/>
+
     <div class="nav">
         <a th:href="@{/}" class="logo">Aura<span>Motum</span></a>
 
@@ -114,8 +118,8 @@
         }
         .notif-item-icon.booking { background: #e3f2fd; color: #1976d2; }
         .notif-item-icon.payment { background: #e8f5e9; color: #388e3c; }
-        .notif-item-icon.cancel { background: #fce4ec; color: #c62828; }
-        .notif-item-icon.info { background: #fff3e0; color: #e65100; }
+        .notif-item-icon.cancel  { background: #fce4ec; color: #c62828; }
+        .notif-item-icon.info    { background: #fff3e0; color: #e65100; }
         .notif-item-text { font-size: 0.82rem; line-height: 1.35; flex: 1; }
         .notif-item-time { font-size: 0.7rem; color: #999; margin-top: 3px; }
         .notif-item-dot {
@@ -125,6 +129,12 @@
     </style>
 
     <script>
+        function getCsrfHeaders() {
+            const token  = document.querySelector('meta[name="_csrf"]')?.content;
+            const header = document.querySelector('meta[name="_csrf_header"]')?.content;
+            return token && header ? { [header]: token } : {};
+        }
+
         function toggleUserMenu(e) {
             e.stopPropagation();
             document.getElementById('notifDropdown').classList.remove('open');
@@ -144,23 +154,22 @@
         });
 
         function getNotifIcon(type) {
-            if (type?.includes('CONFIRM')) return { cls: 'booking', icon: 'bx-check-circle' };
-            if (type?.includes('CANCEL')) return { cls: 'cancel', icon: 'bx-x-circle' };
+            if (type?.includes('CONFIRM'))                           return { cls: 'booking', icon: 'bx-check-circle' };
+            if (type?.includes('CANCEL'))                            return { cls: 'cancel',  icon: 'bx-x-circle' };
             if (type?.includes('PAYMENT') || type?.includes('PAID')) return { cls: 'payment', icon: 'bx-credit-card' };
-            if (type?.includes('COMPLETE')) return { cls: 'payment', icon: 'bx-check-double' };
-            if (type?.includes('BOOKING')) return { cls: 'booking', icon: 'bx-calendar-plus' };
+            if (type?.includes('COMPLETE'))                          return { cls: 'payment', icon: 'bx-check-double' };
+            if (type?.includes('BOOKING'))                           return { cls: 'booking', icon: 'bx-calendar-plus' };
             return { cls: 'info', icon: 'bx-info-circle' };
         }
 
         function timeAgo(dateStr) {
             const diff = Date.now() - new Date(dateStr).getTime();
             const mins = Math.floor(diff / 60000);
-            if (mins < 1) return 'только что';
+            if (mins < 1)  return 'только что';
             if (mins < 60) return mins + ' мин. назад';
             const hours = Math.floor(mins / 60);
             if (hours < 24) return hours + ' ч. назад';
-            const days = Math.floor(hours / 24);
-            return days + ' дн. назад';
+            return Math.floor(hours / 24) + ' дн. назад';
         }
 
         async function loadNotifications() {
@@ -169,7 +178,7 @@
                 if (!res.ok) return;
                 const notifications = await res.json();
 
-                const list = document.getElementById('notifList');
+                const list  = document.getElementById('notifList');
                 const empty = document.getElementById('notifEmpty');
 
                 if (notifications.length === 0) {
@@ -187,12 +196,12 @@
                     item.innerHTML = `
                         <div class="notif-item-icon ${icon.cls}"><i class='bx ${icon.icon}'></i></div>
                         <div class="notif-item-text">
-                            ${document.createElement('span').textContent = n.message, ''}
+                            <span></span>
                             <div class="notif-item-time">${timeAgo(n.createdAt)}</div>
                         </div>
                         ${n.isRead ? '' : '<div class="notif-item-dot"></div>'}
                     `;
-                    item.querySelector('.notif-item-text').childNodes[0].textContent = n.message;
+                    item.querySelector('.notif-item-text span').textContent = n.message;
                     list.appendChild(item);
                 });
             } catch (e) {
@@ -202,7 +211,10 @@
 
         async function markRead(id, el) {
             try {
-                await fetch(`/api/notifications/${id}/read`, { method: 'PATCH' });
+                await fetch(`/api/notifications/${id}/read`, {
+                    method: 'PATCH',
+                    headers: getCsrfHeaders()
+                });
                 el.classList.remove('unread');
                 el.querySelector('.notif-item-dot')?.remove();
                 updateBadge();
@@ -211,7 +223,10 @@
 
         async function markAllRead() {
             try {
-                await fetch('/api/notifications/read-all', { method: 'PATCH' });
+                await fetch('/api/notifications/read-all', {
+                    method: 'PATCH',
+                    headers: getCsrfHeaders()
+                });
                 document.querySelectorAll('.notif-item.unread').forEach(el => {
                     el.classList.remove('unread');
                     el.querySelector('.notif-item-dot')?.remove();

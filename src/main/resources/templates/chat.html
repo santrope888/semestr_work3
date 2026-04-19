@@ -97,6 +97,12 @@
 <script th:inline="javascript">
     const chatSessionId = [[${sessionId}]];
 
+    function getCsrfHeaders() {
+        const token  = document.querySelector('meta[name="_csrf"]')?.content;
+        const header = document.querySelector('meta[name="_csrf_header"]')?.content;
+        return token && header ? { [header]: token } : {};
+    }
+
     function renderMarkdown(text) {
         return text
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -139,7 +145,10 @@
         try {
             const res = await fetch(`/api/chat/sessions/${chatSessionId}/send`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getCsrfHeaders()
+                },
                 body: JSON.stringify({message: msg})
             });
             const data = await res.json();
