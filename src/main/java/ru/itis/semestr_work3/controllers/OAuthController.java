@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.LinkedMultiValueMap;
@@ -42,6 +43,7 @@ public class OAuthController {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final UserDetailsServiceImpl userDetailsService;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${oauth.google.client-id}")
     private String clientId;
@@ -187,7 +189,7 @@ public class OAuthController {
         User newUser = new User();
         newUser.setUsername(username);
         newUser.setEmail(email);
-        newUser.setPassword(UUID.randomUUID().toString());
+        newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
         newUser.setRole(userRole);
         newUser.setOauthProvider("GOOGLE");
         newUser.setOauthSubject(subject);
