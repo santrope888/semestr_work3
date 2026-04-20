@@ -2,6 +2,7 @@ package ru.itis.semestr_work3.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.itis.semestr_work3.entity.Notification;
 import ru.itis.semestr_work3.entity.User;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
@@ -13,22 +14,27 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
 
+    @Transactional(readOnly = true)
     public Optional<Notification> findById(Long id) {
         return notificationRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<Notification> findByUser(Long userId) {
         return notificationRepository.findByUser(userId);
     }
 
+    @Transactional(readOnly = true)
     public List<Notification> findUnread(Long userId) {
         return notificationRepository.findUnread(userId);
     }
 
+    @Transactional(readOnly = true)
     public long countUnread(Long userId) {
         return notificationRepository.countUnread(userId);
     }

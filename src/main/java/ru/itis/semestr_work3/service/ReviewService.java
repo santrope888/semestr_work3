@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.itis.semestr_work3.dto.ReviewFilter;
 import ru.itis.semestr_work3.entity.Review;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
@@ -18,10 +19,12 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
 
+    @Transactional(readOnly = true)
     public List<Review> findFilteredReviews(ReviewFilter filter) {
         if (filter == null) {
             return reviewRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -41,10 +44,12 @@ public class ReviewService {
         return reviewRepository.findAll(specification, Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 
+    @Transactional(readOnly = true)
     public List<Review> findAll() {
         return reviewRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public List<Review> findByCar(Long carId) {
         return reviewRepository.findAll(
                 ReviewSpecifications.hasCar(carId),
@@ -52,10 +57,12 @@ public class ReviewService {
         );
     }
 
+    @Transactional(readOnly = true)
     public List<Review> findByUser(Long userId) {
         return reviewRepository.findAll(ReviewSpecifications.hasUser(userId));
     }
 
+    @Transactional(readOnly = true)
     public double getAverageRating(Long carId) {
         List<Review> reviews = findByCar(carId);
         if (reviews.isEmpty()) return 0.0;
@@ -65,10 +72,12 @@ public class ReviewService {
                 .orElse(0.0);
     }
 
+    @Transactional(readOnly = true)
     public long getReviewCount(Long carId) {
         return reviewRepository.count(ReviewSpecifications.hasCar(carId));
     }
 
+    @Transactional(readOnly = true)
     public Map<Long, Double> getAverageRatings(List<Long> carIds) {
         Map<Long, Double> result = new HashMap<>();
         List<Review> allReviews = reviewRepository.findAll();
@@ -83,6 +92,7 @@ public class ReviewService {
         return result;
     }
 
+    @Transactional(readOnly = true)
     public Map<Long, Long> getReviewCounts(List<Long> carIds) {
         Map<Long, Long> result = new HashMap<>();
         List<Review> allReviews = reviewRepository.findAll();
@@ -128,6 +138,7 @@ public class ReviewService {
         reviewRepository.deleteById(id);
     }
 
+    @Transactional(readOnly = true)
     public Optional<Review> findById(Long id) {
         return reviewRepository.findById(id);
     }

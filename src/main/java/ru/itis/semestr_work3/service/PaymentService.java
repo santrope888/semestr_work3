@@ -3,6 +3,7 @@ package ru.itis.semestr_work3.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.itis.semestr_work3.entity.Payment;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.repository.PaymentRepository;
@@ -13,14 +14,17 @@ import java.util.Optional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
 
+    @Transactional(readOnly = true)
     public Optional<Payment> findById(Long id) {
         return paymentRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public Optional<Payment> findByBooking(Long bookingId) {
         return paymentRepository.findByBooking(bookingId);
     }

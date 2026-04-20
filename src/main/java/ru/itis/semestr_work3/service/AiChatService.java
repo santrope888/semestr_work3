@@ -8,6 +8,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import ru.itis.semestr_work3.entity.Car;
 import ru.itis.semestr_work3.entity.ChatMessage;
@@ -41,6 +42,7 @@ public class AiChatService {
     @Value("${ollama.model:llama3}")
     private String ollamaModel;
 
+    @Transactional
     public ChatSession createSession(User user, String title) {
         ChatSession session = new ChatSession();
         session.setUser(user);
@@ -49,15 +51,18 @@ public class AiChatService {
         return sessionRepository.save(session);
     }
 
+    @Transactional(readOnly = true)
     public List<ChatSession> getUserSessions(Long userId) {
         return sessionRepository.findByUser(userId);
     }
 
+    @Transactional(readOnly = true)
     public ChatSession findSessionById(Long sessionId) {
         return sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Чат-сессия не найдена"));
     }
 
+    @Transactional(readOnly = true)
     public List<ChatMessage> getSessionMessages(Long sessionId) {
         return messageRepository.findBySession(sessionId);
     }

@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.itis.semestr_work3.dto.CarFilter;
 import ru.itis.semestr_work3.entity.Car;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
@@ -18,10 +19,12 @@ import java.util.Optional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CarService {
 
     private final CarRepository carRepository;
 
+    @Transactional(readOnly = true)
     public Page<Car> findCars(CarFilter filter, Pageable pageable) {
         if (filter == null) {
             filter = new CarFilter();
@@ -71,6 +74,7 @@ public class CarService {
         };
     }
 
+    @Transactional(readOnly = true)
     public List<String> findDistinctBrands() {
         return carRepository.findAll().stream()
                 .map(Car::getBrand)
@@ -80,6 +84,7 @@ public class CarService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<String> findDistinctColors() {
         return carRepository.findAll().stream()
                 .map(Car::getColor)
@@ -89,14 +94,17 @@ public class CarService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<Car> findAll() {
         return carRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Optional<Car> findById(Long id) {
         return carRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<Car> findAvailable() {
         return carRepository.findAll(CarSpecifications.isAvailable(true));
     }
