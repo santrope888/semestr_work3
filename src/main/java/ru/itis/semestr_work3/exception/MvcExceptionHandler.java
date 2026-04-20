@@ -6,10 +6,20 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import ru.itis.semestr_work3.controllers.AdminCarController;
+import ru.itis.semestr_work3.controllers.AuthController;
+import ru.itis.semestr_work3.controllers.DocumentController;
+import ru.itis.semestr_work3.controllers.OAuthController;
+import ru.itis.semestr_work3.controllers.PageController;
 
 @Slf4j
-@ControllerAdvice(basePackages = "ru.itis.semestr_work3.controllers",
-        basePackageClasses = {})
+@ControllerAdvice(assignableTypes = {
+        PageController.class,
+        AuthController.class,
+        OAuthController.class,
+        AdminCarController.class,
+        DocumentController.class
+})
 public class MvcExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
