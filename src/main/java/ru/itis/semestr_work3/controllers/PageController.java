@@ -1,6 +1,7 @@
 package ru.itis.semestr_work3.controllers;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -41,7 +42,22 @@ public class PageController {
     private final AiChatService aiChatService;
 
     @GetMapping("/")
-    public String index() {
+    public String index(Model model) {
+        CarFilter popularFilter = new CarFilter();
+        popularFilter.setSearch("Taycan");
+        popularFilter.setAvailable(true);
+        List<Car> popularCars = carService.findCars(
+                popularFilter, PageRequest.of(0, 4)
+        ).getContent();
+
+        List<Car> fleetCars = carService.findAvailable().stream()
+                .filter(c -> c.getModel() == null
+                        || !c.getModel().toLowerCase().contains("taycan"))
+                .limit(4)
+                .toList();
+
+        model.addAttribute("popularCars", popularCars);
+        model.addAttribute("fleetCars", fleetCars);
         return "index";
     }
 

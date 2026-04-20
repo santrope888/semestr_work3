@@ -7,6 +7,77 @@
     <title>Aura Motum — Премиум Аренда</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <style>
+        .home-grid {
+            grid-template-columns: repeat(4, 1fr) !important;
+        }
+        @media (max-width: 992px) {
+            .home-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (max-width: 576px) {
+            .home-grid { grid-template-columns: 1fr !important; }
+        }
+
+        .home-grid > .trend-box,
+        .home-grid > .rental-box {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .home-grid > .trend-box > h4 {
+            align-self: flex-start;
+        }
+
+        .home-img-box {
+            width: 100%;
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            background: transparent;
+        }
+        .home-img-box img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            object-fit: contain;
+        }
+        .home-img-box .home-img-placeholder {
+            font-size: 3.5rem;
+            opacity: 0.25;
+        }
+
+        .rental-box .price-btn {
+            margin-top: auto;
+        }
+
+        .home-catalog-cta {
+            text-align: center;
+            margin-top: 2.5rem;
+        }
+        .home-catalog-cta a {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 32px;
+            background: var(--text-color);
+            color: #fff;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: 0.3s;
+        }
+        .home-catalog-cta a:hover {
+            transform: translateX(6px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        .home-catalog-cta i {
+            font-size: 1.5em;
+        }
+    </style>
 </head>
 <body>
 
@@ -24,70 +95,77 @@
     <div class="heading">
         <h2>Популярные модели</h2>
     </div>
-    <div class="trending-content">
-        <div class="trend-box">
-            <h4>Electric</h4>
-            <img src="/images/trend-1.png" alt="">
-            <h3>Taycan S</h3>
-            <p>От 25.000 ₽/день</p>
-        </div>
-        <div class="trend-box">
-            <h4>Electric</h4>
-            <img src="/images/trend-2.png" alt="">
-            <h3>Taycan</h3>
-            <p>От 22.000 ₽/день</p>
-        </div>
-        <div class="trend-box">
-            <h4>Electric</h4>
-            <img src="/images/trend-3.png" alt="">
-            <h3>Taycan Turbo</h3>
-            <p>От 35.000 ₽/день</p>
-        </div>
-        <div class="trend-box">
-            <h4>Electric</h4>
-            <img src="/images/trend-4.png" alt="">
-            <h3>Taycan Turismo</h3>
-            <p>От 30.000 ₽/день</p>
+
+    <div class="trending-content home-grid" th:if="${popularCars != null and !#lists.isEmpty(popularCars)}">
+        <div class="trend-box" th:each="car : ${popularCars}">
+            <h4 th:text="${car.category != null ? car.category.name : 'Premium'}">Electric</h4>
+
+            <div class="home-img-box">
+                <img th:if="${car.imagePath != null and !#strings.isEmpty(car.imagePath)}"
+                     th:src="${car.imagePath}"
+                     th:alt="${car.brand + ' ' + car.model}"
+                     onerror="this.parentElement.innerHTML='<span class=&quot;home-img-placeholder&quot;>🚗</span>';">
+                <span th:unless="${car.imagePath != null and !#strings.isEmpty(car.imagePath)}"
+                      class="home-img-placeholder">🚗</span>
+            </div>
+
+            <h3 th:text="${car.model}">Taycan S</h3>
+            <p>От <span th:text="${#numbers.formatInteger(car.pricePerDay, 0, 'WHITESPACE')}">25 000</span> ₽/день</p>
         </div>
     </div>
+
+    <p th:if="${popularCars == null or #lists.isEmpty(popularCars)}"
+       style="text-align:center; color:var(--text-alter-color); margin-top:2rem;">
+        Популярные модели скоро появятся.
+        <a th:href="@{/catalog}" style="color:var(--main-color); font-weight:600;">Посмотреть каталог →</a>
+    </p>
 </section>
 
 <section class="rentals container" id="rentals">
     <div class="heading">
         <h2>Наш автопарк</h2>
     </div>
-    <div class="rentals-content">
-        <div class="rental-box">
-            <div class="rental-top"><h3>Sedan</h3><i class='bx bx-heart'></i></div>
-            <img src="/images/rental-1.png" alt="">
-            <h2>Rolls-Royce</h2>
-            <h4>Automatic</h4>
-            <div class="price-btn">
-                <p>45.000 ₽ <span>/день</span></p>
-                <a href="/catalog" class="rental-btn">Аренда</a>
+
+    <div class="rentals-content home-grid" th:if="${fleetCars != null and !#lists.isEmpty(fleetCars)}">
+        <div class="rental-box" th:each="car : ${fleetCars}">
+            <div class="rental-top">
+                <h3 th:text="${car.category != null ? car.category.name : 'Auto'}">Sedan</h3>
+                <i class='bx bx-heart'></i>
             </div>
-        </div>
-        <div class="rental-box">
-            <div class="rental-top"><h3>SUV</h3><i class='bx bx-heart'></i></div>
-            <img src="/images/rental-2.png" alt="">
-            <h2>Macan 4</h2>
-            <h4>Automatic</h4>
-            <div class="price-btn">
-                <p>18.000 ₽ <span>/день</span></p>
-                <a href="/catalog" class="rental-btn">Аренда</a>
+
+            <div class="home-img-box">
+                <img th:if="${car.imagePath != null and !#strings.isEmpty(car.imagePath)}"
+                     th:src="${car.imagePath}"
+                     th:alt="${car.brand + ' ' + car.model}"
+                     onerror="this.parentElement.innerHTML='<span class=&quot;home-img-placeholder&quot;>🚗</span>';">
+                <span th:unless="${car.imagePath != null and !#strings.isEmpty(car.imagePath)}"
+                      class="home-img-placeholder">🚗</span>
             </div>
-        </div>
-        <div class="rental-box">
-            <div class="rental-top"><h3>Sport</h3><i class='bx bx-heart'></i></div>
-            <img src="/images/rental-3.png" alt="">
-            <h2>Cayenne S</h2>
-            <h4>Automatic</h4>
+
+            <h2 th:text="${car.brand}">Rolls-Royce</h2>
+            <h4 th:text="${car.transmission}">Automatic</h4>
             <div class="price-btn">
-                <p>22.000 ₽ <span>/день</span></p>
-                <a href="/catalog" class="rental-btn">Аренда</a>
+                <p>
+                    <span th:text="${#numbers.formatInteger(car.pricePerDay, 0, 'WHITESPACE')}">45 000</span> ₽
+                    <span>/день</span>
+                </p>
+                <a th:href="@{/cars/{id}(id=${car.id})}" class="rental-btn">Аренда</a>
             </div>
         </div>
     </div>
+
+    <div class="home-catalog-cta" th:if="${fleetCars != null and !#lists.isEmpty(fleetCars)}">
+        <a th:href="@{/catalog}">
+            Смотреть все автомобили
+            <i class='bx bx-right-arrow-alt'></i>
+        </a>
+    </div>
+
+    <p th:if="${fleetCars == null or #lists.isEmpty(fleetCars)}"
+       style="text-align:center; color:var(--text-alter-color); margin-top:2rem;">
+        Автопарк скоро пополнится.
+        <a th:href="@{/catalog}" style="color:var(--main-color); font-weight:600;">Перейти в каталог →</a>
+    </p>
 </section>
 
 <section class="container" style="padding: 4rem 0;">
