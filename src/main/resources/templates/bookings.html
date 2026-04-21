@@ -7,6 +7,54 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <style>
+        .booking-card-image {
+            width: 200px !important;
+            height: 130px !important;
+            background: var(--container-color);
+            border-radius: 14px;
+            overflow: hidden;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+        }
+        .booking-card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain !important;
+        }
+
+        .booking-meta-line {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-top: 6px;
+            font-size: 0.85rem;
+            flex-wrap: wrap;
+        }
+        .booking-meta-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+        }
+        .booking-meta-status.status-pending   { color: #b26a00; }
+        .booking-meta-status.status-confirmed { color: #1565c0; }
+        .booking-meta-status.status-completed { color: #2e7d32; }
+        .booking-meta-status.status-cancelled { color: #c62828; }
+        .booking-meta-status .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: currentColor;
+        }
+        .booking-meta-payment {
+            color: var(--text-alter-color);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .booking-meta-payment i { font-size: 1rem; }
+
         .review-modal-overlay {
             display:none; position:fixed; top:0; left:0; width:100%; height:100%;
             background:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center;
@@ -81,20 +129,52 @@
 
     <div th:each="booking : ${bookings}" class="booking-card">
         <div class="booking-card-image">
-            <img th:src="${booking.car.imagePath != null ? booking.car.imagePath : '/images/no-car.png'}" alt="">
+            <img th:src="${booking.car.imagePath != null ? booking.car.imagePath : '/images/no-car.png'}"
+                 th:alt="${booking.car.brand + ' ' + booking.car.model}"
+                 onerror="this.onerror=null;this.src='/images/no-car.png';">
         </div>
         <div class="booking-card-info">
             <div class="booking-card-title" th:text="${booking.car.brand + ' ' + booking.car.model}">Toyota Camry</div>
-            <div class="booking-card-dates">
+
+            <div class="booking-meta-line">
+                <span class="booking-meta-status"
+                      th:classappend="'status-' + ${booking.status.toLowerCase()}">
+                    <span class="dot"></span>
+                    <span th:switch="${booking.status}">
+                        <span th:case="'PENDING'">Ожидает подтверждения</span>
+                        <span th:case="'CONFIRMED'">Подтверждена</span>
+                        <span th:case="'COMPLETED'">Завершена</span>
+                        <span th:case="'CANCELLED'">Отменена</span>
+                        <span th:case="*" th:text="${booking.status}">статус</span>
+                    </span>
+                </span>
+
+                <span class="booking-meta-payment" th:if="${booking.payment != null}">
+                    <i class='bx bx-wallet'></i>
+                    <span th:if="${booking.payment.method == 'CARD' and booking.payment.status == 'PAID'}">
+                        Оплачено картой
+                    </span>
+                    <span th:if="${booking.payment.method == 'CARD' and booking.payment.status == 'PENDING'}">
+                        Карта · ожидает списания
+                    </span>
+                    <span th:if="${booking.payment.method == 'CASH' and booking.payment.status != 'REFUNDED'}">
+                        Оплата при выдаче (наличные)
+                    </span>
+                    <span th:if="${booking.payment.status == 'REFUNDED'}">
+                        Возврат оформлен
+                    </span>
+                    <span th:if="${booking.payment.method == null and booking.payment.status == 'PENDING'}">
+                        Способ оплаты не выбран
+                    </span>
+                </span>
+            </div>
+
+            <div class="booking-card-dates" style="margin-top:8px;">
                 <i class='bx bx-calendar'></i>
                 <span th:text="${booking.startDate + ' — ' + booking.endDate}">01.01 — 05.01</span>
             </div>
-            <div class="booking-card-actions" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-                <a th:if="${booking.status == 'PENDING' and booking.payment != null and booking.payment.status == 'PENDING'}"
-                   th:href="@{/payments/{id}(id=${booking.payment.id})}"
-                   class="btn btn-sm btn-primary">
-                    <i class='bx bx-credit-card'></i> Оплатить
-                </a>
+
+            <div class="booking-card-actions" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
                 <form th:if="${booking.status == 'PENDING' or booking.status == 'CONFIRMED'}"
                       th:action="@{/bookings/{id}/cancel(id=${booking.id})}" method="post"
                       style="display:inline;">
@@ -111,8 +191,8 @@
                 </button>
                 <span th:if="${booking.status == 'COMPLETED' and reviewedCarIds.contains(booking.car.id)}"
                       style="color:#388e3c;font-size:0.8rem;display:flex;align-items:center;gap:4px;">
-    <i class='bx bxs-check-circle'></i> Отзыв оставлен
-</span>
+                    <i class='bx bxs-check-circle'></i> Отзыв оставлен
+                </span>
             </div>
         </div>
         <div class="booking-card-right">
@@ -120,6 +200,9 @@
                   th:classappend="'badge-' + ${booking.status.toLowerCase()}"
                   th:text="${booking.status}">PENDING</span>
             <div class="booking-card-price" th:text="${booking.totalPrice + ' ₽'}">25 000 ₽</div>
+            <div th:if="${booking.bookingNumber != null}"
+                 style="font-size:0.75rem;color:var(--text-alter-color);font-family:'Squada One', monospace;letter-spacing:1px;"
+                 th:text="${booking.bookingNumber}">AM-XXXXXX</div>
         </div>
     </div>
 
