@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Бронирование — Aura Motum</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/airbnb.css">
+
+    <style>
+        .wizard-page { padding: 40px 0 80px; }
+        .wizard-page-title h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 6px; }
+        .wizard-page-title p { color: var(--text-alter-color); margin-bottom: 32px; }
+
+        .wizard-grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 32px;
+            align-items: start;
+        }
+
+        .wizard-card {
+            background: #fff;
+            border-radius: 24px;
+            padding: 40px 36px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+        }
+
+        .stepper {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+        .stepper-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            user-select: none;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+        .stepper-item.completed,
+        .stepper-item.active { opacity: 1; }
+        .stepper-circle {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            background: #d9d9d9;
+            color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 1.1rem;
+            transition: background 0.2s;
+        }
+        .stepper-item.active .stepper-circle { background: var(--main-color); }
+        .stepper-item.completed .stepper-circle { background: var(--text-color); }
+        .stepper-label {
+            font-size: 0.85rem; font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-color);
+        }
+
+        .step { display: none; }
+        .step.active { display: block; animation: fadeIn 0.25s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+        .field-row { margin-bottom: 18px; }
+        .field-row label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-color);
+            margin-bottom: 8px;
+        }
+        .field-row input[type="date"],
+        .field-row input[type="text"],
+        .field-row select,
+        .field-row .flatpickr-input {
+            width: 100%;
+            border: 1.5px solid #e5e5e5;
+            border-radius: 12px;
+            padding: 14px 16px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            background: #fff;
+            transition: border-color 0.15s;
+        }
+        .field-row input:focus,
+        .field-row select:focus { outline: none; border-color: var(--main-color); }
+
+        .field-row.invalid input,
+        .field-row.invalid select {
+            border-color: #d93025 !important;
+            background: #fff8f8;
+        }
+        .field-error-msg {
+            display: none;
+            color: #d93025;
+            font-size: 0.78rem;
+            margin-top: 6px;
+        }
+        .field-row.invalid .field-error-msg { display: block; }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .options-section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin: 24px 0 12px;
+        }
+        .options-section-title:first-child { margin-top: 0; }
+        .option-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border: 1.5px solid #ececec;
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+            background: #fff;
+        }
+        .option-card:hover { border-color: #ccc; }
+        .option-card.selected {
+            border-color: var(--main-color);
+            background: #fff5f0;
+        }
+        .option-card input[type="checkbox"],
+        .option-card input[type="radio"] { display: none; }
+        .option-icon {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            background: var(--container-color);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--main-color);
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        .option-card.selected .option-icon { background: var(--main-color); color: #fff; }
+        .option-info { flex: 1; }
+        .option-name { font-weight: 700; color: var(--text-color); margin-bottom: 2px; }
+        .option-desc { font-size: 0.82rem; color: var(--text-alter-color); }
+        .option-price {
+            font-weight: 800;
+            color: var(--text-color);
+            font-size: 1rem;
+            white-space: nowrap;
+        }
+
+        .pay-method-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .pay-method-tab {
+            border: 1.5px solid #ececec;
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.15s;
+            background: #fff;
+        }
+        .pay-method-tab i { font-size: 1.4rem; }
+        .pay-method-tab.active {
+            border-color: var(--main-color);
+            background: #fff5f0;
+            color: var(--main-color);
+        }
+
+        .pay-card-form { animation: fadeIn 0.2s ease; }
+        .pay-cash-info {
+            background: #fff8e6;
+            border: 1px solid #ffd97a;
+            border-radius: 14px;
+            padding: 18px 20px;
+            color: #5a4400;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            display: none;
+        }
+        .pay-cash-info.active { display: block; animation: fadeIn 0.2s ease; }
+
+        .pay-secure-note {
+            margin-top: 18px;
+            padding: 12px 16px;
+            background: #fff5f0;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            color: var(--text-alter-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .pay-secure-note i { color: var(--main-color); }
+
+        .step-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 32px;
+        }
+        .btn-back, .btn-next, .btn-submit {
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 0.95rem;
+            padding: 14px 28px;
+            border-radius: 14px;
+            transition: 0.15s;
+        }
+        .btn-back { background: var(--container-color); color: var(--text-color); }
+        .btn-back:hover { background: #e0d8cc; }
+        .btn-next, .btn-submit {
+            background: var(--main-color);
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-next:hover, .btn-submit:hover { background: #d8451e; }
+        .btn-next i { font-size: 1.2rem; }
+        .step-actions.first-step { justify-content: flex-end; }
+
+        .step-error {
+            background: #fde7e7;
+            color: #c0392b;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            font-size: 0.88rem;
+            display: none;
+        }
+        .step-error.active { display: block; }
+
+        .booking-summary {
+            background: var(--text-color);
+            color: #fff;
+            border-radius: 24px;
+            padding: 28px 28px 32px;
+            position: sticky;
+            top: 24px;
+        }
+        .summary-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+        .summary-header i { font-size: 1.2rem; opacity: 0.7; }
+        .summary-car {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.12);
+            margin-bottom: 20px;
+        }
+        .summary-car-img {
+            width: 80px; height: 60px;
+            border-radius: 10px;
+            background: #fff;
+            overflow: hidden;
+            flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .summary-car-img img { width: 100%; height: 100%; object-fit: contain; }
+        .summary-car-name { font-weight: 700; font-size: 1rem; color: #fff; }
+        .summary-car-meta { font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-top: 2px; }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.92rem;
+            margin-bottom: 12px;
+            color: rgba(255,255,255,0.85);
+        }
+        .summary-row .v { color: #fff; font-weight: 600; }
+
+        .summary-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.12);
+            margin: 18px 0;
+        }
+        .summary-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+        .summary-total-label { font-size: 1.4rem; font-weight: 800; color: var(--main-color); }
+        .summary-total-value { font-size: 1.4rem; font-weight: 800; color: var(--main-color); }
+
+        .currency-toggle {
+            display: flex;
+            gap: 6px;
+            margin-top: 18px;
+            background: rgba(255,255,255,0.06);
+            padding: 4px;
+            border-radius: 10px;
+        }
+        .currency-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 8px;
+            color: rgba(255,255,255,0.6);
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border-radius: 7px;
+            font-family: inherit;
+            transition: 0.15s;
+        }
+        .currency-btn.active {
+            background: var(--main-color);
+            color: #fff;
+        }
+
+        .flatpickr-day.selected,
+        .flatpickr-day.startRange,
+        .flatpickr-day.endRange,
+        .flatpickr-day.selected.inRange,
+        .flatpickr-day.startRange.inRange,
+        .flatpickr-day.endRange.inRange,
+        .flatpickr-day.selected:focus,
+        .flatpickr-day.startRange:focus,
+        .flatpickr-day.endRange:focus,
+        .flatpickr-day.selected:hover,
+        .flatpickr-day.startRange:hover,
+        .flatpickr-day.endRange:hover,
+        .flatpickr-day.selected.prevMonthDay,
+        .flatpickr-day.startRange.prevMonthDay,
+        .flatpickr-day.endRange.prevMonthDay,
+        .flatpickr-day.selected.nextMonthDay,
+        .flatpickr-day.startRange.nextMonthDay,
+        .flatpickr-day.endRange.nextMonthDay {
+            background: var(--main-color);
+            border-color: var(--main-color);
+        }
+        .flatpickr-day.flatpickr-disabled,
+        .flatpickr-day.flatpickr-disabled:hover {
+            color: rgba(0,0,0,0.2);
+            background: rgba(243, 85, 37, 0.08);
+            text-decoration: line-through;
+        }
+
+        @media (max-width: 992px) {
+            .wizard-grid { grid-template-columns: 1fr; }
+            .booking-summary { position: static; }
+        }
+    </style>
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header}"></header>
+
+<section class="wizard-page container">
+    <div class="wizard-page-title">
+        <h1>Бронирование</h1>
+        <p>Три шага до вашего автомобиля</p>
+    </div>
+
+    <div th:if="${error}" class="step-error active" style="margin-bottom:20px;"
+         th:text="${error}">Ошибка</div>
+
+    <div class="wizard-grid">
+
+        <form id="wizardForm" class="wizard-card"
+              th:action="@{/bookings/wizard/{id}(id=${car.id})}" method="post"
+              onsubmit="return validateBeforeSubmit(event)">
+
+            <div class="stepper">
+                <div class="stepper-item active" data-step="1" onclick="goToStep(1)">
+                    <div class="stepper-circle">1</div>
+                    <div class="stepper-label">Даты и место</div>
+                </div>
+                <div class="stepper-item" data-step="2" onclick="goToStep(2)">
+                    <div class="stepper-circle">2</div>
+                    <div class="stepper-label">Опции</div>
+                </div>
+                <div class="stepper-item" data-step="3" onclick="goToStep(3)">
+                    <div class="stepper-circle">3</div>
+                    <div class="stepper-label">Оплата</div>
+                </div>
+            </div>
+
+            <div class="step active" data-step="1">
+                <div id="step1Error" class="step-error"></div>
+
+                <div class="two-col">
+                    <div class="field-row" id="rowStartDate">
+                        <label for="startDate">Дата начала</label>
+                        <input type="text" id="startDate" name="startDate" placeholder="дд.мм.гггг" required readonly>
+                        <div class="field-error-msg">Выберите дату начала</div>
+                    </div>
+                    <div class="field-row" id="rowEndDate">
+                        <label for="endDate">Дата окончания</label>
+                        <input type="text" id="endDate" name="endDate" placeholder="дд.мм.гггг" required readonly>
+                        <div class="field-error-msg">Выберите дату окончания</div>
+                    </div>
+                </div>
+
+                <div class="field-row" id="rowPickup">
+                    <label for="pickupLocation">Место выдачи</label>
+                    <select id="pickupLocation" name="pickupLocation" required>
+                        <option value="" disabled selected>Выберите место выдачи</option>
+                        <option th:each="loc : ${locations}" th:value="${loc}" th:text="${loc}">Локация</option>
+                    </select>
+                    <div class="field-error-msg">Выберите место выдачи</div>
+                </div>
+
+                <div class="field-row" id="rowReturn">
+                    <label for="returnLocation">Место возврата</label>
+                    <select id="returnLocation" name="returnLocation" required>
+                        <option value="" disabled selected>Выберите место возврата</option>
+                        <option th:each="loc : ${locations}" th:value="${loc}" th:text="${loc}">Локация</option>
+                    </select>
+                    <div class="field-error-msg">Выберите место возврата</div>
+                </div>
+
+                <div class="step-actions first-step">
+                    <button type="button" class="btn-next" onclick="nextFromStep(1)">
+                        Далее <i class='bx bx-right-arrow-alt'></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="step" data-step="2">
+                <div id="step2Error" class="step-error"></div>
+
+                <div class="options-section-title">Страхование</div>
+                <label class="option-card" th:each="ins : ${insurances}">
+                    <input type="checkbox" name="insuranceIds"
+                           class="js-insurance"
+                           th:value="${ins.id}"
+                           th:attr="data-price=${ins.pricePerDay}, data-name=${ins.name}">
+                    <div class="option-icon">
+                        <i th:class="'bx ' + ${ins.icon != null ? ins.icon : 'bx-shield'}"></i>
+                    </div>
+                    <div class="option-info">
+                        <div class="option-name" th:text="${ins.name}">Базовая</div>
+                        <div class="option-desc" th:text="${ins.description}">Описание</div>
+                    </div>
+                    <div class="option-price">
+                        <span th:text="${ins.pricePerDay}">500</span> ₽/день
+                    </div>
+                </label>
+
+                <div class="options-section-title">Дополнительные опции</div>
+
+                <label class="option-card">
+                    <input type="checkbox" name="gpsNavigator" value="true"
+                           class="js-extra" th:attr="data-price=${gpsPrice}, data-name='GPS-навигатор'">
+                    <div class="option-icon"><i class='bx bx-map-pin'></i></div>
+                    <div class="option-info">
+                        <div class="option-name">GPS-навигатор</div>
+                        <div class="option-desc">Карты и пробки</div>
+                    </div>
+                    <div class="option-price"><span th:text="${gpsPrice}">300</span> ₽/день</div>
+                </label>
+
+                <label class="option-card">
+                    <input type="checkbox" name="childSeat" value="true"
+                           class="js-extra" th:attr="data-price=${childSeatPrice}, data-name='Детское кресло'">
+                    <div class="option-icon"><i class='bx bx-male-female'></i></div>
+                    <div class="option-info">
+                        <div class="option-name">Детское кресло</div>
+                        <div class="option-desc">Для детей 1–12 лет</div>
+                    </div>
+                    <div class="option-price"><span th:text="${childSeatPrice}">400</span> ₽/день</div>
+                </label>
+
+                <label class="option-card">
+                    <input type="checkbox" name="driverService" value="true"
+                           class="js-extra" th:attr="data-price=${driverPrice}, data-name='Водитель'">
+                    <div class="option-icon"><i class='bx bx-id-card'></i></div>
+                    <div class="option-info">
+                        <div class="option-name">Водитель</div>
+                        <div class="option-desc">Персональный шофёр</div>
+                    </div>
+                    <div class="option-price"><span th:text="${driverPrice}">3500</span> ₽/день</div>
+                </label>
+
+                <div class="step-actions">
+                    <button type="button" class="btn-back" onclick="goToStep(1)">Назад</button>
+                    <button type="button" class="btn-next" onclick="nextFromStep(2)">
+                        Далее <i class='bx bx-right-arrow-alt'></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="step" data-step="3">
+                <div id="step3Error" class="step-error"></div>
+
+                <div class="pay-method-tabs">
+                    <div class="pay-method-tab active" data-method="CARD" onclick="selectPayment('CARD')">
+                        <i class='bx bx-credit-card'></i> Карта
+                    </div>
+                    <div class="pay-method-tab" data-method="CASH" onclick="selectPayment('CASH')">
+                        <i class='bx bx-money'></i> Наличные
+                    </div>
+                </div>
+
+                <input type="hidden" name="paymentMethod" id="paymentMethod" value="CARD">
+
+                <div id="payCardForm" class="pay-card-form">
+                    <div class="field-row" id="rowCardNumber">
+                        <label for="cardNumber">Номер карты</label>
+                        <input type="text" id="cardNumber" placeholder="0000 0000 0000 0000"
+                               maxlength="19" autocomplete="off">
+                        <div class="field-error-msg">Введите 16 цифр номера карты</div>
+                    </div>
+                    <div class="field-row" id="rowCardHolder">
+                        <label for="cardHolder">Имя держателя</label>
+                        <input type="text" id="cardHolder" placeholder="IVAN IVANOV" autocomplete="off">
+                        <div class="field-error-msg">Введите имя держателя карты</div>
+                    </div>
+                    <div class="two-col">
+                        <div class="field-row" id="rowCardExpiry">
+                            <label for="cardExpiry">Срок</label>
+                            <input type="text" id="cardExpiry" placeholder="MM/YY" maxlength="5" autocomplete="off">
+                            <div class="field-error-msg">Формат MM/YY</div>
+                        </div>
+                        <div class="field-row" id="rowCardCvv">
+                            <label for="cardCvv">CVV</label>
+                            <input type="text" id="cardCvv" placeholder="•••" maxlength="3" autocomplete="off">
+                            <div class="field-error-msg">3 цифры</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="payCashInfo" class="pay-cash-info">
+                    <strong>Оплата при выдаче автомобиля.</strong><br>
+                    Наличный расчёт принимается на месте получения. Подтвердите бронирование сейчас, оплатите при встрече с менеджером.
+                </div>
+
+                <div class="pay-secure-note">
+                    <i class='bx bx-lock-alt'></i>
+                    Платёж защищён SSL. Списание произойдёт только при выдаче автомобиля.
+                </div>
+
+                <div class="step-actions">
+                    <button type="button" class="btn-back" onclick="goToStep(2)">Назад</button>
+                    <button type="submit" class="btn-submit" id="submitBtn">
+                        Оплатить <span id="submitTotal">—</span> ✓
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <aside class="booking-summary">
+            <div class="summary-header">
+                <i class='bx bx-receipt'></i> Ваша бронь
+            </div>
+
+            <div class="summary-car">
+                <div class="summary-car-img">
+                    <img th:src="${car.imagePath != null and !#strings.isEmpty(car.imagePath)
+                                  ? car.imagePath : '/images/no-car.png'}"
+                         th:alt="${car.brand + ' ' + car.model}"
+                         onerror="this.style.display='none'">
+                </div>
+                <div>
+                    <div class="summary-car-name" th:text="${car.brand + ' ' + car.model}">Авто</div>
+                    <div class="summary-car-meta">
+                        <span th:text="${car.category != null ? car.category.name : 'Авто'}">Бизнес</span>
+                        · <span th:text="${car.year}">2024</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="summary-row">
+                <span>Срок аренды</span>
+                <span class="v" id="sumDays">—</span>
+            </div>
+            <div class="summary-row">
+                <span>Тариф</span>
+                <span class="v" id="sumTariff">— /день</span>
+            </div>
+            <div class="summary-row" id="sumInsuranceRow" style="display:none;">
+                <span>Страхование</span>
+                <span class="v" id="sumInsurance">—</span>
+            </div>
+            <div class="summary-row" id="sumExtrasRow" style="display:none;">
+                <span>Доп. опции</span>
+                <span class="v" id="sumExtras">—</span>
+            </div>
+
+            <div class="summary-divider"></div>
+
+            <div class="summary-total">
+                <span class="summary-total-label">Итого</span>
+                <span class="summary-total-value" id="sumTotal">—</span>
+            </div>
+
+            <div class="currency-toggle">
+                <button type="button" class="currency-btn active" data-currency="RUB" onclick="setCurrency('RUB')">RUB</button>
+                <button type="button" class="currency-btn" data-currency="USD" onclick="setCurrency('USD')">USD</button>
+                <button type="button" class="currency-btn" data-currency="EUR" onclick="setCurrency('EUR')">EUR</button>
+            </div>
+        </aside>
+
+    </div>
+</section>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/ru.js"></script>
+
+<script th:inline="javascript">
+    const CAR_PRICE_PER_DAY = Number([[${car.pricePerDay}]]);
+    const CAR_ID = Number([[${car.id}]]);
+
+    let currentStep = 1;
+    let currentCurrency = 'RUB';
+    const rateCache = { RUB: 1 };
+    let bookedPeriods = [];
+    let startPicker, endPicker;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        await loadBookedPeriods();
+        initDatePickers();
+        attachListeners();
+        recalcAndRender();
+    });
+
+    function initDatePickers() {
+        const disabled = bookedPeriods.map(p => ({ from: p.start, to: p.end }));
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const common = {
+            dateFormat: 'Y-m-d',
+            altInput: true,
+            altFormat: 'd.m.Y',
+            minDate: 'today',
+            disable: disabled,
+            locale: 'ru',
+            allowInput: false
+        };
+
+        startPicker = flatpickr('#startDate', {
+            ...common,
+            onChange: (sel, str) => {
+                if (sel[0]) {
+                    endPicker.set('minDate', sel[0]);
+                }
+                clearFieldError('rowStartDate');
+                recalcAndRender();
+            }
+        });
+
+        endPicker = flatpickr('#endDate', {
+            ...common,
+            onChange: () => {
+                clearFieldError('rowEndDate');
+                recalcAndRender();
+            }
+        });
+    }
+
+    function attachListeners() {
+        document.getElementById('pickupLocation').addEventListener('change', () => {
+            clearFieldError('rowPickup');
+        });
+        document.getElementById('returnLocation').addEventListener('change', () => {
+            clearFieldError('rowReturn');
+        });
+
+        document.querySelectorAll('.option-card input[type="checkbox"]').forEach(cb => {
+            cb.addEventListener('change', () => {
+                cb.closest('.option-card').classList.toggle('selected', cb.checked);
+                recalcAndRender();
+            });
+        });
+
+        const cardNumber = document.getElementById('cardNumber');
+        cardNumber.addEventListener('input', (e) => {
+            let digits = e.target.value.replace(/\D/g, '').slice(0, 16);
+            e.target.value = digits.match(/.{1,4}/g)?.join(' ') || '';
+            clearFieldError('rowCardNumber');
+        });
+
+        const cardHolder = document.getElementById('cardHolder');
+        cardHolder.addEventListener('input', () => clearFieldError('rowCardHolder'));
+
+        const cardExpiry = document.getElementById('cardExpiry');
+        cardExpiry.addEventListener('input', (e) => {
+            let v = e.target.value.replace(/\D/g, '').slice(0, 4);
+            if (v.length >= 3) v = v.slice(0, 2) + '/' + v.slice(2);
+            e.target.value = v;
+            clearFieldError('rowCardExpiry');
+        });
+
+        const cardCvv = document.getElementById('cardCvv');
+        cardCvv.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/\D/g, '').slice(0, 3);
+            clearFieldError('rowCardCvv');
+        });
+    }
+
+    async function loadBookedPeriods() {
+        try {
+            const res = await fetch(`/api/bookings/car/${CAR_ID}/booked-periods`);
+            if (res.ok) bookedPeriods = await res.json();
+        } catch (e) {
+            console.warn('Не удалось загрузить занятые даты');
+        }
+    }
+
+    function goToStep(target) {
+        if (target < currentStep) { switchStep(target); return; }
+        if (target === currentStep) return;
+        for (let s = currentStep; s < target; s++) {
+            if (!validateStep(s)) return;
+        }
+        switchStep(target);
+    }
+
+    function nextFromStep(from) {
+        if (!validateStep(from)) return;
+        switchStep(from + 1);
+    }
+
+    function switchStep(n) {
+        currentStep = n;
+        document.querySelectorAll('.step').forEach(el => {
+            el.classList.toggle('active', Number(el.dataset.step) === n);
+        });
+        document.querySelectorAll('.stepper-item').forEach(el => {
+            const stepNum = Number(el.dataset.step);
+            el.classList.toggle('active', stepNum === n);
+            el.classList.toggle('completed', stepNum < n);
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function validateStep(step) {
+        clearStepError(step);
+        if (step === 1) return validateStep1();
+        if (step === 2) return true;
+        if (step === 3) return validateStep3();
+        return true;
+    }
+
+    function validateStep1() {
+        let ok = true;
+        const sd = document.getElementById('startDate').value;
+        const ed = document.getElementById('endDate').value;
+        const pickup = document.getElementById('pickupLocation').value;
+        const returnLoc = document.getElementById('returnLocation').value;
+
+        if (!sd) { markFieldError('rowStartDate'); ok = false; }
+        if (!ed) { markFieldError('rowEndDate'); ok = false; }
+        if (!pickup) { markFieldError('rowPickup'); ok = false; }
+        if (!returnLoc) { markFieldError('rowReturn'); ok = false; }
+
+        if (!ok) {
+            return showStepError(1, 'Заполните все поля');
+        }
+
+        if (new Date(ed) < new Date(sd)) {
+            markFieldError('rowEndDate');
+            return showStepError(1, 'Дата окончания не может быть раньше даты начала');
+        }
+
+        return true;
+    }
+
+    function validateStep3() {
+        const method = document.getElementById('paymentMethod').value;
+        if (method === 'CASH') return true;
+
+        let ok = true;
+        const num = document.getElementById('cardNumber').value.replace(/\s/g, '');
+        const holder = document.getElementById('cardHolder').value.trim();
+        const expiry = document.getElementById('cardExpiry').value;
+        const cvv = document.getElementById('cardCvv').value;
+
+        if (num.length !== 16 || !/^\d{16}$/.test(num)) {
+            markFieldError('rowCardNumber'); ok = false;
+        }
+        if (!holder) {
+            markFieldError('rowCardHolder'); ok = false;
+        }
+        if (!/^\d{2}\/\d{2}$/.test(expiry)) {
+            markFieldError('rowCardExpiry'); ok = false;
+        } else {
+            const [mm, yy] = expiry.split('/').map(Number);
+            const now = new Date();
+            const currentYY = now.getFullYear() % 100;
+            const currentMM = now.getMonth() + 1;
+            if (mm < 1 || mm > 12 || yy < currentYY || (yy === currentYY && mm < currentMM)) {
+                markFieldError('rowCardExpiry'); ok = false;
+            }
+        }
+        if (cvv.length !== 3 || !/^\d{3}$/.test(cvv)) {
+            markFieldError('rowCardCvv'); ok = false;
+        }
+
+        if (!ok) {
+            const firstInvalid = document.querySelector('#payCardForm .field-row.invalid input');
+            if (firstInvalid) firstInvalid.focus();
+            return showStepError(3, 'Заполните данные карты корректно');
+        }
+        return true;
+    }
+
+    function validateBeforeSubmit(event) {
+        if (!validateStep1()) {
+            event.preventDefault();
+            switchStep(1);
+            return false;
+        }
+        if (!validateStep3()) {
+            event.preventDefault();
+            switchStep(3);
+            return false;
+        }
+        return true;
+    }
+
+    function markFieldError(rowId) {
+        document.getElementById(rowId)?.classList.add('invalid');
+    }
+
+    function clearFieldError(rowId) {
+        document.getElementById(rowId)?.classList.remove('invalid');
+    }
+
+    function showStepError(step, msg) {
+        const el = document.getElementById(`step${step}Error`);
+        if (el) {
+            el.textContent = msg;
+            el.classList.add('active');
+        }
+        return false;
+    }
+
+    function clearStepError(step) {
+        const el = document.getElementById(`step${step}Error`);
+        if (el) {
+            el.classList.remove('active');
+            el.textContent = '';
+        }
+    }
+
+    function selectPayment(method) {
+        document.getElementById('paymentMethod').value = method;
+        document.querySelectorAll('.pay-method-tab').forEach(t => {
+            t.classList.toggle('active', t.dataset.method === method);
+        });
+        document.getElementById('payCardForm').style.display = method === 'CARD' ? 'block' : 'none';
+        document.getElementById('payCashInfo').classList.toggle('active', method === 'CASH');
+
+        if (method === 'CASH') {
+            ['rowCardNumber', 'rowCardHolder', 'rowCardExpiry', 'rowCardCvv'].forEach(clearFieldError);
+            clearStepError(3);
+        }
+    }
+
+    function calcDays() {
+        const sd = document.getElementById('startDate').value;
+        const ed = document.getElementById('endDate').value;
+        if (!sd || !ed) return 0;
+        const start = new Date(sd), end = new Date(ed);
+        if (end < start) return 0;
+        return Math.floor((end - start) / 86400000) + 1;
+    }
+
+    function calcInsuranceTotal(days) {
+        if (days <= 0) return 0;
+        let sum = 0;
+        document.querySelectorAll('.js-insurance:checked').forEach(cb => {
+            sum += Number(cb.dataset.price) * days;
+        });
+        return sum;
+    }
+
+    function calcExtrasTotal(days) {
+        if (days <= 0) return 0;
+        let sum = 0;
+        document.querySelectorAll('.js-extra:checked').forEach(cb => {
+            sum += Number(cb.dataset.price) * days;
+        });
+        return sum;
+    }
+
+    async function recalcAndRender() {
+        const days = calcDays();
+        const carTotal = days > 0 ? CAR_PRICE_PER_DAY * days : 0;
+        const insurance = calcInsuranceTotal(days);
+        const extras = calcExtrasTotal(days);
+        const totalRub = carTotal + insurance + extras;
+
+        let rate = 1;
+        try { rate = await getRate(currentCurrency); } catch (e) { rate = 1; }
+
+        document.getElementById('sumDays').textContent = days > 0 ? `${days} дн.` : '—';
+        document.getElementById('sumTariff').textContent =
+            formatCurrency(CAR_PRICE_PER_DAY * rate, currentCurrency) + ' /день';
+
+        const insRow = document.getElementById('sumInsuranceRow');
+        if (insurance > 0) {
+            insRow.style.display = 'flex';
+            document.getElementById('sumInsurance').textContent =
+                formatCurrency(insurance * rate, currentCurrency);
+        } else { insRow.style.display = 'none'; }
+
+        const exRow = document.getElementById('sumExtrasRow');
+        if (extras > 0) {
+            exRow.style.display = 'flex';
+            document.getElementById('sumExtras').textContent =
+                formatCurrency(extras * rate, currentCurrency);
+        } else { exRow.style.display = 'none'; }
+
+        document.getElementById('sumTotal').textContent =
+            days > 0 ? formatCurrency(totalRub * rate, currentCurrency) : '—';
+
+        document.getElementById('submitTotal').textContent =
+            days > 0 ? formatCurrency(totalRub * rate, currentCurrency) : '';
+    }
+
+    async function getRate(currency) {
+        if (rateCache[currency] !== undefined) return rateCache[currency];
+        const probe = 1000;
+        const res = await fetch(`/api/payments/convert?amount=${probe}&currency=${currency}`);
+        if (!res.ok) throw new Error('rate fetch failed');
+        const data = await res.json();
+        const rate = Number(data.converted) / probe;
+        rateCache[currency] = rate;
+        return rate;
+    }
+
+    function formatCurrency(amount, currency) {
+        const rounded = Math.round(amount);
+        const withSpaces = rounded.toLocaleString('ru-RU').replace(/,/g, ' ');
+        if (currency === 'RUB') return `${withSpaces} ₽`;
+        if (currency === 'USD') return `$${amount.toFixed(2)}`;
+        return `€${amount.toFixed(2)}`;
+    }
+
+    async function setCurrency(cur) {
+        currentCurrency = cur;
+        document.querySelectorAll('.currency-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.currency === cur);
+        });
+        await recalcAndRender();
+    }
+</script>
+
+</body>
+</html>
