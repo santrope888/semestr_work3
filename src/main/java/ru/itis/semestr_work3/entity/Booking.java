@@ -35,6 +35,24 @@ public class Booking {
     @Column(name = "created_at", nullable = false)
     private LocalDate createdAt;
 
+    @Column(name = "pickup_location")
+    private String pickupLocation;
+
+    @Column(name = "return_location")
+    private String returnLocation;
+
+    @Column(name = "gps_navigator", nullable = false)
+    private Boolean gpsNavigator = false;
+
+    @Column(name = "child_seat", nullable = false)
+    private Boolean childSeat = false;
+
+    @Column(name = "driver_service", nullable = false)
+    private Boolean driverService = false;
+
+    @Column(name = "booking_number", unique = true)
+    private String bookingNumber;
+
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -53,5 +71,4 @@ public class Booking {
             inverseJoinColumns = @JoinColumn(name = "insurance_id")
     )
     private Set<Insurance> insurances;
-
 }

@@ -28,6 +28,9 @@ public class Insurance {
     @Column(name = "price_per_day", nullable = false)
     private Integer pricePerDay;
 
+    @Column
+    private String icon;
+
     @ManyToMany(mappedBy = "insurances")
     private Set<Booking> bookings;
 }

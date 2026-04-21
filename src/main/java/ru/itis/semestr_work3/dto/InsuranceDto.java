@@ -12,4 +12,5 @@ public class InsuranceDto {
     private String name;
     private String description;
     private Integer pricePerDay;
+    private String icon;
 }
