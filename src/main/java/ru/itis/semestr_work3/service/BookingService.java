@@ -7,6 +7,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.itis.semestr_work3.dto.BookingExtrasRequest;
 import ru.itis.semestr_work3.dto.BookingFilter;
 import ru.itis.semestr_work3.entity.Booking;
 import ru.itis.semestr_work3.entity.Car;
@@ -20,6 +21,7 @@ import ru.itis.semestr_work3.repository.InsuranceRepository;
 import ru.itis.semestr_work3.repository.UserRepository;
 import ru.itis.semestr_work3.specifications.BookingSpecifications;
 
+import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -32,11 +34,31 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class BookingService {
 
+    public static final int GPS_PRICE_PER_DAY = 300;
+    public static final int CHILD_SEAT_PRICE_PER_DAY = 400;
+    public static final int DRIVER_PRICE_PER_DAY = 3500;
+
+    public static final List<String> ALLOWED_LOCATIONS = List.of(
+            "Москва — Внуково",
+            "Москва — Шереметьево",
+            "Москва — Домодедово",
+            "Москва — Центр"
+    );
+
+    public static final Set<String> ALLOWED_PAYMENT_METHODS = Set.of("CARD", "CASH");
+
+    private static final String BOOKING_NUMBER_PREFIX = "AM-";
+    private static final String BOOKING_NUMBER_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    private static final int BOOKING_NUMBER_LENGTH = 6;
+    private static final int BOOKING_NUMBER_MAX_ATTEMPTS = 10;
+
     private final BookingRepository bookingRepository;
     private final InsuranceRepository insuranceRepository;
     private final CarRepository carRepository;
     private final UserRepository userRepository;
     private final EntityManager entityManager;
+    private final NotificationService notificationService;
+    private final SecureRandom random = new SecureRandom();
 
     @Transactional(readOnly = true)
     public List<Booking> findFilteredBookings(BookingFilter filter) {
@@ -81,7 +103,7 @@ public class BookingService {
         return bookingRepository.findAll(BookingSpecifications.hasStatus(status));
     }
 
-   public List<Map<String, String>> getBookedPeriods(Long carId) {
+    public List<Map<String, String>> getBookedPeriods(Long carId) {
         Specification<Booking> spec = Specification
                 .where(BookingSpecifications.hasCar(carId))
                 .and((root, query, cb) ->
@@ -152,6 +174,104 @@ public class BookingService {
         booking.setPayment(payment);
 
         return bookingRepository.save(booking);
+    }
+
+    @Transactional
+    public Booking createWithExtras(BookingExtrasRequest request, Long userId) {
+        validateExtrasRequest(request);
+
+        Car car = carRepository.findById(request.getCarId())
+                .orElseThrow(() -> new ResourceNotFoundException("Автомобиль не найден"));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+
+        if (Boolean.FALSE.equals(car.getAvailable())) {
+            throw new IllegalArgumentException("Автомобиль недоступен для бронирования");
+        }
+
+        if (request.getStartDate().isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Дата начала не может быть в прошлом");
+        }
+
+        if (request.getEndDate().isBefore(request.getStartDate())) {
+            throw new IllegalArgumentException("Дата окончания не может быть раньше даты начала");
+        }
+
+        checkCarAvailabilityForPeriod(car.getId(), request.getStartDate(), request.getEndDate());
+
+        long days = ChronoUnit.DAYS.between(request.getStartDate(), request.getEndDate()) + 1;
+
+        int carPrice = car.getPricePerDay() * (int) days;
+        int insurancePrice = 0;
+        Set<Insurance> selectedInsurances = Set.of();
+
+        if (request.getInsuranceIds() != null && !request.getInsuranceIds().isEmpty()) {
+            List<Insurance> insurances = insuranceRepository.findAllById(request.getInsuranceIds());
+
+            if (insurances.size() != request.getInsuranceIds().size()) {
+                throw new IllegalArgumentException("Одна или несколько выбранных страховок не найдены");
+            }
+
+            insurancePrice = insurances.stream()
+                    .mapToInt(i -> i.getPricePerDay() * (int) days)
+                    .sum();
+
+            selectedInsurances = Set.copyOf(insurances);
+        }
+
+        boolean gps = Boolean.TRUE.equals(request.getGpsNavigator());
+        boolean seat = Boolean.TRUE.equals(request.getChildSeat());
+        boolean driver = Boolean.TRUE.equals(request.getDriverService());
+
+        int extrasPrice = 0;
+        if (gps)    extrasPrice += GPS_PRICE_PER_DAY * (int) days;
+        if (seat)   extrasPrice += CHILD_SEAT_PRICE_PER_DAY * (int) days;
+        if (driver) extrasPrice += DRIVER_PRICE_PER_DAY * (int) days;
+
+        Booking booking = new Booking();
+        booking.setCar(car);
+        booking.setUser(user);
+        booking.setStartDate(request.getStartDate());
+        booking.setEndDate(request.getEndDate());
+        booking.setPickupLocation(request.getPickupLocation());
+        booking.setReturnLocation(request.getReturnLocation());
+        booking.setInsurances(selectedInsurances);
+        booking.setGpsNavigator(gps);
+        booking.setChildSeat(seat);
+        booking.setDriverService(driver);
+        booking.setTotalPrice(carPrice + insurancePrice + extrasPrice);
+        booking.setStatus("PENDING");
+        booking.setCreatedAt(LocalDate.now());
+        booking.setBookingNumber(generateUniqueBookingNumber());
+
+        Payment payment = new Payment();
+        payment.setAmount(booking.getTotalPrice());
+        payment.setCurrency("RUB");
+        payment.setMethod(request.getPaymentMethod());
+        payment.setStatus("PENDING");
+        payment.setBooking(booking);
+        booking.setPayment(payment);
+
+        Booking saved = bookingRepository.save(booking);
+        log.info("Создана бронь #{} (booking_number={}) для пользователя {}",
+                saved.getId(), saved.getBookingNumber(), userId);
+
+        String paymentNote = "CASH".equals(request.getPaymentMethod())
+                ? " Оплата при выдаче автомобиля."
+                : " Оплачено картой.";
+        notificationService.send(
+                user,
+                "BOOKING_CREATED",
+                String.format("Бронь %s оформлена. %s %s — %s.%s",
+                        saved.getBookingNumber(),
+                        car.getBrand() + " " + car.getModel(),
+                        request.getStartDate(),
+                        request.getEndDate(),
+                        paymentNote)
+        );
+
+        return saved;
     }
 
     @Transactional
@@ -235,6 +355,35 @@ public class BookingService {
         }
     }
 
+    private void validateExtrasRequest(BookingExtrasRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Данные бронирования отсутствуют");
+        }
+
+        if (request.getCarId() == null) {
+            throw new IllegalArgumentException("Не указан id автомобиля");
+        }
+
+        if (request.getStartDate() == null || request.getEndDate() == null) {
+            throw new IllegalArgumentException("Нужно указать даты начала и окончания");
+        }
+
+        if (request.getPickupLocation() == null
+                || !ALLOWED_LOCATIONS.contains(request.getPickupLocation())) {
+            throw new IllegalArgumentException("Неверное место выдачи");
+        }
+
+        if (request.getReturnLocation() == null
+                || !ALLOWED_LOCATIONS.contains(request.getReturnLocation())) {
+            throw new IllegalArgumentException("Неверное место возврата");
+        }
+
+        if (request.getPaymentMethod() == null
+                || !ALLOWED_PAYMENT_METHODS.contains(request.getPaymentMethod())) {
+            throw new IllegalArgumentException("Неверный метод оплаты");
+        }
+    }
+
     private void checkCarAvailabilityForPeriod(Long carId, LocalDate startDate, LocalDate endDate) {
         Specification<Booking> overlapSpecification =
                 BookingSpecifications.overlapsCarPeriod(carId, startDate, endDate);
@@ -242,5 +391,23 @@ public class BookingService {
         if (bookingRepository.count(overlapSpecification) > 0) {
             throw new IllegalArgumentException("Автомобиль уже забронирован на выбранные даты");
         }
+    }
+
+    private String generateUniqueBookingNumber() {
+        for (int attempt = 0; attempt < BOOKING_NUMBER_MAX_ATTEMPTS; attempt++) {
+            String candidate = generateBookingNumberCandidate();
+            if (!bookingRepository.existsByBookingNumber(candidate)) {
+                return candidate;
+            }
+        }
+        throw new IllegalStateException("Не удалось сгенерировать уникальный номер брони");
+    }
+
+    private String generateBookingNumberCandidate() {
+        StringBuilder sb = new StringBuilder(BOOKING_NUMBER_PREFIX);
+        for (int i = 0; i < BOOKING_NUMBER_LENGTH; i++) {
+            sb.append(BOOKING_NUMBER_ALPHABET.charAt(random.nextInt(BOOKING_NUMBER_ALPHABET.length())));
+        }
+        return sb.toString();
     }
 }

@@ -58,6 +58,8 @@ class BookingServiceTest {
     private UserRepository userRepository;
     @Mock
     private EntityManager entityManager;
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private BookingService bookingService;
@@ -438,5 +440,288 @@ class BookingServiceTest {
 
         assertThat(result).containsExactly(row);
         verify(entityManager).createQuery(anyString(), eq(Object[].class));
+    }
+
+    private ru.itis.semestr_work3.dto.BookingExtrasRequest validExtrasRequest() {
+        return ru.itis.semestr_work3.dto.BookingExtrasRequest.builder()
+                .carId(1L)
+                .startDate(LocalDate.now().plusDays(1))
+                .endDate(LocalDate.now().plusDays(3))
+                .pickupLocation("Москва — Внуково")
+                .returnLocation("Москва — Шереметьево")
+                .paymentMethod("CARD")
+                .build();
+    }
+
+    @Test
+    void createWithExtras_minimalValidRequest_createsBookingWithBookingNumber() {
+        when(carRepository.findById(1L)).thenReturn(Optional.of(car));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(bookingRepository.count(any(Specification.class))).thenReturn(0L);
+        when(bookingRepository.existsByBookingNumber(anyString())).thenReturn(false);
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Booking result = bookingService.createWithExtras(validExtrasRequest(), 1L);
+
+        assertThat(result.getStatus()).isEqualTo("PENDING");
+        assertThat(result.getTotalPrice()).isEqualTo(3000);
+        assertThat(result.getBookingNumber()).startsWith("AM-");
+        assertThat(result.getBookingNumber()).hasSize(9);
+        assertThat(result.getPickupLocation()).isEqualTo("Москва — Внуково");
+        assertThat(result.getReturnLocation()).isEqualTo("Москва — Шереметьево");
+        assertThat(result.getGpsNavigator()).isFalse();
+        assertThat(result.getChildSeat()).isFalse();
+        assertThat(result.getDriverService()).isFalse();
+        assertThat(result.getPayment().getMethod()).isEqualTo("CARD");
+        assertThat(result.getInsurances()).isEmpty();
+    }
+
+    @Test
+    void createWithExtras_allOptionsEnabled_addsExtrasCost() {
+        ru.itis.semestr_work3.dto.BookingExtrasRequest request = validExtrasRequest();
+        request.setGpsNavigator(true);
+        request.setChildSeat(true);
+        request.setDriverService(true);
+
+        when(carRepository.findById(1L)).thenReturn(Optional.of(car));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(bookingRepository.count(any(Specification.class))).thenReturn(0L);
+        when(bookingRepository.existsByBookingNumber(anyString())).thenReturn(false);
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Booking result = bookingService.createWithExtras(request, 1L);
+
+        assertThat(result.getTotalPrice()).isEqualTo(15600);
+        assertThat(result.getGpsNavigator()).isTrue();
+        assertThat(result.getChildSeat()).isTrue();
+        assertThat(result.getDriverService()).isTrue();
+    }
+
+    @Test
+    void createWithExtras_withInsurances_addsInsuranceCost() {
+        ru.itis.semestr_work3.dto.BookingExtrasRequest request = validExtrasRequest();
+        request.setInsuranceIds(Set.of(100L));
+        request.setPaymentMethod("CASH");
+
+        Insurance insurance = new Insurance();
+        insurance.setId(100L);
+        insurance.setPricePerDay(500);
+
+        when(carRepository.findById(1L)).thenReturn(Optional.of(car));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(bookingRepository.count(any(Specification.class))).thenReturn(0L);
+        when(insuranceRepository.findAllById(Set.of(100L))).thenReturn(List.of(insurance));
+        when(bookingRepository.existsByBookingNumber(anyString())).thenReturn(false);
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Booking result = bookingService.createWithExtras(request, 1L);
+
+        assertThat(result.getTotalPrice()).isEqualTo(4500);
+        assertThat(result.getPayment().getMethod()).isEqualTo("CASH");
+        assertThat(result.getInsurances()).containsExactly(insurance);
+    }
+
+    @Test
+    void createWithExtras_nullRequest_throwsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> bookingService.createWithExtras(null, 1L));
+    }
+
+    @Test
+    void createWithExtras_nullCarId_throwsException() {
+        ru.itis.semestr_work3.dto.BookingExtrasRequest request = validExtrasRequest();
+        request.setCarId(null);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> bookingService.createWithExtras(request, 1L));
+    }
+
+    @Test
+    void createWithExtras_nullStartDate_throwsException() {
+        ru.itis.semestr_work3.dto.BookingExtrasRequest request = validExtrasRequest();
+        request.setStartDate(null);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> bookingService.createWithExtras(request, 1L));
+    }
+
+    @Test
+    void createWithExtras_nullEndDate_throwsException() {
+        ru.itis.semestr_work3.dto.BookingExtrasRequest request = validExtrasRequest();
+        request.setEndDate(null);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> bookingService.createWithExtras(request, 1L));
+    }
+
+    @Test
+    void createWithExtras_invalidPickupLocation_throwsException() {
+        ru.itis.semestr_work3.dto.BookingExtrasRequest request = validExtrasRequest();
+        request.setPickupLocation("Несуществующий аэропорт");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> bookingService.createWithExtras(request, 1L));
+    }
+
+    @Test
+    void createWithExtras_nullPickupLocation_throwsException() {
+        ru.itis.semestr_work3.dto.BookingExtrasRequest request = validExtrasRequest();
+        request.setPickupLocation(null);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> bookingService.createWithExtras(request, 1L));
+    }
+
+    @Test
+    void createWithExtras_invalidReturnLocation_throwsException() {
+        ru.itis.semestr_work3.dto.BookingExtrasRequest request = validExtrasRequest();
+        request.setReturnLocation("Marrakech");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> bookingService.createWithExtras(request, 1L));
+    }
+
+    @Test
+    void createWithExtras_nullReturnLocation_throwsException() {
+        ru.itis.semestr_work3.dto.BookingExtrasRequest request = validExtrasRequest();
+        request.setReturnLocation(null);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> bookingService.createWithExtras(request, 1L));
+    }
+
+    @Test
+    void createWithExtras_invalidPaymentMethod_throwsException() {
+        ru.itis.semestr_work3.dto.BookingExtrasRequest request = validExtrasRequest();
+        request.setPaymentMethod("BITCOIN");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> bookingService.createWithExtras(request, 1L));
+    }
+
+    @Test
+    void createWithExtras_nullPaymentMethod_throwsException() {
+        ru.itis.semestr_work3.dto.BookingExtrasRequest request = validExtrasRequest();
+        request.setPaymentMethod(null);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> bookingService.createWithExtras(request, 1L));
+    }
+
+    @Test
+    void createWithExtras_carNotFound_throwsException() {
+        when(carRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> bookingService.createWithExtras(validExtrasRequest(), 1L));
+    }
+
+    @Test
+    void createWithExtras_userNotFound_throwsException() {
+        when(carRepository.findById(1L)).thenReturn(Optional.of(car));
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> bookingService.createWithExtras(validExtrasRequest(), 1L));
+    }
+
+    @Test
+    void createWithExtras_carUnavailable_throwsException() {
+        car.setAvailable(false);
+        when(carRepository.findById(1L)).thenReturn(Optional.of(car));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> bookingService.createWithExtras(validExtrasRequest(), 1L));
+    }
+
+    @Test
+    void createWithExtras_startDateInPast_throwsException() {
+        ru.itis.semestr_work3.dto.BookingExtrasRequest request = validExtrasRequest();
+        request.setStartDate(LocalDate.now().minusDays(1));
+
+        when(carRepository.findById(1L)).thenReturn(Optional.of(car));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> bookingService.createWithExtras(request, 1L));
+    }
+
+    @Test
+    void createWithExtras_endBeforeStart_throwsException() {
+        ru.itis.semestr_work3.dto.BookingExtrasRequest request = validExtrasRequest();
+        request.setStartDate(LocalDate.now().plusDays(5));
+        request.setEndDate(LocalDate.now().plusDays(2));
+
+        when(carRepository.findById(1L)).thenReturn(Optional.of(car));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> bookingService.createWithExtras(request, 1L));
+    }
+
+    @Test
+    void createWithExtras_periodOverlap_throwsException() {
+        when(carRepository.findById(1L)).thenReturn(Optional.of(car));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(bookingRepository.count(any(Specification.class))).thenReturn(1L);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> bookingService.createWithExtras(validExtrasRequest(), 1L));
+    }
+
+    @Test
+    void createWithExtras_someInsuranceMissing_throwsException() {
+        ru.itis.semestr_work3.dto.BookingExtrasRequest request = validExtrasRequest();
+        request.setInsuranceIds(Set.of(100L, 200L));
+
+        when(carRepository.findById(1L)).thenReturn(Optional.of(car));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(bookingRepository.count(any(Specification.class))).thenReturn(0L);
+        when(insuranceRepository.findAllById(Set.of(100L, 200L)))
+                .thenReturn(List.of(new Insurance()));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> bookingService.createWithExtras(request, 1L));
+    }
+
+    @Test
+    void createWithExtras_bookingNumberCollision_retriesAndSucceeds() {
+        when(carRepository.findById(1L)).thenReturn(Optional.of(car));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(bookingRepository.count(any(Specification.class))).thenReturn(0L);
+        when(bookingRepository.existsByBookingNumber(anyString()))
+                .thenReturn(true)
+                .thenReturn(false);
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Booking result = bookingService.createWithExtras(validExtrasRequest(), 1L);
+
+        assertThat(result.getBookingNumber()).startsWith("AM-");
+        verify(bookingRepository, org.mockito.Mockito.times(2)).existsByBookingNumber(anyString());
+    }
+
+    @Test
+    void createWithExtras_bookingNumberAlwaysCollides_throwsException() {
+        when(carRepository.findById(1L)).thenReturn(Optional.of(car));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(bookingRepository.count(any(Specification.class))).thenReturn(0L);
+        when(bookingRepository.existsByBookingNumber(anyString())).thenReturn(true);
+
+        assertThrows(IllegalStateException.class,
+                () -> bookingService.createWithExtras(validExtrasRequest(), 1L));
+    }
+
+    @Test
+    void createWithExtras_sendsNotification() {
+        when(carRepository.findById(1L)).thenReturn(Optional.of(car));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(bookingRepository.count(any(Specification.class))).thenReturn(0L);
+        when(bookingRepository.existsByBookingNumber(anyString())).thenReturn(false);
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        bookingService.createWithExtras(validExtrasRequest(), 1L);
+
+        verify(notificationService).send(eq(user), eq("BOOKING_CREATED"), anyString());
     }
 }
