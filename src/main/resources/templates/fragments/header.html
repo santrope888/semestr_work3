@@ -3,6 +3,9 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <header th:fragment="header">
 
+    <meta th:name="_csrf"        th:content="${_csrf.token}"/>
+    <meta th:name="_csrf_header" th:content="${_csrf.headerName}"/>
+
     <div class="nav">
         <a th:href="@{/}" class="logo">Aura<span>Motum</span></a>
 
@@ -38,7 +41,7 @@
             border-bottom:1px solid rgba(0,0,0,0.07);display:flex;justify-content:space-between;align-items:center;
             background:var(--main-color);color:#fff;border-radius:16px 16px 0 0;">
                         <span>Уведомления</span>
-                        <button onclick="markAllRead()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:0.8rem;">
+                        <button onclick="event.stopPropagation(); markAllRead();" style="background:none;border:none;color:#fff;cursor:pointer;font-size:0.8rem;">
                             Прочитать все
                         </button>
                     </div>
@@ -189,7 +192,10 @@
                     const icon = getNotifIcon(n.type);
                     const item = document.createElement('div');
                     item.className = 'notif-item' + (n.isRead ? '' : ' unread');
-                    item.onclick = () => markRead(n.id, item);
+                    item.onclick = (e) => {
+                        e.stopPropagation();
+                        markRead(n.id, item);
+                    };
                     item.innerHTML = `
                         <div class="notif-item-icon ${icon.cls}"><i class='bx ${icon.icon}'></i></div>
                         <div class="notif-item-text">
@@ -208,28 +214,42 @@
 
         async function markRead(id, el) {
             try {
-                await fetch(`/api/notifications/${id}/read`, {
+                const res = await fetch(`/api/notifications/${id}/read`, {
                     method: 'PATCH',
+                    credentials: 'same-origin',
                     headers: getCsrfHeaders()
                 });
+                if (!res.ok) {
+                    console.error('markRead failed:', res.status);
+                    return;
+                }
                 el.classList.remove('unread');
                 el.querySelector('.notif-item-dot')?.remove();
                 updateBadge();
-            } catch (e) {}
+            } catch (e) {
+                console.error('markRead network error', e);
+            }
         }
 
         async function markAllRead() {
             try {
-                await fetch('/api/notifications/read-all', {
+                const res = await fetch('/api/notifications/read-all', {
                     method: 'PATCH',
+                    credentials: 'same-origin',
                     headers: getCsrfHeaders()
                 });
+                if (!res.ok) {
+                    console.error('markAllRead failed:', res.status);
+                    return;
+                }
                 document.querySelectorAll('.notif-item.unread').forEach(el => {
                     el.classList.remove('unread');
                     el.querySelector('.notif-item-dot')?.remove();
                 });
                 updateBadge();
-            } catch (e) {}
+            } catch (e) {
+                console.error('markAllRead network error', e);
+            }
         }
 
         async function updateBadge() {

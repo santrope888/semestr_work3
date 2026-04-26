@@ -1,8 +1,10 @@
 package ru.itis.semestr_work3.controllers;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import ru.itis.semestr_work3.entity.ChatSession;
@@ -36,5 +38,13 @@ public class GlobalModelAttributes {
                 ? aiChatService.createSession(user, "Подбор автомобиля")
                 : sessions.get(0);
         return session.getId();
+    }
+
+    @ModelAttribute
+    public void primeCsrfToken(HttpServletRequest request) {
+        CsrfToken token = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+        if (token != null) {
+            token.getToken();
+        }
     }
 }
