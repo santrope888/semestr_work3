@@ -7,6 +7,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -14,6 +15,7 @@ import ru.itis.semestr_work3.entity.Car;
 import ru.itis.semestr_work3.entity.ChatMessage;
 import ru.itis.semestr_work3.entity.ChatSession;
 import ru.itis.semestr_work3.entity.User;
+import ru.itis.semestr_work3.exception.ExternalServiceException;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.repository.CarRepository;
 import ru.itis.semestr_work3.repository.ChatMessageRepository;
@@ -51,6 +53,18 @@ public class AiChatService {
         return sessionRepository.save(session);
     }
 
+    @Transactional
+    public void deleteSession(Long sessionId, Long userId) {
+        ChatSession session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Чат-сессия не найдена"));
+
+        if (!session.getUser().getId().equals(userId)) {
+            throw new AccessDeniedException("Доступ запрещён");
+        }
+
+        sessionRepository.delete(session);
+    }
+
     @Transactional(readOnly = true)
     public List<ChatSession> getUserSessions(Long userId) {
         return sessionRepository.findByUser(userId);
@@ -67,14 +81,16 @@ public class AiChatService {
         return messageRepository.findBySession(sessionId);
     }
 
+    @Transactional
     public String sendMessage(Long sessionId, String userMessage) {
         ChatSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Чат-сессия не найдена"));
 
         saveMessage(session, "USER", userMessage);
-        String aiResponse = callOllama(session);
-        saveMessage(session, "ASSISTANT", aiResponse);
 
+        String aiResponse = callOllama(session);
+
+        saveMessage(session, "ASSISTANT", aiResponse);
         return aiResponse;
     }
 
@@ -131,19 +147,30 @@ public class AiChatService {
                     Map.class
             );
 
-            if (response.getBody() != null && response.getBody().containsKey("message")) {
-                Map<String, Object> message = (Map<String, Object>) response.getBody().get("message");
-                Object content = message.get("content");
-                if (content != null) {
-                    return content.toString();
-                }
+            if (response.getBody() == null) {
+                throw new ExternalServiceException("Ollama вернул пустой ответ");
             }
 
-            return "Извините, не удалось получить ответ. Попробуйте ещё раз.";
+            Object messageObj = response.getBody().get("message");
+            if (!(messageObj instanceof Map<?, ?> message)) {
+                throw new ExternalServiceException("Ollama вернул некорректный формат ответа");
+            }
 
+            Object content = message.get("content");
+            if (content == null || content.toString().isBlank()) {
+                throw new ExternalServiceException("Ollama не вернул текст ответа");
+            }
+
+            return content.toString();
+
+        } catch (ExternalServiceException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Ошибка при обращении к Ollama: {}", e.getMessage(), e);
-            return "Извините, ИИ-помощник временно недоступен. Попробуйте позже.";
+            throw new ExternalServiceException(
+                    "ИИ-помощник временно недоступен. Попробуйте позже.",
+                    e
+            );
         }
     }
 
