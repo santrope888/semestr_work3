@@ -58,7 +58,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .csrf(csrf -> csrf
-                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+                        .ignoringRequestMatchers("/api/chat/**")
                 )
                 .cors(cors -> cors.configurationSource(corsSource()))
                 .exceptionHandling(ex -> ex

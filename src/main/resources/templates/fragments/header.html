@@ -3,9 +3,6 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <header th:fragment="header">
 
-    <meta th:name="_csrf"        th:content="${_csrf.token}"/>
-    <meta th:name="_csrf_header" th:content="${_csrf.headerName}"/>
-
     <div class="nav">
         <a th:href="@{/}" class="logo">Aura<span>Motum</span></a>
 
