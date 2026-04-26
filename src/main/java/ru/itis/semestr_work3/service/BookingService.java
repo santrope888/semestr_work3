@@ -280,7 +280,19 @@ public class BookingService {
                 .orElseThrow(() -> new ResourceNotFoundException("Бронирование не найдено"));
 
         booking.setStatus("CONFIRMED");
-        return bookingRepository.save(booking);
+        Booking saved = bookingRepository.save(booking);
+
+        notificationService.send(
+                saved.getUser(),
+                "BOOKING_CONFIRMED",
+                String.format("Бронь %s подтверждена. %s %s — %s. Ждём вас!",
+                        saved.getBookingNumber() != null ? saved.getBookingNumber() : "#" + saved.getId(),
+                        saved.getCar().getBrand() + " " + saved.getCar().getModel(),
+                        saved.getStartDate(),
+                        saved.getEndDate())
+        );
+
+        return saved;
     }
 
     @Transactional
@@ -294,11 +306,32 @@ public class BookingService {
 
         booking.setStatus("CANCELLED");
 
+        boolean wasPaidByCard = booking.getPayment() != null
+                && "CARD".equals(booking.getPayment().getMethod())
+                && "PAID".equals(booking.getPayment().getStatus());
+
         if (booking.getPayment() != null) {
             booking.getPayment().setStatus("REFUNDED");
         }
 
-        return bookingRepository.save(booking);
+        Booking saved = bookingRepository.save(booking);
+
+        String tail = wasPaidByCard
+                ? " Возврат средств поступит на карту в течение 3-5 рабочих дней."
+                : "";
+
+        notificationService.send(
+                saved.getUser(),
+                "BOOKING_CANCELLED",
+                String.format("Бронь %s отменена. %s %s — %s.%s",
+                        saved.getBookingNumber() != null ? saved.getBookingNumber() : "#" + saved.getId(),
+                        saved.getCar().getBrand() + " " + saved.getCar().getModel(),
+                        saved.getStartDate(),
+                        saved.getEndDate(),
+                        tail)
+        );
+
+        return saved;
     }
 
     @Transactional
@@ -307,7 +340,16 @@ public class BookingService {
                 .orElseThrow(() -> new ResourceNotFoundException("Бронирование не найдено"));
 
         booking.setStatus("COMPLETED");
-        return bookingRepository.save(booking);
+        Booking saved = bookingRepository.save(booking);
+
+        notificationService.send(
+                saved.getUser(),
+                "BOOKING_COMPLETED",
+                String.format("Поездка по брони %s завершена. Спасибо, что выбрали нас! Будем рады вашему отзыву.",
+                        saved.getBookingNumber() != null ? saved.getBookingNumber() : "#" + saved.getId())
+        );
+
+        return saved;
     }
 
     public List<Object[]> findMostBooked() {
