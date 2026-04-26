@@ -12,9 +12,11 @@
         .home-grid {
             grid-template-columns: repeat(4, 1fr) !important;
         }
+
         @media (max-width: 992px) {
             .home-grid { grid-template-columns: repeat(2, 1fr) !important; }
         }
+
         @media (max-width: 576px) {
             .home-grid { grid-template-columns: 1fr !important; }
         }
@@ -39,12 +41,14 @@
             margin-bottom: 15px;
             background: transparent;
         }
+
         .home-img-box img {
             max-width: 100%;
             max-height: 100%;
             width: auto;
             object-fit: contain;
         }
+
         .home-img-box .home-img-placeholder {
             font-size: 3.5rem;
             opacity: 0.25;
@@ -58,6 +62,7 @@
             text-align: center;
             margin-top: 2.5rem;
         }
+
         .home-catalog-cta a {
             display: inline-flex;
             align-items: center;
@@ -70,12 +75,327 @@
             font-size: 1rem;
             transition: 0.3s;
         }
+
         .home-catalog-cta a:hover {
             transform: translateX(6px);
             box-shadow: 0 10px 25px rgba(0,0,0,0.15);
         }
+
         .home-catalog-cta i {
             font-size: 1.5em;
+        }
+
+        .ai-cta-center {
+            text-align: center;
+        }
+
+        .ai-btn-wrap {
+            position: relative;
+            display: inline-block;
+            padding: 30px 40px;
+            isolation: isolate;
+            border-radius: 999px;
+        }
+
+        .ai-btn-wrap::before {
+            content: '';
+            position: absolute;
+            inset: -20px -54px -12px;
+            border-radius: 999px;
+            z-index: -2;
+            pointer-events: none;
+            filter: blur(34px) saturate(1.12);
+            opacity: 0.96;
+            background:
+                    radial-gradient(ellipse 42% 82% at 10% 50%, rgba(103, 214, 255, 0.92) 0%, transparent 60%),
+                    radial-gradient(ellipse 38% 76% at 28% 64%, rgba(132, 160, 255, 0.46) 0%, transparent 60%),
+                    radial-gradient(ellipse 40% 80% at 50% 42%, rgba(255, 216, 142, 0.62) 0%, transparent 60%),
+                    radial-gradient(ellipse 42% 82% at 72% 50%, rgba(255, 154, 206, 0.86) 0%, transparent 60%),
+                    radial-gradient(ellipse 40% 80% at 90% 56%, rgba(178, 138, 255, 0.58) 0%, transparent 60%),
+                    radial-gradient(ellipse 46% 76% at 52% 82%, rgba(153, 208, 255, 0.34) 0%, transparent 62%);
+            background-size: 210% 210%;
+            animation:
+                    aiDriftFlow 12s ease-in-out infinite,
+                    aiAuraPulse 6s ease-in-out infinite;
+            transition: filter 0.45s ease, opacity 0.45s ease;
+        }
+
+        .ai-btn-wrap::after {
+            content: '';
+            position: absolute;
+            inset: -4px -18px 6px;
+            border-radius: 999px;
+            z-index: -1;
+            pointer-events: none;
+            filter: blur(20px) saturate(1.05);
+            opacity: 0.78;
+            background:
+                    radial-gradient(ellipse 34% 68% at 18% 54%, rgba(122, 224, 255, 0.34) 0%, transparent 64%),
+                    radial-gradient(ellipse 28% 58% at 48% 84%, rgba(136, 172, 255, 0.22) 0%, transparent 64%),
+                    radial-gradient(ellipse 28% 58% at 62% 28%, rgba(255, 225, 168, 0.24) 0%, transparent 64%),
+                    radial-gradient(ellipse 34% 68% at 84% 46%, rgba(255, 170, 218, 0.30) 0%, transparent 64%);
+            background-size: 220% 220%;
+            animation:
+                    aiDriftFlowSoft 15s ease-in-out infinite reverse,
+                    aiAuraPulseSoft 5.4s ease-in-out infinite;
+            transition: opacity 0.45s ease, filter 0.45s ease;
+        }
+
+        .ai-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 18px 40px;
+            min-height: 62px;
+            font-size: 1.02rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            color: #1d2235 !important;
+            text-decoration: none;
+            font-family: inherit;
+
+            background: linear-gradient(
+                    180deg,
+                    rgba(255, 255, 255, 0.988) 0%,
+                    rgba(255, 255, 255, 0.944) 48%,
+                    rgba(255, 255, 255, 0.898) 100%
+            );
+
+            border: 1px solid rgba(255, 255, 255, 0.88);
+            border-radius: 999px;
+            cursor: pointer;
+            overflow: hidden;
+
+            backdrop-filter: blur(22px) saturate(1.12);
+            -webkit-backdrop-filter: blur(22px) saturate(1.12);
+
+            box-shadow:
+                    inset 0 1px 0 rgba(255, 255, 255, 0.98),
+                    inset 0 -8px 16px rgba(126, 142, 255, 0.03),
+                    0 12px 26px rgba(20, 24, 43, 0.08),
+                    0 3px 8px rgba(20, 24, 43, 0.04);
+
+            transition: transform 0.28s ease, box-shadow 0.28s ease;
+        }
+
+        .ai-btn::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 8%;
+            right: 8%;
+            height: 42%;
+            border-radius: 999px;
+            background: linear-gradient(
+                    180deg,
+                    rgba(255, 255, 255, 0.98) 0%,
+                    rgba(255, 255, 255, 0.42) 42%,
+                    rgba(255, 255, 255, 0) 100%
+            );
+            pointer-events: none;
+        }
+
+        .ai-btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            padding: 1.35px;
+            border-radius: inherit;
+            pointer-events: none;
+
+            background: linear-gradient(
+                    108deg,
+                    rgba(114, 214, 255, 0.82) 0%,
+                    rgba(255, 216, 142, 0.72) 34%,
+                    rgba(255, 160, 206, 0.80) 68%,
+                    rgba(176, 140, 255, 0.76) 100%
+            );
+            background-size: 220% 220%;
+            background-position: 0% 50%;
+            opacity: 0.56;
+
+            -webkit-mask:
+                    linear-gradient(#000 0 0) content-box,
+                    linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+
+            animation: aiEdgeFlow 6.8s ease-in-out infinite;
+        }
+
+        .ai-btn i {
+            font-size: 1.2rem;
+            background: linear-gradient(
+                    135deg,
+                    #72d5ff 0%,
+                    #ffd58d 35%,
+                    #ff98cf 68%,
+                    #ac8cff 100%
+            );
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            filter: drop-shadow(0 0 8px rgba(255, 200, 150, 0.14));
+        }
+
+        .ai-btn-wrap:hover::before {
+            opacity: 1;
+            filter: blur(38px) saturate(1.16);
+            animation-duration: 8s, 4.8s;
+        }
+
+        .ai-btn-wrap:hover::after {
+            opacity: 0.88;
+            filter: blur(22px) saturate(1.08);
+            animation-duration: 10s, 4.4s;
+        }
+
+        .ai-btn-wrap:hover .ai-btn {
+            transform: translateY(-1px);
+            box-shadow:
+                    inset 0 1px 0 rgba(255, 255, 255, 0.98),
+                    inset 0 -8px 16px rgba(126, 142, 255, 0.04),
+                    0 14px 30px rgba(20, 24, 43, 0.10),
+                    0 4px 10px rgba(20, 24, 43, 0.05);
+        }
+
+        @keyframes aiDriftFlow {
+            0%, 100% {
+                background-position:
+                        0% 50%,
+                        100% 50%,
+                        50% 50%,
+                        50% 0%,
+                        0% 100%,
+                        100% 0%;
+            }
+            25% {
+                background-position:
+                        50% 8%,
+                        58% 100%,
+                        8% 100%,
+                        100% 50%,
+                        50% 50%,
+                        0% 50%;
+            }
+            50% {
+                background-position:
+                        100% 50%,
+                        0% 50%,
+                        50% 8%,
+                        50% 100%,
+                        100% 0%,
+                        0% 100%;
+            }
+            75% {
+                background-position:
+                        50% 100%,
+                        42% 0%,
+                        100% 0%,
+                        0% 50%,
+                        50% 100%,
+                        100% 50%;
+            }
+        }
+
+        @keyframes aiDriftFlowSoft {
+            0%, 100% {
+                background-position:
+                        0% 50%,
+                        100% 50%,
+                        50% 50%,
+                        50% 0%;
+            }
+            25% {
+                background-position:
+                        40% 10%,
+                        60% 100%,
+                        0% 100%,
+                        100% 50%;
+            }
+            50% {
+                background-position:
+                        100% 50%,
+                        0% 50%,
+                        50% 0%,
+                        50% 100%;
+            }
+            75% {
+                background-position:
+                        60% 100%,
+                        40% 0%,
+                        100% 0%,
+                        0% 50%;
+            }
+        }
+
+        @keyframes aiAuraPulse {
+            0%, 100% { opacity: 0.90; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes aiAuraPulseSoft {
+            0%, 100% { opacity: 0.68; }
+            50% { opacity: 0.84; }
+        }
+
+        @keyframes aiEdgeFlow {
+            0% {
+                background-position: 0% 50%;
+                opacity: 0.44;
+            }
+            25% {
+                background-position: 36% 50%;
+                opacity: 0.56;
+            }
+            50% {
+                background-position: 100% 50%;
+                opacity: 0.48;
+            }
+            75% {
+                background-position: 68% 50%;
+                opacity: 0.58;
+            }
+            100% {
+                background-position: 0% 50%;
+                opacity: 0.44;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .ai-btn-wrap {
+                padding: 24px 18px;
+            }
+
+            .ai-btn-wrap::before {
+                inset: -18px -34px -10px;
+                filter: blur(28px) saturate(1.08);
+            }
+
+            .ai-btn-wrap::after {
+                inset: -2px -12px 4px;
+                filter: blur(16px) saturate(1.02);
+            }
+
+            .ai-btn {
+                min-height: 54px;
+                padding: 15px 24px;
+                font-size: 0.95rem;
+                gap: 10px;
+            }
+
+            .ai-btn i {
+                font-size: 1.08rem;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .ai-btn-wrap::before,
+            .ai-btn-wrap::after,
+            .ai-btn::after {
+                animation: none;
+            }
         }
     </style>
 </head>
@@ -86,7 +406,7 @@
 <section class="home" id="home">
     <div class="home-content container">
         <div class="home-img">
-            <img src="/images/home.png" alt="Porsche Taycan">
+            <img src="/images/home.png" alt="Автомобиль Aura Motum">
         </div>
     </div>
 </section>
@@ -171,19 +491,29 @@
 <section class="container" style="padding: 4rem 0;">
     <div class="heading">
         <h2>Не знаете, что выбрать?</h2>
-        <p style="color:var(--text-alter-color);margin-top:8px;">Наш ИИ-помощник подберёт автомобиль под вашу задачу</p>
+        <p style="color:var(--text-alter-color);margin-top:8px;">
+            Наш ИИ-помощник подберёт автомобиль под вашу задачу
+        </p>
     </div>
-    <div style="text-align:center;">
-        <a th:href="@{/chat}" class="btn btn-primary btn-lg"
-           sec:authorize="isAuthenticated()"
-           style="padding:16px 48px;font-size:1.1rem;">
-            <i class='bx bx-bot'></i> Открыть ИИ-помощник
-        </a>
-        <a th:href="@{/login}" class="btn btn-primary btn-lg"
-           sec:authorize="isAnonymous()"
-           style="padding:16px 48px;font-size:1.1rem;">
-            <i class='bx bx-lock-alt'></i> Войдите чтобы использовать ИИ
-        </a>
+
+    <div class="ai-cta-center">
+        <span class="ai-btn-wrap" sec:authorize="isAuthenticated()">
+            <span class="ai-cloud" aria-hidden="true"></span>
+
+            <a th:href="@{/chat}" class="ai-btn">
+                <i class='bx bx-sparkle'></i>
+                <span class="ai-label">Открыть ИИ-помощник</span>
+            </a>
+        </span>
+
+        <span class="ai-btn-wrap" sec:authorize="isAnonymous()">
+            <span class="ai-cloud" aria-hidden="true"></span>
+
+            <a th:href="@{/login}" class="ai-btn">
+                <i class='bx bx-lock-alt'></i>
+                <span class="ai-label">Войдите чтобы использовать ИИ</span>
+            </a>
+        </span>
     </div>
 </section>
 
