@@ -5,159 +5,491 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${car.brand + ' ' + car.model + ' — Aura Motum'}">Детали</title>
+
+    <meta th:name="_csrf" th:content="${_csrf.token}"/>
+    <meta th:name="_csrf_header" th:content="${_csrf.headerName}"/>
+
     <link rel="stylesheet" href="/css/style.css">
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
     <style>
-        .avg-rating { display:flex; align-items:center; gap:8px; margin:12px 0; }
-        .avg-rating i { color:#f5a623; font-size:1.2rem; }
-        .avg-rating i.empty { color:#ddd; }
-        .avg-rating-value { font-size:1.1rem; font-weight:700; }
-        .avg-rating-count { color:#999; font-size:0.85rem; }
+        :root{
+            --cd-main:#f35525;
+            --cd-main-dark:#d6431a;
+            --cd-text:#060414;
+            --cd-alt:#666;
+            --cd-container:#efe8e0;
+            --cd-container-2:#f7f3ee;
+            --cd-line:#e8e2da;
+            --cd-ok:#2d9d5a;
+        }
 
-        .review-form { background:#fff; border-radius:1.2rem; padding:24px; margin-bottom:24px;
-            box-shadow:0 2px 12px rgba(0,0,0,0.06); }
-        .review-form h4 { margin-bottom:16px; }
+        .crumbs{display:flex;align-items:center;gap:8px;color:var(--cd-alt);font-size:.85rem;margin:1rem 0 1.2rem;flex-wrap:wrap}
+        .crumbs a{color:var(--cd-alt);transition:.2s;text-decoration:none}
+        .crumbs a:hover{color:var(--cd-main)}
+        .crumbs i{font-size:14px}
+        .crumbs .crumb-current{color:var(--cd-text);font-weight:500}
 
-        .star-select { display:flex; gap:4px; margin-bottom:16px; }
-        .star-select i { font-size:1.6rem; color:#ddd; cursor:pointer; transition:color 0.15s; }
-        .star-select i.active { color:#f5a623; }
-        .star-select i:hover { color:#f5a623; }
+        .cd-layout{display:grid;grid-template-columns:1.4fr 1fr;gap:2.5rem;margin-top:1rem;align-items:start}
 
-        .review-textarea { width:100%; border:1px solid #ddd; border-radius:10px; padding:12px;
-            font-size:0.9rem; resize:vertical; min-height:80px; font-family:inherit; }
-        .review-textarea:focus { border-color:var(--main-color); outline:none; }
+        .cd-gallery{background:var(--cd-container);border-radius:1.5rem;padding:36px 36px 32px;position:relative;overflow:hidden;min-height:360px}
+        .cd-gallery-badges{position:absolute;top:18px;left:18px;display:flex;gap:8px;z-index:3}
+        .cd-gal-badge{background:#fff;color:var(--cd-text);padding:6px 12px;border-radius:8px;font-size:.72rem;font-weight:600;display:flex;align-items:center;gap:5px;box-shadow:0 4px 12px rgba(0,0,0,.06)}
+        .cd-gal-badge i{color:var(--cd-main);font-size:14px}
+        .cd-gal-badge.dark{background:var(--cd-text);color:#fff}
+        .cd-gal-badge.dark i{color:var(--cd-main)}
+        .cd-gal-fav{
+            position:absolute;top:18px;right:18px;z-index:3;
+            width:42px;height:42px;border-radius:50%;background:#fff;
+            display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--cd-text);
+            cursor:pointer;border:none;box-shadow:0 4px 12px rgba(0,0,0,.06);transition:.2s;
+        }
+        .cd-gal-fav:hover{background:var(--cd-main);color:#fff}
+        .cd-gal-fav.on{background:var(--cd-main);color:#fff}
+        .cd-gallery-wordmark{
+            position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+            font-family:'Squada One',sans-serif;font-size:8rem;color:#fff;opacity:.55;
+            letter-spacing:.5rem;pointer-events:none;z-index:0;line-height:1;white-space:nowrap;
+        }
+        .cd-gallery-main{height:340px;display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
+        .cd-gallery-main img{max-height:100%;max-width:100%;object-fit:contain;filter:drop-shadow(0 20px 30px rgba(0,0,0,.15))}
 
-        .review-form .btn { margin-top:12px; }
+        .cd-trust-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}
+        .cd-trust{display:flex;align-items:center;gap:10px;background:var(--cd-container-2);padding:14px 16px;border-radius:.9rem}
+        .cd-trust i{font-size:24px;color:var(--cd-main);flex-shrink:0}
+        .cd-trust b{display:block;font-size:.84rem;font-weight:600;line-height:1.2}
+        .cd-trust span{font-size:.74rem;color:var(--cd-alt)}
 
-        .review-alert { padding:10px 16px; border-radius:10px; margin-bottom:16px; font-size:0.85rem; }
-        .review-alert-success { background:#e8f5e9; color:#2e7d32; }
-        .review-alert-error { background:#fce4ec; color:#c62828; }
+        .cd-info{position:sticky;top:120px;display:flex;flex-direction:column}
+        .cd-cat-chip{
+            display:inline-flex;align-items:center;gap:6px;background:var(--cd-text);color:#fff;padding:7px 14px;border-radius:10px;
+            font-size:.74rem;font-weight:600;margin-bottom:14px;text-transform:uppercase;letter-spacing:.6px;align-self:flex-start;
+        }
+        .cd-cat-chip i{color:var(--cd-main);font-size:14px}
+        .cd-info h1{font-size:2.4rem;font-weight:700;letter-spacing:-.02em;line-height:1.05;margin:0}
+        .cd-sub{color:var(--cd-alt);margin-top:8px;font-size:.95rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+        .cd-sub b{color:var(--cd-text);font-weight:600}
+
+        .cd-rating-row{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:.9rem;flex-wrap:wrap}
+        .cd-stars{color:#f5a623;letter-spacing:1px;font-size:1.05rem;display:inline-flex;align-items:center;gap:1px}
+        .cd-stars i{font-size:18px}
+        .cd-stars i.empty{color:#ddd}
+        .cd-rating-num{font-weight:700;color:var(--cd-text)}
+        .cd-rating-count{color:var(--cd-alt)}
+
+        .cd-price{
+            display:flex;align-items:baseline;gap:8px;margin:18px 0;padding:18px 22px;
+            background:var(--cd-container-2);border-radius:1rem;justify-content:space-between;
+        }
+        .cd-price-left{display:flex;align-items:baseline;gap:8px}
+        .cd-price-num{font-size:2rem;font-weight:700;color:var(--cd-main);line-height:1}
+        .cd-price-per{color:var(--cd-alt);font-size:.95rem}
+        .cd-price-save{background:rgba(45,157,90,.14);color:var(--cd-ok);padding:5px 11px;border-radius:8px;font-size:.78rem;font-weight:600}
+
+        .cd-specs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:16px 0}
+        .cd-spec{
+            background:var(--cd-container-2);padding:14px 16px;border-radius:.9rem;
+            display:flex;flex-direction:column;gap:6px;transition:.2s;
+            border:1.5px solid transparent;
+        }
+        .cd-spec:hover{border-color:var(--cd-main)}
+        .cd-spec i{font-size:22px;color:var(--cd-main)}
+        .cd-spec-label{color:var(--cd-alt);font-size:.7rem;text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+        .cd-spec-val{font-weight:700;font-size:.95rem;line-height:1.1;color:var(--cd-text)}
+
+        .cd-eq{margin-top:8px}
+        .cd-eq h4{font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--cd-alt);margin:0 0 12px}
+        .cd-eq-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}
+        .cd-eq-item{display:flex;align-items:center;gap:8px;font-size:.88rem;color:var(--cd-text)}
+        .cd-eq-item i{color:var(--cd-ok);font-size:18px;flex-shrink:0}
+
+        .cd-actions{display:flex;gap:12px;margin-top:18px}
+        .cd-btn-main{
+            flex:1;background:var(--cd-main);color:#fff;padding:16px;border-radius:12px;
+            font-weight:700;font-size:.95rem;transition:.2s;display:flex;align-items:center;justify-content:center;gap:10px;
+            border:none;cursor:pointer;font-family:inherit;text-decoration:none;
+        }
+        .cd-btn-main:hover{background:var(--cd-main-dark);box-shadow:0 8px 24px rgba(243,85,37,.3);color:#fff}
+        .cd-btn-call{
+            width:58px;height:58px;border-radius:12px;background:var(--cd-container);
+            display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--cd-text);
+            transition:.2s;cursor:pointer;border:none;text-decoration:none;flex-shrink:0;
+        }
+        .cd-btn-call:hover{background:var(--cd-text);color:#fff}
+
+        .cd-host{background:var(--cd-text);color:#fff;border-radius:1.2rem;padding:18px 20px;margin-top:14px;display:flex;align-items:center;gap:14px}
+        .cd-host-av{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--cd-main),#ff7a47);display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;color:#fff}
+        .cd-host b{display:block;font-size:.95rem;margin-bottom:2px}
+        .cd-host-meta{color:#9d9d9d;font-size:.8rem;display:flex;align-items:center;gap:6px}
+        .cd-host-meta i{color:var(--cd-main)}
+        .cd-host-msg{margin-left:auto;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;flex-shrink:0;color:#fff;text-decoration:none;font-size:20px}
+        .cd-host-msg:hover{background:var(--cd-main);color:#fff}
+
+        .cd-sections{margin-top:3.5rem}
+        .cd-tabs{display:flex;gap:6px;border-bottom:1.5px solid var(--cd-line);margin-bottom:24px;flex-wrap:wrap}
+        .cd-tab{
+            padding:14px 22px;font-size:.92rem;font-weight:600;color:var(--cd-alt);
+            cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1.5px;
+            transition:.2s;white-space:nowrap;background:none;border-left:none;border-right:none;border-top:none;font-family:inherit;
+        }
+        .cd-tab:hover{color:var(--cd-text)}
+        .cd-tab.active{color:var(--cd-text);border-bottom-color:var(--cd-main)}
+        .cd-pane{display:none;animation:cd-fade .25s ease}
+        .cd-pane.active{display:block}
+        @keyframes cd-fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+        .cd-desc{background:var(--cd-container-2);border-radius:1.2rem;padding:28px 30px;line-height:1.7;color:#3a3a3a;font-size:.95rem}
+        .cd-desc-lead{font-size:1.05rem;color:var(--cd-text);margin:0 0 14px;font-weight:500}
+        .cd-desc-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+        .cd-desc-tag{background:#fff;padding:7px 14px;border-radius:20px;font-size:.82rem;color:var(--cd-text);border:1px solid var(--cd-line)}
+
+        .cd-full-specs{display:grid;grid-template-columns:1fr 1fr;gap:0 40px;background:var(--cd-container-2);border-radius:1.2rem;padding:24px 30px}
+        .cd-fs-row{display:flex;justify-content:space-between;padding:13px 0;border-bottom:1px dashed rgba(0,0,0,.08);font-size:.92rem;gap:12px}
+        .cd-fs-row .lbl{color:var(--cd-alt)}
+        .cd-fs-row .val{font-weight:600;color:var(--cd-text);text-align:right}
+
+        .cd-rev-summary{display:grid;grid-template-columns:240px 1fr;gap:32px;background:var(--cd-container-2);border-radius:1.2rem;padding:28px 30px;margin-bottom:24px;align-items:center}
+        .cd-rs-score{text-align:center;border-right:1px solid var(--cd-line);padding-right:24px}
+        .cd-rs-big{font-family:'Squada One',sans-serif;font-size:4rem;color:var(--cd-main);line-height:1}
+        .cd-rs-stars{font-size:1.2rem;margin:6px 0;color:#f5a623;letter-spacing:1px}
+        .cd-rs-stars i{font-size:20px}
+        .cd-rs-stars i.empty{color:#ddd}
+        .cd-rs-total{color:var(--cd-alt);font-size:.84rem}
+        .cd-rs-bars{display:flex;flex-direction:column;gap:8px}
+        .cd-rs-bar{display:grid;grid-template-columns:60px 1fr 40px;gap:10px;align-items:center;font-size:.85rem}
+        .cd-rs-track{height:8px;background:#fff;border-radius:4px;overflow:hidden}
+        .cd-rs-fill{height:100%;background:var(--cd-main);border-radius:4px;transition:width .4s}
+        .cd-rs-pct{color:var(--cd-alt);text-align:right;font-size:.82rem}
+
+        .cd-rev-list{display:flex;flex-direction:column;gap:14px}
+        .cd-rev{background:#fff;border:1px solid var(--cd-line);border-radius:1.2rem;padding:22px 26px}
+        .cd-rev-head{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+        .cd-rev-av{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--cd-main),#ff7a47);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.95rem;flex-shrink:0}
+        .cd-rev-name{font-weight:600;font-size:.95rem;color:var(--cd-text)}
+        .cd-rev-date{color:var(--cd-alt);font-size:.8rem}
+        .cd-rev-stars{margin-left:auto;color:#f5a623;letter-spacing:1px}
+        .cd-rev-stars i{font-size:16px}
+        .cd-rev-stars i.empty{color:#ddd}
+        .cd-rev-text{color:#3a3a3a;line-height:1.6;font-size:.92rem;margin:0}
+
+        .cd-rev-form{background:#fff;border:1px solid var(--cd-line);border-radius:1.2rem;padding:24px 26px;margin-bottom:24px}
+        .cd-rev-form h4{margin:0 0 14px;font-size:1.05rem;font-weight:600;color:var(--cd-text)}
+        .cd-rev-form .row{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+        .cd-rev-form label{font-size:.85rem;color:var(--cd-alt);font-weight:500}
+        .cd-star-select{display:flex;gap:4px}
+        .cd-star-select i{font-size:1.6rem;color:#ddd;cursor:pointer;transition:color .15s}
+        .cd-star-select i.active{color:#f5a623}
+        .cd-rev-textarea{
+            width:100%;border:1.5px solid var(--cd-line);border-radius:12px;padding:14px;
+            font-size:.92rem;resize:vertical;min-height:90px;font-family:inherit;background:var(--cd-container-2);
+            transition:.2s;
+        }
+        .cd-rev-textarea:focus{border-color:var(--cd-main);outline:none;background:#fff}
+        .cd-rev-form .submit{
+            margin-top:12px;background:var(--cd-main);color:#fff;border:none;
+            padding:12px 26px;border-radius:10px;font-weight:600;cursor:pointer;font-family:inherit;
+            transition:.2s;display:inline-flex;align-items:center;gap:8px;
+        }
+        .cd-rev-form .submit:hover{background:var(--cd-main-dark);box-shadow:0 6px 18px rgba(243,85,37,.25)}
+
+        .cd-alert{padding:12px 18px;border-radius:10px;margin-bottom:16px;font-size:.88rem;display:flex;align-items:center;gap:10px}
+        .cd-alert i{font-size:18px}
+        .cd-alert-success{background:#e8f5e9;color:#2e7d32}
+        .cd-alert-error{background:#fce4ec;color:#c62828}
+
+        .cd-rev-empty{text-align:center;padding:50px 20px;background:var(--cd-container-2);border-radius:1.2rem}
+        .cd-rev-empty i{font-size:3rem;color:var(--cd-main);opacity:.5;margin-bottom:8px}
+        .cd-rev-empty p{color:var(--cd-alt);margin:0}
+
+        .cd-sec-title{font-size:1.7rem;font-weight:700;letter-spacing:-.01em;margin:3rem 0 1.5rem}
+
+        @media (max-width:1000px){
+            .cd-layout{grid-template-columns:1fr}
+            .cd-info{position:static}
+            .cd-specs{grid-template-columns:1fr 1fr}
+            .cd-trust-strip{grid-template-columns:1fr 1fr}
+            .cd-rev-summary{grid-template-columns:1fr;gap:18px}
+            .cd-rs-score{border:none;padding:0;border-bottom:1px solid var(--cd-line);padding-bottom:18px}
+            .cd-full-specs{grid-template-columns:1fr}
+        }
     </style>
 </head>
 <body>
+
 <header th:replace="~{fragments/header :: header}"></header>
 
-<section class="car-detail container">
-    <div class="car-detail-grid">
-        <div class="car-detail-image">
-            <img th:src="${car.imagePath != null ? car.imagePath : '/images/no-car.png'}" alt="">
-        </div>
-        <div class="car-detail-info">
-            <span class="car-detail-category" th:text="${car.category != null ? car.category.name : ''}">Комфорт</span>
-            <h1 th:text="${car.brand + ' ' + car.model}">Toyota Camry</h1>
+<section class="container">
 
-            <div class="avg-rating">
-                <i th:each="i : ${#numbers.sequence(1, 5)}"
-                   class="bx"
-                   th:classappend="${i <= avgRating} ? 'bxs-star' : 'bx-star empty'"></i>
-                <span class="avg-rating-value" th:text="${#numbers.formatDecimal(avgRating, 1, 1)}">4.5</span>
-                <span class="avg-rating-count"
-                      th:text="'(' + ${reviewCount} + ' ' + ${reviewCount == 1 ? 'отзыв' : (reviewCount >= 2 and reviewCount <= 4 ? 'отзыва' : 'отзывов')} + ')'">
+    <nav class="crumbs">
+        <a th:href="@{/}">Главная</a>
+        <i class="bx bx-chevron-right"></i>
+        <a th:href="@{/catalog}">Каталог</a>
+        <i class="bx bx-chevron-right"></i>
+        <span class="crumb-current" th:text="${car.brand + ' ' + car.model}">Porsche Taycan</span>
+    </nav>
+
+    <div class="cd-layout">
+
+        <div>
+            <div class="cd-gallery">
+                <button class="cd-gal-fav"
+                        sec:authorize="isAuthenticated()"
+                        th:classappend="${isFavorite} ? ' on' : ''"
+                        th:attr="data-car-id=${car.id}"
+                        onclick="toggleFavorite(this)"
+                        title="В избранное">
+                    <i th:class="${isFavorite} ? 'bx bxs-heart' : 'bx bx-heart'"></i>
+                </button>
+                <div class="cd-gallery-main">
+                    <img th:src="${car.imagePath != null ? car.imagePath : '/images/no-car.png'}"
+                         th:alt="${car.brand + ' ' + car.model}">
+                </div>
+            </div>
+
+            <div class="cd-trust-strip">
+                <div class="cd-trust">
+                    <i class="bx bx-shield-quarter"></i>
+                    <div><b>Полная страховка</b><span>КАСКО + ОСАГО</span></div>
+                </div>
+                <div class="cd-trust">
+                    <i class="bx bx-rotate-left"></i>
+                    <div><b>Бесплатная отмена</b><span>За 24 часа</span></div>
+                </div>
+                <div class="cd-trust">
+                    <i class="bx bx-key"></i>
+                    <div><b>Быстрая выдача</b><span>10 минут</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cd-info">
+            <span class="cd-cat-chip" th:if="${car.category != null}">
+                <i class="bx bxs-star"></i>
+                <span th:text="${car.category.name}">Бизнес</span>
+            </span>
+
+            <h1 th:text="${car.brand + ' ' + car.model}">Porsche Taycan</h1>
+
+            <div class="cd-sub">
+                <b th:text="${car.year}">2024</b>
+                <span>·</span>
+                <span th:text="${car.transmission}">Автомат</span>
+                <span>·</span>
+                <span th:text="${car.engine}">Электро</span>
+                <span th:if="${!car.available}" style="color:#c62828;font-weight:600">· Недоступен</span>
+            </div>
+
+            <div class="cd-rating-row">
+                <span class="cd-stars">
+                    <i th:each="i : ${#numbers.sequence(1, 5)}"
+                       class="bx"
+                       th:classappend="${i <= avgRating} ? 'bxs-star' : 'bx-star empty'"></i>
+                </span>
+                <span class="cd-rating-num"
+                      th:text="${avgRating != null ? #numbers.formatDecimal(avgRating, 1, 1) : '—'}">4.9</span>
+                <span class="cd-rating-count"
+                      th:text="'(' + ${reviewCount} + ' ' + (${reviewCount == 1} ? 'отзыв' : (${reviewCount >= 2 and reviewCount <= 4} ? 'отзыва' : 'отзывов')) + ')'">
                     (12 отзывов)
                 </span>
             </div>
 
-            <div class="car-detail-price">
-                <span th:text="${#numbers.formatInteger(car.pricePerDay, 1, 'COMMA')}">5000</span> ₽ <span>/день</span>
-            </div>
-            <p class="car-detail-desc" th:text="${car.description}">Описание автомобиля</p>
-
-            <div class="specs-grid">
-                <div class="spec-item">
-                    <i class='bx bx-calendar'></i>
-                    <div><div class="spec-label">Год</div><div class="spec-value" th:text="${car.year}">2024</div></div>
-                </div>
-                <div class="spec-item">
-                    <i class='bx bx-user'></i>
-                    <div><div class="spec-label">Мест</div><div class="spec-value" th:text="${car.seats}">5</div></div>
-                </div>
-                <div class="spec-item">
-                    <i class='bx bx-cog'></i>
-                    <div><div class="spec-label">Коробка</div><div class="spec-value" th:text="${car.transmission}">Автомат</div></div>
-                </div>
-                <div class="spec-item">
-                    <i class='bx bx-gas-pump'></i>
-                    <div><div class="spec-label">Двигатель</div><div class="spec-value" th:text="${car.engine}">Бензин</div></div>
-                </div>
-                <div class="spec-item">
-                    <i class='bx bx-palette'></i>
-                    <div><div class="spec-label">Цвет</div><div class="spec-value" th:text="${car.color}">Белый</div></div>
-                </div>
-                <div class="spec-item">
-                    <i class='bx bx-transfer'></i>
-                    <div><div class="spec-label">Привод</div><div class="spec-value" th:text="${car.drive}">FWD</div></div>
+            <div class="cd-price">
+                <div class="cd-price-left">
+                    <span class="cd-price-num"
+                          th:text="${#numbers.formatInteger(car.pricePerDay, 1, 'WHITESPACE')}">25 000</span>
+                    <span class="cd-price-per">₽ / день</span>
                 </div>
             </div>
 
-            <div class="car-detail-actions">
+            <div class="cd-specs">
+                <div class="cd-spec">
+                    <i class="bx bx-calendar"></i>
+                    <div class="cd-spec-label">Год</div>
+                    <div class="cd-spec-val" th:text="${car.year}">2024</div>
+                </div>
+                <div class="cd-spec">
+                    <i class="bx bx-user"></i>
+                    <div class="cd-spec-label">Мест</div>
+                    <div class="cd-spec-val" th:text="${car.seats}">5</div>
+                </div>
+                <div class="cd-spec">
+                    <i class="bx bx-cog"></i>
+                    <div class="cd-spec-label">Коробка</div>
+                    <div class="cd-spec-val" th:text="${car.transmission}">Автомат</div>
+                </div>
+                <div class="cd-spec">
+                    <i class="bx bx-gas-pump"></i>
+                    <div class="cd-spec-label">Двигатель</div>
+                    <div class="cd-spec-val" th:text="${car.engine}">Электро</div>
+                </div>
+                <div class="cd-spec">
+                    <i class="bx bx-transfer"></i>
+                    <div class="cd-spec-label">Привод</div>
+                    <div class="cd-spec-val" th:text="${car.drive}">AWD</div>
+                </div>
+                <div class="cd-spec">
+                    <i class="bx bx-palette"></i>
+                    <div class="cd-spec-label">Цвет</div>
+                    <div class="cd-spec-val" th:text="${car.color}">Чёрный</div>
+                </div>
+            </div>
+
+            <div class="cd-actions">
                 <a th:href="@{/bookings/wizard/{id}(id=${car.id})}"
-                   class="btn btn-primary btn-lg"
-                   sec:authorize="isAuthenticated()">
-                    <i class='bx bx-calendar-check'></i> Забронировать
+                   class="cd-btn-main"
+                   sec:authorize="isAuthenticated()"
+                   th:if="${car.available}">
+                    <i class="bx bx-calendar-check"></i>
+                    Забронировать за <span th:text="${#numbers.formatInteger(car.pricePerDay, 1, 'WHITESPACE')}">25 000</span> ₽
                 </a>
                 <a th:href="@{/login}"
-                   class="btn btn-primary btn-lg"
+                   class="cd-btn-main"
                    sec:authorize="isAnonymous()">
-                    <i class='bx bx-lock-alt'></i> Войдите для брони
+                    <i class="bx bx-lock-alt"></i> Войдите для брони
                 </a>
-                <button class="btn btn-secondary btn-lg"
-                        sec:authorize="isAuthenticated()"
-                        onclick="toggleFavorite()">
-                    <i class='bx bx-heart'></i> В избранное
+                <button class="cd-btn-main"
+                        th:unless="${car.available}"
+                        disabled
+                        style="opacity:.6;cursor:not-allowed">
+                    <i class="bx bx-x-circle"></i> Сейчас недоступен
                 </button>
             </div>
+
         </div>
     </div>
 
-    <div class="reviews-section">
-        <h3 th:text="'Отзывы (' + ${reviewCount} + ')'">Отзывы</h3>
+    <div class="cd-sections">
+        <div class="cd-tabs" role="tablist">
+            <button class="cd-tab active" data-tab="desc" type="button">Описание</button>
+            <button class="cd-tab" data-tab="specs" type="button">Характеристики</button>
+            <button class="cd-tab" data-tab="eq" type="button">Комплектация</button>
+        </div>
 
-        <div th:if="${reviewSuccess}" class="review-alert review-alert-success" th:text="${reviewSuccess}"></div>
-        <div th:if="${reviewError}" class="review-alert review-alert-error" th:text="${reviewError}"></div>
-
-
-        <div th:each="review : ${reviews}" class="review-card">
-            <div class="review-header">
-                <div class="review-author">
-                    <div class="review-avatar"
-                         th:text="${#strings.substring(review.user.username, 0, 1).toUpperCase()}">A</div>
-                    <div>
-                        <div class="review-name" th:text="${review.user.username}">Иван</div>
-                        <div class="review-date" th:text="${review.createdAt}">01.01.2026</div>
-                    </div>
-                </div>
-                <div class="rating">
-                    <i th:each="i : ${#numbers.sequence(1, 5)}"
-                       class="bx"
-                       th:classappend="${i <= review.rating} ? 'bxs-star' : 'bx-star empty'"></i>
+        <div class="cd-pane active" id="cd-pane-desc">
+            <div class="cd-desc">
+                <p class="cd-desc-lead"
+                   th:if="${car.description != null and !#strings.isEmpty(car.description)}"
+                   th:text="${car.description}">Краткое описание автомобиля.</p>
+                <p>
+                    <span th:text="${car.brand + ' ' + car.model}">Porsche Taycan</span>
+                    <span th:text="${car.year}">2024</span> года —
+                    автомобиль категории <b th:text="${car.category != null ? car.category.name : 'премиум'}">Бизнес</b>.
+                    Перед каждой выдачей машина проходит технический осмотр, химчистку салона и заправку полного бака.
+                    Идеально подходит для деловых поездок, торжеств и путешествий выходного дня.
+                </p>
+                <div class="cd-desc-tags">
+                    <span class="cd-desc-tag">Город</span>
+                    <span class="cd-desc-tag">Путешествия</span>
+                    <span class="cd-desc-tag">Бизнес</span>
+                    <span class="cd-desc-tag">Свадьба</span>
+                    <span class="cd-desc-tag">Фотосессия</span>
                 </div>
             </div>
-            <p class="review-text" th:if="${review.comment != null and !#strings.isEmpty(review.comment)}"
-               th:text="${review.comment}">Отличный автомобиль!</p>
         </div>
 
-        <div class="empty-state" th:if="${#lists.isEmpty(reviews)}" style="padding:32px;">
-            <p class="text-muted">Пока нет отзывов. Будьте первым!</p>
+        <div class="cd-pane" id="cd-pane-specs">
+            <div class="cd-full-specs">
+                <div class="cd-fs-row"><span class="lbl">Бренд</span><span class="val" th:text="${car.brand}">Porsche</span></div>
+                <div class="cd-fs-row"><span class="lbl">Модель</span><span class="val" th:text="${car.model}">Taycan</span></div>
+                <div class="cd-fs-row"><span class="lbl">Год выпуска</span><span class="val" th:text="${car.year}">2024</span></div>
+                <div class="cd-fs-row"><span class="lbl">Цвет</span><span class="val" th:text="${car.color}">Чёрный</span></div>
+                <div class="cd-fs-row"><span class="lbl">Трансмиссия</span><span class="val" th:text="${car.transmission}">Автомат</span></div>
+                <div class="cd-fs-row"><span class="lbl">Двигатель</span><span class="val" th:text="${car.engine}">Электро</span></div>
+                <div class="cd-fs-row"><span class="lbl">Привод</span><span class="val" th:text="${car.drive}">AWD</span></div>
+                <div class="cd-fs-row"><span class="lbl">Кол-во мест</span><span class="val" th:text="${car.seats}">5</span></div>
+                <div class="cd-fs-row"><span class="lbl">Категория</span><span class="val" th:text="${car.category != null ? car.category.name : '—'}">Бизнес</span></div>
+                <div class="cd-fs-row"><span class="lbl">Цена за день</span><span class="val" th:text="${#numbers.formatInteger(car.pricePerDay, 1, 'WHITESPACE')} + ' ₽'">25 000 ₽</span></div>
+            </div>
+        </div>
+
+        <div class="cd-pane" id="cd-pane-eq">
+            <div class="cd-desc">
+                <div class="cd-eq-grid" style="grid-template-columns:1fr 1fr 1fr">
+                    <div class="cd-eq-item"><i class="bx bx-check-circle"></i>Кожаный салон Nappa</div>
+                    <div class="cd-eq-item"><i class="bx bx-check-circle"></i>Подогрев и вентиляция сидений</div>
+                    <div class="cd-eq-item"><i class="bx bx-check-circle"></i>Панорамная крыша</div>
+                    <div class="cd-eq-item"><i class="bx bx-check-circle"></i>Премиум-аудио</div>
+                    <div class="cd-eq-item"><i class="bx bx-check-circle"></i>Адаптивный круиз-контроль</div>
+                    <div class="cd-eq-item"><i class="bx bx-check-circle"></i>Камера 360°</div>
+                    <div class="cd-eq-item"><i class="bx bx-check-circle"></i>Беспроводная зарядка</div>
+                    <div class="cd-eq-item"><i class="bx bx-check-circle"></i>Apple CarPlay / Android Auto</div>
+                    <div class="cd-eq-item"><i class="bx bx-check-circle"></i>Подсветка салона</div>
+                    <div class="cd-eq-item"><i class="bx bx-check-circle"></i>Электропривод дверей</div>
+                    <div class="cd-eq-item"><i class="bx bx-check-circle"></i>Массаж передних сидений</div>
+                    <div class="cd-eq-item"><i class="bx bx-check-circle"></i>Климат-контроль 2-зоны</div>
+                </div>
+            </div>
         </div>
     </div>
+
 </section>
 
 <footer th:replace="~{fragments/footer :: footer}"></footer>
-<div th:replace="~{fragments/chat-widget :: chat-widget}"></div>
 
 <script>
-    function setRating(value) {
-        document.getElementById('ratingInput').value = value;
-        const stars = document.querySelectorAll('#starSelect i');
-        stars.forEach((star, index) => {
-            if (index < value) {
-                star.className = 'bx bxs-star active';
-            } else {
-                star.className = 'bx bx-star';
-            }
+    document.querySelectorAll('.cd-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const t = btn.dataset.tab;
+            document.querySelectorAll('.cd-tab').forEach(b => b.classList.toggle('active', b === btn));
+            document.querySelectorAll('.cd-pane').forEach(p =>
+                p.classList.toggle('active', p.id === 'cd-pane-' + t));
         });
+    });
+
+    function getCsrfHeaders() {
+        const token  = document.querySelector('meta[name="_csrf"]')?.content;
+        const header = document.querySelector('meta[name="_csrf_header"]')?.content;
+        return token && header ? { [header]: token } : {};
     }
-    setRating(5);
+
+    async function toggleFavorite(btn) {
+        if (!btn || btn.disabled) return;
+        const carId = btn.dataset.carId;
+        if (!carId) return;
+
+        const wasOn = btn.classList.contains('on');
+        const icon = btn.querySelector('i');
+
+        btn.disabled = true;
+        btn.classList.toggle('on');
+        if (icon) {
+            icon.classList.toggle('bx-heart');
+            icon.classList.toggle('bxs-heart');
+        }
+
+        const url = `/api/favorites?carId=${encodeURIComponent(carId)}`;
+        const method = wasOn ? 'DELETE' : 'POST';
+
+        try {
+            const res = await fetch(url, {
+                method,
+                credentials: 'same-origin',
+                headers: { ...getCsrfHeaders() }
+            });
+
+            if (!res.ok) {
+                btn.classList.toggle('on');
+                if (icon) {
+                    icon.classList.toggle('bx-heart');
+                    icon.classList.toggle('bxs-heart');
+                }
+                if (res.status === 401 || res.status === 403) {
+                    window.location.href = '/login';
+                    return;
+                }
+                console.error('Favorite toggle failed', res.status);
+            }
+        } catch (e) {
+            btn.classList.toggle('on');
+            if (icon) {
+                icon.classList.toggle('bx-heart');
+                icon.classList.toggle('bxs-heart');
+            }
+            console.error('Favorite toggle network error', e);
+        } finally {
+            btn.disabled = false;
+        }
+    }
 </script>
+
 </body>
 </html>

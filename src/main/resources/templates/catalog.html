@@ -1,11 +1,35 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Каталог — Aura Motum</title>
+
+    <meta th:name="_csrf" th:content="${_csrf.token}"/>
+    <meta th:name="_csrf_header" th:content="${_csrf.headerName}"/>
+
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <style>
+        .catalog-fav-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            margin: 0;
+            font-size: 22px;
+            line-height: 1;
+            color: #666;
+            transition: color 0.15s, transform 0.15s;
+            position: relative;
+            z-index: 5;
+        }
+        .catalog-fav-btn:hover { color: var(--main-color); transform: scale(1.1); }
+        .catalog-fav-btn.on { color: var(--main-color); }
+        .catalog-fav-btn i { pointer-events: none; }
+    </style>
+
 </head>
 <body>
 <header th:replace="~{fragments/header :: header}"></header>
@@ -474,7 +498,16 @@
                 <article class="rental-box catalog-rental-box">
                     <div class="rental-top">
                         <h3 th:text="${car.category != null ? car.category.name : 'Авто'}">Sedan</h3>
-                        <i class='bx bx-heart'></i>
+                        <button type="button"
+                                class="catalog-fav-btn"
+                                sec:authorize="isAuthenticated()"
+                                th:classappend="${favoriteIds != null and favoriteIds.contains(car.id)} ? ' on' : ''"
+                                th:attr="data-car-id=${car.id}"
+                                onclick="onCatalogFavClick(event, this)"
+                                title="В избранное">
+                            <i th:class="${favoriteIds != null and favoriteIds.contains(car.id)} ? 'bx bxs-heart' : 'bx bx-heart'"></i>
+                        </button>
+                        <i class='bx bx-heart' sec:authorize="isAnonymous()"></i>
                     </div>
 
                     <img
@@ -521,43 +554,63 @@
 <footer th:replace="~{fragments/footer :: footer}"></footer>
 
 <script>
-    document.querySelectorAll('.removable-chip').forEach(chip => {
-        chip.addEventListener('click', function () {
-            const form = document.getElementById('catalogFilterForm');
-            const filterName = this.dataset.filterName;
-            const filterValue = this.dataset.filterValue;
+    function getCsrfHeaders() {
+        const token  = document.querySelector('meta[name="_csrf"]')?.content;
+        const header = document.querySelector('meta[name="_csrf_header"]')?.content;
+        return token && header ? { [header]: token } : {};
+    }
 
-            if (!form || !filterName) {
-                return;
+    async function onCatalogFavClick(event, btn) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (!btn || btn.disabled) return;
+        const carId = btn.dataset.carId;
+        if (!carId) return;
+
+        const wasOn = btn.classList.contains('on');
+        const icon = btn.querySelector('i');
+
+        btn.disabled = true;
+        btn.classList.toggle('on');
+        if (icon) {
+            icon.classList.toggle('bx-heart');
+            icon.classList.toggle('bxs-heart');
+        }
+
+        const url = `/api/favorites?carId=${encodeURIComponent(carId)}`;
+        const method = wasOn ? 'DELETE' : 'POST';
+
+        try {
+            const res = await fetch(url, {
+                method,
+                credentials: 'same-origin',
+                headers: { ...getCsrfHeaders() }
+            });
+
+            if (!res.ok) {
+                btn.classList.toggle('on');
+                if (icon) {
+                    icon.classList.toggle('bx-heart');
+                    icon.classList.toggle('bxs-heart');
+                }
+                if (res.status === 401 || res.status === 403) {
+                    window.location.href = '/login';
+                    return;
+                }
+                console.error('Favorite toggle failed', res.status);
             }
-
-            if (filterName === 'brands' || filterName === 'colors' || filterName === 'categoryIds' || filterName === 'ratings') {
-                const checkboxes = form.querySelectorAll(`input[name="${filterName}"]`);
-                checkboxes.forEach(input => {
-                    if (input.value === filterValue) {
-                        input.checked = false;
-                    }
-                });
-            } else if (filterName === 'available') {
-                const checkbox = form.querySelector(`input[name="${filterName}"]`);
-                if (checkbox) {
-                    checkbox.checked = false;
-                }
-            } else if (filterName === 'transmission' || filterName === 'sortBy') {
-                const select = form.querySelector(`[name="${filterName}"]`);
-                if (select) {
-                    select.value = '';
-                }
-            } else {
-                const input = form.querySelector(`[name="${filterName}"]`);
-                if (input) {
-                    input.value = '';
-                }
+        } catch (e) {
+            btn.classList.toggle('on');
+            if (icon) {
+                icon.classList.toggle('bx-heart');
+                icon.classList.toggle('bxs-heart');
             }
-
-            form.submit();
-        });
-    });
+            console.error('Favorite toggle network error', e);
+        } finally {
+            btn.disabled = false;
+        }
+    }
 </script>
 </body>
 </html>
