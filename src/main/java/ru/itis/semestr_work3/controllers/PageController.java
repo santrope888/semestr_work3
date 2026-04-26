@@ -64,6 +64,7 @@ public class PageController {
     @GetMapping("/catalog")
     public String catalog(CarFilter filter,
                           @PageableDefault(size = 12) Pageable pageable,
+                          @AuthenticationPrincipal UserDetails userDetails,
                           Model model) {
         var carsPage = carService.findCars(filter, pageable);
         var cars = carsPage.getContent();
@@ -78,6 +79,17 @@ public class PageController {
         model.addAttribute("avgRatings", reviewService.getAverageRatings(carIds));
         model.addAttribute("reviewCounts", reviewService.getReviewCounts(carIds));
 
+        Set<Long> favoriteIds = java.util.Collections.emptySet();
+        if (userDetails != null) {
+            var userOpt = userService.findByUsername(userDetails.getUsername());
+            if (userOpt.isPresent()) {
+                favoriteIds = favoriteService.findByUser(userOpt.get().getId()).stream()
+                        .map(f -> f.getCar().getId())
+                        .collect(java.util.stream.Collectors.toSet());
+            }
+        }
+        model.addAttribute("favoriteIds", favoriteIds);
+
         return "catalog";
     }
 
@@ -90,6 +102,16 @@ public class PageController {
         model.addAttribute("reviews", reviewService.findByCar(id));
         model.addAttribute("avgRating", reviewService.getAverageRating(id));
         model.addAttribute("reviewCount", reviewService.getReviewCount(id));
+
+        boolean isFavorite = false;
+        if (userDetails != null) {
+            var userOpt = userService.findByUsername(userDetails.getUsername());
+            if (userOpt.isPresent()) {
+                isFavorite = favoriteService.isFavorite(userOpt.get().getId(), id);
+            }
+        }
+        model.addAttribute("isFavorite", isFavorite);
+
         return "car-detail";
     }
 
@@ -289,19 +311,98 @@ public class PageController {
     }
 
     @GetMapping("/chat")
-    public String chat(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+    public String chat(@AuthenticationPrincipal UserDetails userDetails,
+                       @RequestParam(required = false) Long sessionId,
+                       Model model) {
         if (userDetails == null) return "redirect:/login";
 
-        userService.findByUsername(userDetails.getUsername()).ifPresent(user -> {
-            List<ChatSession> sessions = aiChatService.getUserSessions(user.getId());
-            ChatSession session = sessions.isEmpty()
-                    ? aiChatService.createSession(user, "Подбор автомобиля")
-                    : sessions.get(0);
-            model.addAttribute("sessionId", session.getId());
-            model.addAttribute("messages", aiChatService.getSessionMessages(session.getId()));
-        });
+        var userOpt = userService.findByUsername(userDetails.getUsername());
+        if (userOpt.isEmpty()) return "redirect:/login";
+
+        var user = userOpt.get();
+        List<ChatSession> sessions = aiChatService.getUserSessions(user.getId());
+
+        ChatSession activeSession = null;
+
+        if (sessionId != null) {
+            for (ChatSession session : sessions) {
+                if (session.getId().equals(sessionId)) {
+                    activeSession = session;
+                    break;
+                }
+            }
+        }
+
+        if (activeSession == null) {
+            if (sessions.isEmpty()) {
+                activeSession = aiChatService.createSession(user, "Подбор автомобиля");
+                sessions = List.of(activeSession);
+            } else {
+                activeSession = sessions.get(0);
+            }
+        }
+
+        model.addAttribute("sessionId", activeSession.getId());
+        model.addAttribute("messages", aiChatService.getSessionMessages(activeSession.getId()));
+        model.addAttribute("chatSessions", sessions);
+        model.addAttribute("activeSessionId", activeSession.getId());
+        model.addAttribute("activeSessionTitle", activeSession.getTitle());
 
         return "chat";
+    }
+
+    @PostMapping("/chat/new")
+    public String createNewChat(@AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) return "redirect:/login";
+
+        var userOpt = userService.findByUsername(userDetails.getUsername());
+        if (userOpt.isEmpty()) return "redirect:/login";
+
+        ChatSession newSession = aiChatService.createSession(userOpt.get(), "Новый диалог");
+        return "redirect:/chat?sessionId=" + newSession.getId();
+    }
+
+    @PostMapping("/chat/{sessionId}/delete")
+    public String deleteChat(@PathVariable Long sessionId,
+                             @RequestParam(required = false) Long currentSessionId,
+                             @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+
+        var userOpt = userService.findByUsername(userDetails.getUsername());
+        if (userOpt.isEmpty()) {
+            return "redirect:/login";
+        }
+
+        var user = userOpt.get();
+
+        aiChatService.deleteSession(sessionId, user.getId());
+
+        List<ChatSession> remainingSessions = aiChatService.getUserSessions(user.getId());
+
+        if (remainingSessions.isEmpty()) {
+            ChatSession newSession = aiChatService.createSession(user, "Новый диалог");
+            return "redirect:/chat?sessionId=" + newSession.getId();
+        }
+
+        Long redirectSessionId = currentSessionId;
+        boolean redirectSessionStillExists = false;
+
+        if (redirectSessionId != null) {
+            for (ChatSession session : remainingSessions) {
+                if (session.getId().equals(redirectSessionId)) {
+                    redirectSessionStillExists = true;
+                    break;
+                }
+            }
+        }
+
+        if (!redirectSessionStillExists) {
+            redirectSessionId = remainingSessions.get(0).getId();
+        }
+
+        return "redirect:/chat?sessionId=" + redirectSessionId;
     }
 
     @PostMapping("/bookings/{id}/cancel")
