@@ -5,154 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Бронирования — Aura Motum</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/bookings.css}">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <style>
-        .booking-card-image {
-            width: 200px !important;
-            height: 130px !important;
-            background: var(--container-color);
-            border-radius: 14px;
-            overflow: hidden;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 8px;
-        }
-        .booking-card-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain !important;
-        }
-
-        .booking-meta-line {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            margin-top: 6px;
-            font-size: 0.85rem;
-            flex-wrap: wrap;
-        }
-        .booking-meta-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: 600;
-        }
-        .booking-meta-status.status-pending   { color: #b26a00; }
-        .booking-meta-status.status-confirmed { color: #1565c0; }
-        .booking-meta-status.status-completed { color: #2e7d32; }
-        .booking-meta-status.status-cancelled { color: #c62828; }
-        .booking-meta-status .dot {
-            width: 8px; height: 8px; border-radius: 50%;
-            background: currentColor;
-        }
-        .booking-meta-payment {
-            color: var(--text-alter-color);
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .booking-meta-payment i { font-size: 1rem; }
-
-        .review-modal-overlay {
-            display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-            background:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center;
-        }
-        .review-modal-overlay.open { display:flex; }
-        .review-modal {
-            background:#fff; border-radius:1.2rem; padding:28px; max-width:440px; width:90%;
-            box-shadow:0 12px 40px rgba(0,0,0,0.2); position:relative;
-        }
-        .review-modal h3 { margin-bottom:4px; }
-        .review-modal-sub { color:#999; font-size:0.85rem; margin-bottom:16px; }
-        .review-modal-close {
-            position:absolute; top:12px; right:16px; background:none; border:none;
-            font-size:1.4rem; cursor:pointer; color:#999;
-        }
-        .review-modal-close:hover { color:#333; }
-
-        .cancel-modal-overlay {
-            display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-            background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;
-            backdrop-filter: blur(4px);
-        }
-        .cancel-modal-overlay.open { display:flex; }
-        .cancel-modal {
-            background:#fff; border-radius:1.4rem; padding:32px 28px 24px; max-width:440px; width:90%;
-            box-shadow:0 20px 60px rgba(0,0,0,0.25); position:relative; text-align:center;
-        }
-        .cancel-modal-close {
-            position:absolute; top:14px; right:18px; background:none; border:none;
-            font-size:1.6rem; cursor:pointer; color:#999; line-height:1;
-        }
-        .cancel-modal-close:hover { color:#333; }
-        .cancel-modal-icon {
-            width:64px; height:64px; border-radius:50%;
-            background:#fef2f2; color:#dc2626;
-            display:flex; align-items:center; justify-content:center;
-            font-size:2.2rem; margin:0 auto 16px;
-        }
-        .cancel-modal h3 {
-            margin:0 0 10px;
-            font-size:1.35rem; font-weight:800;
-            color: var(--text-color);
-        }
-        .cancel-modal-info {
-            color: var(--text-alter-color); font-size:0.92rem; margin:0 0 14px;
-        }
-        .cancel-modal-warn {
-            background:#fff8e6; border:1px solid #ffd97a;
-            border-radius:10px; padding:10px 14px;
-            color:#5a4400; font-size:0.82rem;
-            margin:0 0 22px;
-        }
-        .cancel-modal-actions {
-            display:flex; gap:10px; justify-content:center;
-        }
-        .cancel-modal-actions .btn-secondary,
-        .cancel-modal-actions .btn-danger-solid {
-            border:none; cursor:pointer; font-weight:700;
-            padding:12px 22px; border-radius:12px;
-            font-family: inherit; font-size:0.92rem;
-            display:inline-flex; align-items:center; gap:6px;
-            transition: 0.15s;
-        }
-        .cancel-modal-actions .btn-secondary {
-            background: var(--container-color); color: var(--text-color);
-        }
-        .cancel-modal-actions .btn-secondary:hover { background:#e0d8cc; }
-        .cancel-modal-actions .btn-danger-solid {
-            background:#dc2626; color:#fff;
-        }
-        .cancel-modal-actions .btn-danger-solid:hover { background:#b91c1c; }
-        .star-select { display:flex; gap:6px; margin-bottom:16px; }
-        .star-select i { font-size:1.8rem; color:#ddd; cursor:pointer; transition:color 0.15s; }
-        .star-select i.active { color:#f5a623; }
-        .star-select i:hover { color:#f5a623; }
-        .review-textarea {
-            width:100%; border:1px solid #ddd; border-radius:10px; padding:12px;
-            font-size:0.9rem; resize:vertical; min-height:80px; font-family:inherit;
-        }
-        .review-textarea:focus { border-color:var(--main-color); outline:none; }
-        .review-modal .btn { margin-top:12px; width:100%; }
-
-        .review-alert { padding:10px 16px; border-radius:10px; margin-bottom:16px; font-size:0.85rem; }
-        .review-alert-success { background:#e8f5e9; color:#2e7d32; }
-        .review-alert-error { background:#fce4ec; color:#c62828; }
-
-        .booking-card.cancelling {
-            opacity: 0.4;
-            transform: scale(0.97);
-            pointer-events: none;
-            transition: opacity 0.3s, transform 0.3s;
-        }
-        .booking-card.removing {
-            opacity: 0;
-            transform: translateX(-30px);
-            transition: opacity 0.4s, transform 0.4s;
-        }
-    </style>
 </head>
 <body>
 <header th:replace="~{fragments/header :: header}"></header>
@@ -166,7 +20,7 @@
     <div th:if="${reviewError}" class="review-alert review-alert-error" th:text="${reviewError}"></div>
 
     <form method="get" th:action="@{/bookings}" class="mt-md mb-lg">
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+        <div class="bookings-filter-grid">
             <select name="status" class="form-select">
                 <option value="">Все статусы</option>
                 <option value="PENDING" th:selected="${filter.status == 'PENDING'}">Pending</option>
@@ -188,7 +42,7 @@
                    th:value="${filter.endDateTo}" class="form-input">
         </div>
 
-        <div class="mt-md" style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="mt-md bookings-filter-actions">
             <button type="submit" class="btn btn-primary">Применить</button>
             <a th:href="@{/bookings}" class="btn btn-secondary">Сбросить</a>
         </div>
@@ -236,12 +90,12 @@
                 </span>
             </div>
 
-            <div class="booking-card-dates" style="margin-top:8px;">
+            <div class="booking-card-dates booking-card-dates-spaced">
                 <i class='bx bx-calendar'></i>
                 <span th:text="${booking.startDate + ' — ' + booking.endDate}">01.01 — 05.01</span>
             </div>
 
-            <div class="booking-card-actions" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+            <div class="booking-card-actions-row">
                 <button th:if="${booking.status == 'PENDING' or booking.status == 'CONFIRMED'}"
                         type="button"
                         class="btn btn-sm btn-danger cancel-btn"
@@ -256,7 +110,7 @@
                     <i class='bx bx-star'></i> Оставить отзыв
                 </button>
                 <span th:if="${booking.status == 'COMPLETED' and reviewedCarIds.contains(booking.car.id)}"
-                      style="color:#388e3c;font-size:0.8rem;display:flex;align-items:center;gap:4px;">
+                      class="booking-review-done">
                     <i class='bx bxs-check-circle'></i> Отзыв оставлен
                 </span>
             </div>
@@ -267,7 +121,7 @@
                   th:text="${booking.status}">PENDING</span>
             <div class="booking-card-price" th:text="${booking.totalPrice + ' ₽'}">25 000 ₽</div>
             <div th:if="${booking.bookingNumber != null}"
-                 style="font-size:0.75rem;color:var(--text-alter-color);font-family:'Squada One', monospace;letter-spacing:1px;"
+                 class="booking-card-number"
                  th:text="${booking.bookingNumber}">AM-XXXXXX</div>
         </div>
     </div>
@@ -324,114 +178,6 @@
 
 <footer th:replace="~{fragments/footer :: footer}"></footer>
 
-<script>
-    let pendingCancelId = null;
-
-    function openReviewModal(carId, carName) {
-        document.getElementById('reviewCarName').textContent = carName;
-        document.getElementById('reviewForm').action = '/cars/' + carId + '/reviews';
-        document.getElementById('reviewModal').classList.add('open');
-        setRating(5);
-    }
-
-    function closeReviewModal() {
-        document.getElementById('reviewModal').classList.remove('open');
-    }
-
-    function openCancelModal(bookingId, info) {
-        pendingCancelId = bookingId;
-        document.getElementById('cancelInfo').textContent = info;
-        document.getElementById('cancelConfirmBtn').disabled = false;
-        document.getElementById('cancelModal').classList.add('open');
-    }
-
-    function closeCancelModal() {
-        pendingCancelId = null;
-        document.getElementById('cancelModal').classList.remove('open');
-    }
-
-    document.getElementById('cancelModal').addEventListener('click', function(e) {
-        if (e.target === this) closeCancelModal();
-    });
-
-    document.getElementById('reviewModal').addEventListener('click', function(e) {
-        if (e.target === this) closeReviewModal();
-    });
-
-    document.addEventListener('click', function(e) {
-        const cancelBtn = e.target.closest('.cancel-btn');
-        if (cancelBtn) {
-            openCancelModal(cancelBtn.dataset.bookingId, cancelBtn.dataset.bookingInfo);
-            return;
-        }
-        const reviewBtn = e.target.closest('.review-btn');
-        if (reviewBtn) {
-            openReviewModal(reviewBtn.dataset.carId, reviewBtn.dataset.carName);
-        }
-    });
-
-    function getCsrfHeaders() {
-        const token  = document.querySelector('meta[name="_csrf"]')?.content;
-        const header = document.querySelector('meta[name="_csrf_header"]')?.content;
-        return token && header ? { [header]: token } : {};
-    }
-
-    async function confirmCancel() {
-        if (!pendingCancelId) return;
-        const id = pendingCancelId;
-        const card = document.querySelector(`.booking-card[data-booking-card-id="${id}"]`);
-        const confirmBtn = document.getElementById('cancelConfirmBtn');
-
-        confirmBtn.disabled = true;
-        if (card) card.classList.add('cancelling');
-
-        try {
-            const res = await fetch(`/bookings/${id}/cancel`, {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: { ...getCsrfHeaders() }
-            });
-
-            if (!res.ok && res.status !== 302) {
-                console.error('Cancel failed:', res.status);
-                if (card) card.classList.remove('cancelling');
-                confirmBtn.disabled = false;
-                if (res.status === 401 || res.status === 403) {
-                    window.location.href = '/login';
-                }
-                return;
-            }
-
-            closeCancelModal();
-            if (card) {
-                card.classList.add('removing');
-                setTimeout(() => {
-                    card.remove();
-                    const remaining = document.querySelectorAll('.booking-card').length;
-                    if (remaining === 0) window.location.reload();
-                }, 400);
-            }
-
-            if (typeof updateBadge === 'function') updateBadge();
-            if (typeof loadNotifications === 'function') loadNotifications();
-        } catch (e) {
-            console.error('Cancel network error', e);
-            if (card) card.classList.remove('cancelling');
-            confirmBtn.disabled = false;
-        }
-    }
-
-    function setRating(value) {
-        document.getElementById('ratingInput').value = value;
-        const stars = document.querySelectorAll('#starSelect i');
-        stars.forEach((star, index) => {
-            if (index < value) {
-                star.className = 'bx bxs-star active';
-            } else {
-                star.className = 'bx bx-star';
-            }
-        });
-    }
-</script>
+<script th:src="@{/js/bookings.js}" defer></script>
 </body>
 </html>
