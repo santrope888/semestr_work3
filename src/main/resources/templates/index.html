@@ -48,7 +48,7 @@
             <h4 th:text="${car.transmission}">Automatic</h4>
             <div class="price-btn">
                 <p>
-                    От <span th:text="${#numbers.formatInteger(car.pricePerDay, 0, 'WHITESPACE')}">45 000</span> ₽
+                    <span th:text="${#numbers.formatInteger(car.pricePerDay, 0, 'WHITESPACE')}">45 000</span> ₽
                     <span>/день</span>
                 </p>
                 <span class="rental-btn">Аренда</span>

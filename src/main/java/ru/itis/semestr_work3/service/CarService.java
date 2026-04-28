@@ -37,11 +37,11 @@ public class CarService {
                 .and(CarSpecifications.priceBetween(filter.getMinPrice(), filter.getMaxPrice()))
                 .and(CarSpecifications.hasRatings(filter.getRatings()))
                 .and(CarSpecifications.hasCategories(filter.getCategoryIds()))
-                .and(CarSpecifications.hasTransmission(filter.getTransmission()))
+                .and(CarSpecifications.hasTransmissions(filter.getTransmissions()))
                 .and(CarSpecifications.hasSeats(filter.getSeats()))
                 .and(CarSpecifications.yearBetween(filter.getMinYear(), filter.getMaxYear()))
                 .and(CarSpecifications.hasEngine(filter.getEngine()))
-                .and(CarSpecifications.hasDrive(filter.getDrive()))
+                .and(CarSpecifications.hasDrives(filter.getDrives()))
                 .and(CarSpecifications.isAvailable(filter.getAvailable()))
                 .and(CarSpecifications.hasBrands(filter.getBrands()))
                 .and(CarSpecifications.hasColors(filter.getColors()));
@@ -88,6 +88,26 @@ public class CarService {
     public List<String> findDistinctColors() {
         return carRepository.findAll().stream()
                 .map(Car::getColor)
+                .filter(v -> v != null && !v.isBlank())
+                .distinct()
+                .sorted(String::compareToIgnoreCase)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> findDistinctTransmissions() {
+        return carRepository.findAll().stream()
+                .map(Car::getTransmission)
+                .filter(v -> v != null && !v.isBlank())
+                .distinct()
+                .sorted(String::compareToIgnoreCase)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> findDistinctDrives() {
+        return carRepository.findAll().stream()
+                .map(Car::getDrive)
                 .filter(v -> v != null && !v.isBlank())
                 .distinct()
                 .sorted(String::compareToIgnoreCase)

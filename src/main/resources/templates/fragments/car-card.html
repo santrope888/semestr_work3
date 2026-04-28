@@ -24,10 +24,7 @@
             <div class="home-car-card-body">
                 <h3 th:text="${car.brand + ' ' + car.model}">Rolls-Royce</h3>
 
-                <p class="home-car-card-meta"
-                   th:text="${car.transmission != null and !#strings.isEmpty(car.transmission) ? car.transmission : 'Automatic'}">
-                    Automatic
-                </p>
+                <p class="home-car-card-meta" th:text="${car.transmission}">Автомат</p>
 
                 <div class="home-car-card-bottom">
                     <div class="home-car-card-price">

@@ -724,4 +724,36 @@ class BookingServiceTest {
 
         verify(notificationService).send(eq(user), eq("BOOKING_CREATED"), anyString());
     }
+    @Test
+    void cancel_whenOwnerCancelsPaidCardBooking_sendsRefundMessage() {
+        Payment payment = new Payment();
+        payment.setMethod("CARD");
+        payment.setStatus("PAID");
+
+        booking.setPayment(payment);
+        booking.setBookingNumber("AM-ABC123");
+
+        car.setBrand("BMW");
+        car.setModel("X6");
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Booking result = bookingService.cancel(1L, 1L);
+
+        assertThat(result.getStatus()).isEqualTo("CANCELLED");
+        assertThat(result.getPayment().getStatus()).isEqualTo("REFUNDED");
+
+        org.mockito.ArgumentCaptor<String> messageCaptor =
+                org.mockito.ArgumentCaptor.forClass(String.class);
+
+        verify(notificationService).send(
+                eq(user),
+                eq("BOOKING_CANCELLED"),
+                messageCaptor.capture()
+        );
+
+        assertThat(messageCaptor.getValue()).contains("AM-ABC123");
+        assertThat(messageCaptor.getValue()).contains("Возврат средств поступит на карту");
+    }
 }

@@ -19,7 +19,6 @@ import ru.itis.semestr_work3.entity.Booking;
 import ru.itis.semestr_work3.entity.Car;
 import ru.itis.semestr_work3.entity.ChatSession;
 import ru.itis.semestr_work3.entity.Payment;
-import ru.itis.semestr_work3.entity.User;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.service.*;
 
@@ -63,7 +62,7 @@ public class PageController {
 
     @GetMapping("/catalog")
     public String catalog(CarFilter filter,
-                          @PageableDefault(size = 12) Pageable pageable,
+                          @PageableDefault(size = 999) Pageable pageable,
                           @AuthenticationPrincipal UserDetails userDetails,
                           Model model) {
         var carsPage = carService.findCars(filter, pageable);
@@ -74,6 +73,8 @@ public class PageController {
         model.addAttribute("categories", categoryService.findAll());
         model.addAttribute("brands", carService.findDistinctBrands());
         model.addAttribute("colors", carService.findDistinctColors());
+        model.addAttribute("transmissions", carService.findDistinctTransmissions());
+        model.addAttribute("drives", carService.findDistinctDrives());
 
         List<Long> carIds = cars.stream().map(Car::getId).toList();
         model.addAttribute("avgRatings", reviewService.getAverageRatings(carIds));

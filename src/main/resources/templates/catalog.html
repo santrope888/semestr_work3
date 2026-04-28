@@ -44,13 +44,12 @@
                 <div class="filter-group" th:if="${categories != null and !#lists.isEmpty(categories)}">
                     <h4>Категория</h4>
                     <div class="filter-list">
-                        <label class="round-check" th:each="category : ${categories}">
+                        <label class="filter-check" th:each="category : ${categories}">
                             <input
                                     type="checkbox"
                                     name="categoryIds"
                                     th:value="${category.id}"
                                     th:checked="${filter.categoryIds != null and #lists.contains(filter.categoryIds, category.id)}">
-                            <span class="round-indicator"></span>
                             <span th:text="${category.name}">Категория</span>
                         </label>
                     </div>
@@ -79,8 +78,8 @@
                                     name="colors"
                                     th:value="${color}"
                                     th:checked="${filter.colors != null and #lists.contains(filter.colors, color)}">
-                            <span class="color-dot" th:style="'background:' + ${color}"></span>
-                            <span th:text="${color}">black</span>
+                            <span class="color-dot" th:attr="data-color=${color}"></span>
+                            <span th:text="${color}">Цвет</span>
                         </label>
                     </div>
                 </div>
@@ -108,65 +107,51 @@
                 <div class="filter-group">
                     <h4>Рейтинг</h4>
                     <div class="rating-filter-list">
-                        <label class="round-check">
+                        <label class="filter-check">
                             <input
                                     type="checkbox"
                                     name="ratings"
                                     value="5"
                                     th:checked="${filter.ratings != null and #lists.contains(filter.ratings, 5)}">
-                            <span class="round-indicator"></span>
                             <span class="rating-stars">★★★★★</span>
                         </label>
 
-                        <label class="round-check">
+                        <label class="filter-check">
                             <input
                                     type="checkbox"
                                     name="ratings"
                                     value="4"
                                     th:checked="${filter.ratings != null and #lists.contains(filter.ratings, 4)}">
-                            <span class="round-indicator"></span>
                             <span class="rating-stars">★★★★☆</span>
                         </label>
 
-                        <label class="round-check">
+                        <label class="filter-check">
                             <input
                                     type="checkbox"
                                     name="ratings"
                                     value="3"
                                     th:checked="${filter.ratings != null and #lists.contains(filter.ratings, 3)}">
-                            <span class="round-indicator"></span>
                             <span class="rating-stars">★★★☆☆</span>
                         </label>
 
-                        <label class="round-check">
+                        <label class="filter-check">
                             <input
                                     type="checkbox"
                                     name="ratings"
                                     value="2"
                                     th:checked="${filter.ratings != null and #lists.contains(filter.ratings, 2)}">
-                            <span class="round-indicator"></span>
                             <span class="rating-stars">★★☆☆☆</span>
                         </label>
 
-                        <label class="round-check">
+                        <label class="filter-check">
                             <input
                                     type="checkbox"
                                     name="ratings"
                                     value="1"
                                     th:checked="${filter.ratings != null and #lists.contains(filter.ratings, 1)}">
-                            <span class="round-indicator"></span>
                             <span class="rating-stars">★☆☆☆☆</span>
                         </label>
                     </div>
-                </div>
-
-                <div class="filter-group">
-                    <h4>Коробка передач</h4>
-                    <select name="transmission" class="form-select">
-                        <option value="">Любая</option>
-                        <option value="automatic" th:selected="${filter.transmission == 'automatic'}">Automatic</option>
-                        <option value="manual" th:selected="${filter.transmission == 'manual'}">Manual</option>
-                    </select>
                 </div>
 
                 <div class="filter-group">
@@ -188,34 +173,57 @@
                                 name="minYear"
                                 placeholder="От"
                                 th:value="${filter.minYear}"
+                                min="1900"
                                 class="form-input">
                         <input
                                 type="number"
                                 name="maxYear"
                                 placeholder="До"
                                 th:value="${filter.maxYear}"
+                                min="1900"
                                 class="form-input">
                     </div>
                 </div>
 
                 <div class="filter-group">
                     <h4>Двигатель</h4>
-                    <input
-                            type="text"
-                            name="engine"
-                            placeholder="Например, 2.0"
-                            th:value="${filter.engine}"
-                            class="form-input">
+                    <select name="engine" class="form-select">
+                        <option value="" th:selected="${filter.engine == null or #strings.isEmpty(filter.engine)}">Любой</option>
+                        <option value="Бензин" th:selected="${filter.engine == 'Бензин'}">Бензин</option>
+                        <option value="Дизель" th:selected="${filter.engine == 'Дизель'}">Дизель</option>
+                        <option value="Гибрид" th:selected="${filter.engine == 'Гибрид'}">Гибрид</option>
+                        <option value="Электро" th:selected="${filter.engine == 'Электро'}">Электро</option>
+                    </select>
                 </div>
 
-                <div class="filter-group">
-                    <h4>Привод</h4>
-                    <input
-                            type="text"
-                            name="drive"
-                            placeholder="Например, AWD"
-                            th:value="${filter.drive}"
-                            class="form-input">
+                <div class="filter-group" th:if="${drives != null and !#lists.isEmpty(drives)}">
+                    <h4>Приводы</h4>
+
+                    <div class="filter-list">
+                        <label class="filter-check" th:each="drive : ${drives}">
+                            <input
+                                    type="checkbox"
+                                    name="drives"
+                                    th:value="${drive}"
+                                    th:checked="${filter.drives != null and #lists.contains(filter.drives, drive)}">
+                            <span th:text="${drive}">Привод</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="filter-group" th:if="${transmissions != null and !#lists.isEmpty(transmissions)}">
+                    <h4>Коробки передач</h4>
+
+                    <div class="filter-list">
+                        <label class="filter-check" th:each="transmission : ${transmissions}">
+                            <input
+                                    type="checkbox"
+                                    name="transmissions"
+                                    th:value="${transmission}"
+                                    th:checked="${filter.transmissions != null and #lists.contains(filter.transmissions, transmission)}">
+                            <span th:text="${transmission}">Коробка</span>
+                        </label>
+                    </div>
                 </div>
 
                 <div class="filter-group">
@@ -242,7 +250,7 @@
         <div class="catalog-topbar">
             <div>
                 <h3>Автомобили</h3>
-                <p th:text="'Найдено: ' + ${carsPage.totalElements}">Найдено: 12</p>
+                <p th:text="'Найдено: ' + ${carsPage.totalElements}">Найдено: ???</p>
             </div>
 
             <div class="catalog-sort-box">
@@ -310,7 +318,9 @@
                             th:each="color : ${filter.colors}"
                             data-filter-name="colors"
                             th:attr="data-filter-value=${color}">
-                        Цвет: <span th:text="${color}">black</span>
+                        Цвет:
+                        <span class="color-dot" th:attr="data-color=${color}"></span>
+                        <span th:text="${color}">Цвет</span>
                         <span class="chip-remove">×</span>
                     </button>
                 </th:block>
@@ -352,14 +362,17 @@
                     </button>
                 </th:block>
 
-                <button
-                        type="button"
-                        class="filter-chip-active removable-chip"
-                        th:if="${filter.transmission != null and !#strings.isEmpty(filter.transmission)}"
-                        data-filter-name="transmission">
-                    КПП: <span th:text="${filter.transmission}">automatic</span>
-                    <span class="chip-remove">×</span>
-                </button>
+                <th:block th:if="${filter.transmissions != null and !#lists.isEmpty(filter.transmissions)}">
+                    <button
+                            type="button"
+                            class="filter-chip-active removable-chip"
+                            th:each="transmission : ${filter.transmissions}"
+                            data-filter-name="transmissions"
+                            th:attr="data-filter-value=${transmission}">
+                        Коробка передач: <span th:text="${transmission}">???</span>
+                        <span class="chip-remove">×</span>
+                    </button>
+                </th:block>
 
                 <button
                         type="button"
@@ -393,18 +406,21 @@
                         class="filter-chip-active removable-chip"
                         th:if="${filter.engine != null and !#strings.isEmpty(filter.engine)}"
                         data-filter-name="engine">
-                    Двигатель: <span th:text="${filter.engine}">2.0</span>
+                    Двигатель: <span th:text="${filter.engine}">Бензин</span>
                     <span class="chip-remove">×</span>
                 </button>
 
-                <button
-                        type="button"
-                        class="filter-chip-active removable-chip"
-                        th:if="${filter.drive != null and !#strings.isEmpty(filter.drive)}"
-                        data-filter-name="drive">
-                    Привод: <span th:text="${filter.drive}">AWD</span>
-                    <span class="chip-remove">×</span>
-                </button>
+                <th:block th:if="${filter.drives != null and !#lists.isEmpty(filter.drives)}">
+                    <button
+                            type="button"
+                            class="filter-chip-active removable-chip"
+                            th:each="drive : ${filter.drives}"
+                            data-filter-name="drives"
+                            th:attr="data-filter-value=${drive}">
+                        Привод: <span th:text="${drive}">???</span>
+                        <span class="chip-remove">×</span>
+                    </button>
+                </th:block>
 
                 <button
                         type="button"
@@ -474,10 +490,11 @@
         </div>
 
         <div class="rentals-content catalog-rentals-content" th:if="${not #lists.isEmpty(cars)}">
-            <a
-                    th:each="car : ${cars}"
-                    th:href="@{/cars/{id}(id=${car.id})}"
-                    class="catalog-rental-link">
+
+            <a th:each="car : ${cars}"
+               th:href="@{/cars/{id}(id=${car.id})}"
+               class="catalog-rental-link"
+               th:classappend="${!car.available} ? ' is-unavailable' : ''">
                 <article class="rental-box catalog-rental-box">
                     <div class="rental-top">
                         <h3 th:text="${car.category != null ? car.category.name : 'Авто'}">Sedan</h3>
@@ -493,10 +510,15 @@
                         <i class='bx bx-heart' sec:authorize="isAnonymous()"></i>
                     </div>
 
-                    <img
-                            th:src="${car.imagePath != null and !#strings.isEmpty(car.imagePath) ? car.imagePath : '/images/no-car.png'}"
-                            th:alt="${car.brand + ' ' + car.model}"
-                            onerror="this.onerror=null;this.src='/images/no-car.png';">
+                    <div class="catalog-image-wrap">
+                        <img
+                                th:src="${car.imagePath != null and !#strings.isEmpty(car.imagePath) ? car.imagePath : '/images/no-car.png'}"
+                                th:alt="${car.brand + ' ' + car.model}"
+                                onerror="this.onerror=null;this.src='/images/no-car.png';">
+                        <span th:if="${!car.available}" class="unavailable-ribbon">
+                    <i class='bx bx-wrench'></i> В ремонте
+                </span>
+                    </div>
 
                     <h2 th:text="${car.brand + ' ' + car.model}">Rolls-Royce</h2>
 
@@ -510,16 +532,15 @@
                               th:text="'(' + ${reviewCounts.get(car.id)} + ')'"></span>
                     </div>
 
-                    <h4 th:text="${car.transmission != null and !#strings.isEmpty(car.transmission) ? car.transmission : 'Automatic'}">
-                        Automatic
-                    </h4>
+                    <h4 th:text="${car.transmission}">Автомат</h4>
 
                     <div class="price-btn">
                         <p>
                             <span th:text="${#numbers.formatInteger(car.pricePerDay, 0, 'WHITESPACE')} + ' ₽'">45 000 ₽</span>
                             <span>/день</span>
                         </p>
-                        <span class="rental-btn">Аренда</span>
+                        <span class="rental-btn"
+                              th:text="${car.available ? 'Аренда' : 'Недоступно'}">Аренда</span>
                     </div>
                 </article>
             </a>

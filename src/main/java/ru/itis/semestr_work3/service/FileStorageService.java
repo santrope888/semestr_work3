@@ -25,12 +25,15 @@ public class FileStorageService {
     private static final List<String> ALLOWED_DOC_TYPES =
             List.of("image/jpeg", "image/png", "image/webp", "application/pdf");
 
+    private static final int MAX_SLUG_LENGTH = 40;
+    private static final int SUFFIX_LENGTH = 8;
+
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
 
     public String saveAvatar(MultipartFile file) {
         validate(file, ALLOWED_IMAGE_TYPES);
-        String filename = UUID.randomUUID() + getExtension(file);
+        String filename = generateFilename(file);
         Path dest = resolveAndCreate("avatars").resolve(filename);
         copy(file, dest);
         return "/uploads/avatars/" + filename;
@@ -38,7 +41,7 @@ public class FileStorageService {
 
     public String saveDocument(MultipartFile file, String subFolder) {
         validate(file, ALLOWED_DOC_TYPES);
-        String filename = UUID.randomUUID() + getExtension(file);
+        String filename = generateFilename(file);
         Path dest = resolveAndCreate(subFolder).resolve(filename);
         copy(file, dest);
         return "/uploads/" + subFolder + "/" + filename;
@@ -49,7 +52,7 @@ public class FileStorageService {
             return null;
         }
         validate(file, ALLOWED_IMAGE_TYPES);
-        String filename = UUID.randomUUID() + getExtension(file);
+        String filename = generateFilename(file);
         Path dest = resolveAndCreate("cars").resolve(filename);
         copy(file, dest);
         return "/uploads/cars/" + filename;
@@ -118,7 +121,7 @@ public class FileStorageService {
     private String getExtension(MultipartFile file) {
         String original = file.getOriginalFilename();
         if (original != null && original.contains(".")) {
-            return original.substring(original.lastIndexOf('.'));
+            return original.substring(original.lastIndexOf('.')).toLowerCase();
         }
         String ct = file.getContentType();
         if (ct == null) {
@@ -131,5 +134,36 @@ public class FileStorageService {
             case "application/pdf" -> ".pdf";
             default -> ".bin";
         };
+    }
+
+    private String generateFilename(MultipartFile file) {
+        String extension = getExtension(file);
+        String original = file.getOriginalFilename();
+        String slug = slugify(original);
+        String suffix = UUID.randomUUID().toString().replace("-", "").substring(0, SUFFIX_LENGTH);
+
+        return slug.isBlank()
+                ? suffix + extension
+                : slug + "-" + suffix + extension;
+    }
+
+    private String slugify(String original) {
+        if (original == null || original.isBlank()) {
+            return "";
+        }
+        int dotIndex = original.lastIndexOf('.');
+        String baseName = dotIndex > 0 ? original.substring(0, dotIndex) : original;
+
+        String slug = baseName.toLowerCase()
+                .replaceAll("[^a-z0-9_-]+", "-")
+                .replaceAll("-{2,}", "-")
+                .replaceAll("^-+|-+$", "");
+
+        if (slug.length() > MAX_SLUG_LENGTH) {
+            slug = slug.substring(0, MAX_SLUG_LENGTH);
+            slug = slug.replaceAll("-+$", "");
+        }
+
+        return slug;
     }
 }

@@ -14,19 +14,19 @@ public class CarFilter {
     private List<Integer> ratings;
     private List<Long> categoryIds;
 
-    private String transmission;
     private Integer seats;
 
     private Integer minYear;
     private Integer maxYear;
 
     private String engine;
-    private String drive;
 
     private Boolean available;
 
     private List<String> brands;
     private List<String> colors;
+    private List<String> transmissions;
+    private List<String> drives;
 
     private String sortBy;
 }

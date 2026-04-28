@@ -8,6 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 import ru.itis.semestr_work3.entity.Car;
@@ -15,6 +16,7 @@ import ru.itis.semestr_work3.entity.Category;
 import ru.itis.semestr_work3.entity.ChatMessage;
 import ru.itis.semestr_work3.entity.ChatSession;
 import ru.itis.semestr_work3.entity.User;
+import ru.itis.semestr_work3.exception.ExternalServiceException;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.repository.CarRepository;
 import ru.itis.semestr_work3.repository.ChatMessageRepository;
@@ -33,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -42,10 +45,13 @@ class AiChatServiceTest {
 
     @Mock
     private ChatSessionRepository sessionRepository;
+
     @Mock
     private ChatMessageRepository messageRepository;
+
     @Mock
     private CarRepository carRepository;
+
     @Mock
     private RestTemplate restTemplate;
 
@@ -90,6 +96,38 @@ class AiChatServiceTest {
         ChatSession result = aiChatService.createSession(user, null);
 
         assertThat(result.getTitle()).isEqualTo("Новый диалог");
+        verify(sessionRepository).save(any(ChatSession.class));
+    }
+
+    @Test
+    void deleteSession_whenOwner_deletesSession() {
+        when(sessionRepository.findById(10L)).thenReturn(Optional.of(session));
+
+        aiChatService.deleteSession(10L, 1L);
+
+        verify(sessionRepository).delete(session);
+    }
+
+    @Test
+    void deleteSession_whenSessionMissing_throwsException() {
+        when(sessionRepository.findById(10L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> aiChatService.deleteSession(10L, 1L));
+
+        verify(sessionRepository, never()).delete(any(ChatSession.class));
+    }
+
+    @Test
+    void deleteSession_whenUserIsNotOwner_throwsAccessDeniedException() {
+        User anotherUser = new User();
+        anotherUser.setId(2L);
+        session.setUser(anotherUser);
+
+        when(sessionRepository.findById(10L)).thenReturn(Optional.of(session));
+
+        assertThrows(AccessDeniedException.class, () -> aiChatService.deleteSession(10L, 1L));
+
+        verify(sessionRepository, never()).delete(any(ChatSession.class));
     }
 
     @Test
@@ -182,9 +220,11 @@ class AiChatServiceTest {
 
         ArgumentCaptor<ChatMessage> captor = ArgumentCaptor.forClass(ChatMessage.class);
         verify(messageRepository, times(2)).save(captor.capture());
+
         List<ChatMessage> savedMessages = captor.getAllValues();
 
         assertThat(savedMessages).hasSize(2);
+
         assertThat(savedMessages.get(0).getRole()).isEqualTo("USER");
         assertThat(savedMessages.get(0).getContent()).isEqualTo("Что посоветуешь?");
         assertNotNull(savedMessages.get(0).getCreatedAt());
@@ -197,22 +237,28 @@ class AiChatServiceTest {
     }
 
     @Test
-    void sendMessage_whenResponseBodyIsNull_returnsFallbackMessage() {
+    void sendMessage_whenResponseBodyIsNull_throwsExternalServiceException() {
         when(sessionRepository.findById(10L)).thenReturn(Optional.of(session));
         when(carRepository.findAll(org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<Car>>any()))
                 .thenReturn(List.<Car>of());
         when(messageRepository.findBySession(10L)).thenReturn(List.<ChatMessage>of());
-        when(restTemplate.postForEntity(anyString(), any(), eq(Map.class))).thenReturn(ResponseEntity.ok(null));
+        when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
+                .thenReturn(ResponseEntity.ok(null));
         when(messageRepository.save(any(ChatMessage.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        String result = aiChatService.sendMessage(10L, "Привет");
+        ExternalServiceException exception = assertThrows(
+                ExternalServiceException.class,
+                () -> aiChatService.sendMessage(10L, "Привет")
+        );
 
-        assertThat(result).isEqualTo("Извините, не удалось получить ответ. Попробуйте ещё раз.");
+        assertThat(exception.getMessage()).isEqualTo("Ollama вернул пустой ответ");
+
+        verify(messageRepository, times(1)).save(any(ChatMessage.class));
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    void sendMessage_whenMessageHasNoContent_returnsFallbackMessage() {
+    void sendMessage_whenMessageHasNoContent_throwsExternalServiceException() {
         Map<String, Object> message = new HashMap<>();
         Map<String, Object> body = new HashMap<>();
         body.put("message", message);
@@ -221,16 +267,46 @@ class AiChatServiceTest {
         when(carRepository.findAll(org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<Car>>any()))
                 .thenReturn(List.<Car>of());
         when(messageRepository.findBySession(10L)).thenReturn(new ArrayList<>());
-        when(restTemplate.postForEntity(anyString(), any(), eq(Map.class))).thenReturn(ResponseEntity.ok(body));
+        when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
+                .thenReturn(ResponseEntity.ok(body));
         when(messageRepository.save(any(ChatMessage.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        String result = aiChatService.sendMessage(10L, "Привет");
+        ExternalServiceException exception = assertThrows(
+                ExternalServiceException.class,
+                () -> aiChatService.sendMessage(10L, "Привет")
+        );
 
-        assertThat(result).isEqualTo("Извините, не удалось получить ответ. Попробуйте ещё раз.");
+        assertThat(exception.getMessage()).isEqualTo("Ollama не вернул текст ответа");
+
+        verify(messageRepository, times(1)).save(any(ChatMessage.class));
     }
 
     @Test
-    void sendMessage_whenOllamaFails_returnsServiceUnavailableMessage() {
+    @SuppressWarnings("unchecked")
+    void sendMessage_whenMessageHasWrongFormat_throwsExternalServiceException() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("message", "wrong-format");
+
+        when(sessionRepository.findById(10L)).thenReturn(Optional.of(session));
+        when(carRepository.findAll(org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<Car>>any()))
+                .thenReturn(List.<Car>of());
+        when(messageRepository.findBySession(10L)).thenReturn(List.<ChatMessage>of());
+        when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
+                .thenReturn(ResponseEntity.ok(body));
+        when(messageRepository.save(any(ChatMessage.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ExternalServiceException exception = assertThrows(
+                ExternalServiceException.class,
+                () -> aiChatService.sendMessage(10L, "Привет")
+        );
+
+        assertThat(exception.getMessage()).isEqualTo("Ollama вернул некорректный формат ответа");
+
+        verify(messageRepository, times(1)).save(any(ChatMessage.class));
+    }
+
+    @Test
+    void sendMessage_whenOllamaFails_throwsExternalServiceException() {
         when(sessionRepository.findById(10L)).thenReturn(Optional.of(session));
         when(carRepository.findAll(org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<Car>>any()))
                 .thenReturn(List.<Car>of());
@@ -239,8 +315,13 @@ class AiChatServiceTest {
                 .thenThrow(new RuntimeException("Connection refused"));
         when(messageRepository.save(any(ChatMessage.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        String result = aiChatService.sendMessage(10L, "Привет");
+        ExternalServiceException exception = assertThrows(
+                ExternalServiceException.class,
+                () -> aiChatService.sendMessage(10L, "Привет")
+        );
 
-        assertThat(result).isEqualTo("Извините, ИИ-помощник временно недоступен. Попробуйте позже.");
+        assertThat(exception.getMessage()).isEqualTo("ИИ-помощник временно недоступен. Попробуйте позже.");
+
+        verify(messageRepository, times(1)).save(any(ChatMessage.class));
     }
 }

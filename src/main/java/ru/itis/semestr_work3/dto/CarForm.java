@@ -26,7 +26,7 @@ public class CarForm {
     private Integer pricePerDay;
 
     @NotNull(message = "Укажите количество мест")
-    @Min(value = 1, message = "Минимум 1 место")
+    @Min(value = 2, message = "Минимум 2 места")
     private Integer seats;
 
     @NotBlank(message = "Укажите тип трансмиссии")
@@ -39,6 +39,8 @@ public class CarForm {
     private String drive;
 
     private String description;
+
+    private Boolean available;
 
     @NotNull(message = "Укажите категорию")
     private Long categoryId;

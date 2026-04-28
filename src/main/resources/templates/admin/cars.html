@@ -37,8 +37,12 @@
                 <td th:text="${car.pricePerDay + ' ₽'}">5 000 ₽</td>
                 <td th:text="${car.category != null ? car.category.name : '—'}">Комфорт</td>
                 <td>
-                            <span class="badge" th:classappend="${car.available ? 'badge-completed' : 'badge-cancelled'}"
-                                  th:text="${car.available ? 'Доступен' : 'Недоступен'}">Доступен</span>
+                    <span th:if="${car.available}" class="badge badge-completed">
+                        <i class='bx bx-check-circle'></i> Доступен
+                    </span>
+                    <span th:unless="${car.available}" class="badge badge-cancelled">
+                        <i class='bx bx-wrench'></i> В ремонте
+                    </span>
                 </td>
                 <td>
                     <a th:href="@{/admin/cars/{id}/edit(id=${car.id})}" class="btn btn-sm btn-secondary">Ред.</a>

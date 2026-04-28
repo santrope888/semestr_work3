@@ -32,7 +32,9 @@ public class AdminCarController {
 
     @GetMapping("/new")
     public String newCarForm(Model model) {
-        model.addAttribute("carForm", new CarForm());
+        CarForm form = new CarForm();
+        form.setAvailable(true);
+        model.addAttribute("carForm", form);
         model.addAttribute("categories", categoryService.findAll());
         return "admin/car-form";
     }
@@ -75,10 +77,12 @@ public class AdminCarController {
         form.setEngine(car.getEngine());
         form.setDrive(car.getDrive());
         form.setDescription(car.getDescription());
+        form.setAvailable(car.getAvailable());
         form.setCategoryId(car.getCategory() != null ? car.getCategory().getId() : null);
 
         model.addAttribute("carForm", form);
         model.addAttribute("carId", id);
+        model.addAttribute("currentImagePath", car.getImagePath());
         model.addAttribute("categories", categoryService.findAll());
         return "admin/car-form";
     }
@@ -90,17 +94,17 @@ public class AdminCarController {
                             @RequestParam(required = false) MultipartFile image,
                             Model model,
                             RedirectAttributes ra) {
+        Car existing = carService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Автомобиль не найден: " + id));
+
         if (bindingResult.hasErrors()) {
             model.addAttribute("carId", id);
+            model.addAttribute("currentImagePath", existing.getImagePath());
             model.addAttribute("categories", categoryService.findAll());
             return "admin/car-form";
         }
 
-        Car existing = carService.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Автомобиль не найден: " + id));
-
         Car carData = buildCar(form, new Car());
-        carData.setAvailable(existing.getAvailable());
         carData.setImagePath(existing.getImagePath());
 
         String newImagePath = fileStorageService.saveCarImage(image);
@@ -131,6 +135,7 @@ public class AdminCarController {
         car.setEngine(form.getEngine());
         car.setDrive(form.getDrive());
         car.setDescription(form.getDescription());
+        car.setAvailable(form.getAvailable() != null ? form.getAvailable() : true);
         car.setCategory(categoryService.findById(form.getCategoryId()));
         return car;
     }

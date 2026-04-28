@@ -22,12 +22,44 @@ public class CarSpecifications {
                 return cb.conjunction();
             }
 
-            String pattern = "%" + text.toLowerCase() + "%";
+            String normalizedText = text.trim()
+                    .toLowerCase()
+                    .replace('ё', 'е')
+                    .replace('–', '-');
 
-            return cb.or(
-                    cb.like(cb.lower(root.get("brand")), pattern),
-                    cb.like(cb.lower(root.get("model")), pattern)
+            String[] words = normalizedText.split("\\s+");
+
+            Expression<String> brand = cb.lower(cb.trim(root.get("brand")));
+            Expression<String> model = cb.lower(cb.trim(root.get("model")));
+
+            Expression<String> fullName = cb.lower(
+                    cb.concat(
+                            cb.concat(cb.trim(root.get("brand")), " "),
+                            cb.trim(root.get("model"))
+                    )
             );
+
+            List<Predicate> predicates = new ArrayList<>();
+
+            for (String word : words) {
+                if (word.isBlank()) {
+                    continue;
+                }
+
+                String pattern = "%" + word + "%";
+
+                predicates.add(cb.or(
+                        cb.like(brand, pattern),
+                        cb.like(model, pattern),
+                        cb.like(fullName, pattern)
+                ));
+            }
+
+            if (predicates.isEmpty()) {
+                return cb.conjunction();
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
 
@@ -65,12 +97,43 @@ public class CarSpecifications {
         };
     }
 
-    public static Specification<Car> hasTransmission(String transmission) {
+    public static Specification<Car> hasTransmissions(List<String> transmissions) {
         return (Root<Car> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
-            if (transmission == null || transmission.isBlank()) {
+            if (transmissions == null || transmissions.isEmpty()) {
                 return cb.conjunction();
             }
-            return cb.equal(cb.lower(root.get("transmission")), transmission.toLowerCase());
+
+            List<String> normalized = transmissions.stream()
+                    .filter(v -> v != null && !v.isBlank())
+                    .map(String::toLowerCase)
+                    .collect(Collectors.toList());
+
+            if (normalized.isEmpty()) {
+                return cb.conjunction();
+            }
+
+            Expression<String> transmissionExpr = cb.lower(root.get("transmission"));
+            return transmissionExpr.in(normalized);
+        };
+    }
+
+    public static Specification<Car> hasDrives(List<String> drives) {
+        return (Root<Car> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
+            if (drives == null || drives.isEmpty()) {
+                return cb.conjunction();
+            }
+
+            List<String> normalized = drives.stream()
+                    .filter(v -> v != null && !v.isBlank())
+                    .map(String::toLowerCase)
+                    .collect(Collectors.toList());
+
+            if (normalized.isEmpty()) {
+                return cb.conjunction();
+            }
+
+            Expression<String> driveExpr = cb.lower(root.get("drive"));
+            return driveExpr.in(normalized);
         };
     }
 
@@ -103,7 +166,8 @@ public class CarSpecifications {
             if (engine == null || engine.isBlank()) {
                 return cb.conjunction();
             }
-            return cb.like(cb.lower(root.get("engine")), "%" + engine.toLowerCase() + "%");
+
+            return cb.equal(cb.lower(root.get("engine")), engine.trim().toLowerCase());
         };
     }
 
