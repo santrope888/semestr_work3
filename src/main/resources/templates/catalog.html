@@ -10,25 +10,8 @@
     <meta th:name="_csrf_header" th:content="${_csrf.headerName}"/>
 
     <link rel="stylesheet" th:href="@{/css/style.css}">
-    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-    <style>
-        .catalog-fav-btn {
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            padding: 4px;
-            margin: 0;
-            font-size: 22px;
-            line-height: 1;
-            color: #666;
-            transition: color 0.15s, transform 0.15s;
-            position: relative;
-            z-index: 5;
-        }
-        .catalog-fav-btn:hover { color: var(--main-color); transform: scale(1.1); }
-        .catalog-fav-btn.on { color: var(--main-color); }
-        .catalog-fav-btn i { pointer-events: none; }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/catalog.css}">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 
 </head>
 <body>
@@ -553,64 +536,6 @@
 
 <footer th:replace="~{fragments/footer :: footer}"></footer>
 
-<script>
-    function getCsrfHeaders() {
-        const token  = document.querySelector('meta[name="_csrf"]')?.content;
-        const header = document.querySelector('meta[name="_csrf_header"]')?.content;
-        return token && header ? { [header]: token } : {};
-    }
-
-    async function onCatalogFavClick(event, btn) {
-        event.preventDefault();
-        event.stopPropagation();
-
-        if (!btn || btn.disabled) return;
-        const carId = btn.dataset.carId;
-        if (!carId) return;
-
-        const wasOn = btn.classList.contains('on');
-        const icon = btn.querySelector('i');
-
-        btn.disabled = true;
-        btn.classList.toggle('on');
-        if (icon) {
-            icon.classList.toggle('bx-heart');
-            icon.classList.toggle('bxs-heart');
-        }
-
-        const url = `/api/favorites?carId=${encodeURIComponent(carId)}`;
-        const method = wasOn ? 'DELETE' : 'POST';
-
-        try {
-            const res = await fetch(url, {
-                method,
-                credentials: 'same-origin',
-                headers: { ...getCsrfHeaders() }
-            });
-
-            if (!res.ok) {
-                btn.classList.toggle('on');
-                if (icon) {
-                    icon.classList.toggle('bx-heart');
-                    icon.classList.toggle('bxs-heart');
-                }
-                if (res.status === 401 || res.status === 403) {
-                    window.location.href = '/login';
-                    return;
-                }
-                console.error('Favorite toggle failed', res.status);
-            }
-        } catch (e) {
-            btn.classList.toggle('on');
-            if (icon) {
-                icon.classList.toggle('bx-heart');
-                icon.classList.toggle('bxs-heart');
-            }
-            console.error('Favorite toggle network error', e);
-        } finally {
-            btn.disabled = false;
-        }
-    }
-</script>
+<script th:src="@{/js/catalog.js}" defer></script>
 </body>
 </html>

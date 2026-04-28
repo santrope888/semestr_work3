@@ -1,0 +1,16 @@
+.catalog-fav-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    margin: 0;
+    font-size: 22px;
+    line-height: 1;
+    color: #666;
+    transition: color 0.15s, transform 0.15s;
+    position: relative;
+    z-index: 5;
+}
+.catalog-fav-btn:hover { color: var(--main-color); transform: scale(1.1); }
+.catalog-fav-btn.on { color: var(--main-color); }
+.catalog-fav-btn i { pointer-events: none; }
