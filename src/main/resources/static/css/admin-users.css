@@ -1,0 +1,184 @@
+.admin-users-page {
+    padding: 30px 20px 80px;
+}
+.admin-users-page .page-header {
+    margin-bottom: 28px;
+}
+.admin-users-page .page-header h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin: 0;
+}
+.admin-users-page .page-header p {
+    color: var(--text-alter-color);
+    margin: 8px 0 0;
+    font-size: 0.95rem;
+}
+
+.alert {
+    padding: 14px 18px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.92rem;
+}
+.alert i { font-size: 1.2rem; }
+.alert-success { background: #e8f5e9; color: #2e7d32; }
+.alert-error   { background: #fce4ec; color: #c62828; }
+
+.users-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.user-card {
+    background: #fff;
+    border-radius: 18px;
+    padding: 22px 26px;
+    box-shadow: 0 4px 18px rgba(20,24,43,0.06);
+}
+
+.user-card-head {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f0f0f0;
+}
+.user-card-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--main-color);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+.user-card-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.user-card-info { flex: 1; min-width: 0; }
+.user-card-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 2px;
+}
+.user-card-email,
+.user-card-meta {
+    font-size: 0.85rem;
+    color: var(--text-alter-color);
+}
+
+.user-card-docs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+@media (max-width: 768px) {
+    .user-card-docs { grid-template-columns: 1fr; }
+}
+
+.user-doc {
+    background: var(--container-color);
+    border-radius: 14px;
+    padding: 14px 16px;
+}
+.user-doc-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+.user-doc-head i {
+    font-size: 1.3rem;
+    color: var(--main-color);
+}
+.user-doc-head strong {
+    font-size: 0.92rem;
+    color: var(--text-color);
+}
+
+.doc-badge {
+    margin-left: auto;
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+.doc-badge.badge-not_uploaded { background: #f0f0f0; color: #666; }
+.doc-badge.badge-pending      { background: #fff3e0; color: #e65100; }
+.doc-badge.badge-confirmed    { background: #e8f5e9; color: #2e7d32; }
+.doc-badge.badge-rejected     { background: #fce4ec; color: #c62828; }
+
+.user-doc-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.inline-form { margin: 0; display: inline; }
+
+.btn-doc-view,
+.btn-doc-approve,
+.btn-doc-reject {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    font-family: inherit;
+    transition: 0.15s;
+}
+.btn-doc-view {
+    background: #fff;
+    color: var(--text-color);
+    border: 1px solid #ddd;
+}
+.btn-doc-view:hover { background: #f5f5f5; }
+
+.btn-doc-approve {
+    background: #2e7d32;
+    color: #fff;
+}
+.btn-doc-approve:hover { background: #1b5e20; }
+
+.btn-doc-reject {
+    background: #c62828;
+    color: #fff;
+}
+.btn-doc-reject:hover { background: #8e0000; }
+
+.empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    background: #fff;
+    border-radius: 18px;
+}
+.empty-state i {
+    font-size: 4rem;
+    color: var(--main-color);
+    opacity: 0.4;
+    margin-bottom: 12px;
+}
+.empty-state h3 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0;
+}

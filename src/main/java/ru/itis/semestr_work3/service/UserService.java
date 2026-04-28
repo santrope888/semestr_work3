@@ -12,8 +12,10 @@ import ru.itis.semestr_work3.entity.User;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.repository.RoleRepository;
 import ru.itis.semestr_work3.repository.UserRepository;
+import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -26,6 +28,7 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final FileStorageService fileStorageService;
+    private final NotificationService notificationService;
 
     public User register(UserDto userDto) {
         if (userRepository.existsByUsername(userDto.getUsername())) {
@@ -62,6 +65,10 @@ public class UserService {
     @Transactional(readOnly = true)
     public Optional<User> findById(Long id) {
         return userRepository.findById(id);
+    }
+
+    public List<User> findAll() {
+        return userRepository.findAll();
     }
 
     public User updateFullProfile(Long id,
@@ -108,6 +115,54 @@ public class UserService {
         }
 
         return userRepository.save(user);
+    }
+
+    @Transactional
+    public User approveDocument(Long userId, String docType) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+
+        applyDocumentStatus(user, docType, "CONFIRMED");
+        User saved = userRepository.save(user);
+
+        notificationService.send(
+                saved,
+                "DOCUMENT_APPROVED",
+                "Ваш документ \"" + humanDocName(docType) + "\" подтверждён администратором."
+        );
+        return saved;
+    }
+
+    @Transactional
+    public User rejectDocument(Long userId, String docType) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+
+        applyDocumentStatus(user, docType, "REJECTED");
+        User saved = userRepository.save(user);
+
+        notificationService.send(
+                saved,
+                "DOCUMENT_REJECTED",
+                "Ваш документ \"" + humanDocName(docType) + "\" отклонён. Загрузите его повторно."
+        );
+        return saved;
+    }
+
+    private void applyDocumentStatus(User user, String docType, String status) {
+        switch (docType) {
+            case "license"  -> user.setLicenseStatus(status);
+            case "passport" -> user.setPassportStatus(status);
+            default -> throw new IllegalArgumentException("Неизвестный тип документа: " + docType);
+        }
+    }
+
+    private String humanDocName(String docType) {
+        return switch (docType) {
+            case "license"  -> "Водительское удостоверение";
+            case "passport" -> "Паспорт";
+            default -> docType;
+        };
     }
 
     public User updateProfile(Long id, String phoneNumber, String avatarPath) {

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пользователи — Админ — Aura Motum</title>
+
+    <meta th:name="_csrf" th:content="${_csrf.token}"/>
+    <meta th:name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-users.css}">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<div class="admin-users-page container">
+    <div class="page-header">
+        <h1>Пользователи</h1>
+        <p>Проверка документов и статусы аккаунтов</p>
+    </div>
+
+    <div th:if="${adminSuccess}" class="alert alert-success">
+        <i class='bx bx-check-circle'></i><span th:text="${adminSuccess}"></span>
+    </div>
+    <div th:if="${adminError}" class="alert alert-error">
+        <i class='bx bx-error-circle'></i><span th:text="${adminError}"></span>
+    </div>
+
+    <div class="users-grid">
+        <div class="user-card" th:each="u : ${users}">
+            <div class="user-card-head">
+                <div class="user-card-avatar">
+                    <img th:if="${u.avatarPath != null}" th:src="${u.avatarPath}" alt="avatar">
+                    <span th:unless="${u.avatarPath != null}"
+                          th:text="${#strings.toUpperCase(#strings.substring(u.username, 0, 1))}">A</span>
+                </div>
+                <div class="user-card-info">
+                    <div class="user-card-name" th:text="${u.username}">username</div>
+                    <div class="user-card-email" th:text="${u.email}">user@mail.com</div>
+                    <div class="user-card-meta" th:if="${u.phoneNumber != null}"
+                         th:text="${u.phoneNumber}">+7 999 000 00 00</div>
+                </div>
+            </div>
+
+            <div class="user-card-docs">
+                <div class="user-doc">
+                    <div class="user-doc-head">
+                        <i class='bx bx-id-card'></i>
+                        <strong>Водительское удостоверение</strong>
+                        <span class="doc-badge"
+                              th:classappend="' badge-' + ${#strings.toLowerCase(u.licenseStatus)}"
+                              th:switch="${u.licenseStatus}">
+                            <span th:case="'NOT_UPLOADED'">Не загружен</span>
+                            <span th:case="'PENDING'">На проверке</span>
+                            <span th:case="'CONFIRMED'">Подтверждён</span>
+                            <span th:case="'REJECTED'">Отклонён</span>
+                            <span th:case="*" th:text="${u.licenseStatus}">—</span>
+                        </span>
+                    </div>
+                    <div class="user-doc-actions" th:if="${u.licensePath != null}">
+                        <a th:href="@{/admin/users/{userId}/documents/license(userId=${u.id})}"
+                           target="_blank" class="btn-doc-view">
+                            <i class='bx bx-show'></i> Просмотреть
+                        </a>
+                        <form th:action="@{/admin/users/{userId}/documents/license/approve(userId=${u.id})}"
+                              method="post" class="inline-form"
+                              th:if="${u.licenseStatus == 'PENDING' or u.licenseStatus == 'REJECTED'}">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button type="submit" class="btn-doc-approve">
+                                <i class='bx bx-check'></i> Подтвердить
+                            </button>
+                        </form>
+                        <form th:action="@{/admin/users/{userId}/documents/license/reject(userId=${u.id})}"
+                              method="post" class="inline-form"
+                              th:if="${u.licenseStatus == 'PENDING' or u.licenseStatus == 'CONFIRMED'}">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button type="submit" class="btn-doc-reject">
+                                <i class='bx bx-x'></i> Отклонить
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="user-doc">
+                    <div class="user-doc-head">
+                        <i class='bx bx-book'></i>
+                        <strong>Паспорт</strong>
+                        <span class="doc-badge"
+                              th:classappend="' badge-' + ${#strings.toLowerCase(u.passportStatus)}"
+                              th:switch="${u.passportStatus}">
+                            <span th:case="'NOT_UPLOADED'">Не загружен</span>
+                            <span th:case="'PENDING'">На проверке</span>
+                            <span th:case="'CONFIRMED'">Подтверждён</span>
+                            <span th:case="'REJECTED'">Отклонён</span>
+                            <span th:case="*" th:text="${u.passportStatus}">—</span>
+                        </span>
+                    </div>
+                    <div class="user-doc-actions" th:if="${u.passportPath != null}">
+                        <a th:href="@{/admin/users/{userId}/documents/passport(userId=${u.id})}"
+                           target="_blank" class="btn-doc-view">
+                            <i class='bx bx-show'></i> Просмотреть
+                        </a>
+                        <form th:action="@{/admin/users/{userId}/documents/passport/approve(userId=${u.id})}"
+                              method="post" class="inline-form"
+                              th:if="${u.passportStatus == 'PENDING' or u.passportStatus == 'REJECTED'}">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button type="submit" class="btn-doc-approve">
+                                <i class='bx bx-check'></i> Подтвердить
+                            </button>
+                        </form>
+                        <form th:action="@{/admin/users/{userId}/documents/passport/reject(userId=${u.id})}"
+                              method="post" class="inline-form"
+                              th:if="${u.passportStatus == 'PENDING' or u.passportStatus == 'CONFIRMED'}">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button type="submit" class="btn-doc-reject">
+                                <i class='bx bx-x'></i> Отклонить
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="empty-state" th:if="${#lists.isEmpty(users)}">
+            <i class='bx bx-user-x'></i>
+            <h3>Нет пользователей</h3>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

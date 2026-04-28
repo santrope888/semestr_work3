@@ -17,6 +17,7 @@
             <a th:href="@{/chat}" class="nav-link" sec:authorize="isAuthenticated()">ИИ-помощник</a>
             <a th:href="@{/admin/cars}" class="nav-link admin-link-accent" sec:authorize="hasAuthority('ADMIN')">Автомобили</a>
             <a th:href="@{/admin/bookings}" class="nav-link admin-link-accent" sec:authorize="hasAuthority('ADMIN')">Брони</a>
+            <a th:href="@{/admin/users}" class="nav-link admin-link-accent" sec:authorize="hasAuthority('ADMIN')">Пользователи</a>
         </div>
 
         <div class="nav-icons">
