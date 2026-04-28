@@ -2822,3 +2822,77 @@ footer {
 }
 .dropdown-logout-form { margin: 0; }
 .admin-link-accent { color: var(--main-color); }
+.color-dot {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    margin-right: 6px;
+    vertical-align: middle;
+}
+.color-dot[data-color="Бежевый"]    { background-color: #F5F5DC; }
+.color-dot[data-color="Белый"]      { background-color: #FFFFFF; }
+.color-dot[data-color="Голубой"]    { background-color: #87CEEB; }
+.color-dot[data-color="Жёлтый"]     { background-color: #FFD700; }
+.color-dot[data-color="Зелёный"]    { background-color: #1E8449; }
+.color-dot[data-color="Красный"]    { background-color: #C0392B; }
+.color-dot[data-color="Оливковый"]  { background-color: #808000; }
+.color-dot[data-color="Серый"]      { background-color: #7F8C8D; }
+.color-dot[data-color="Синий"]      { background-color: #0033A0; }
+.color-dot[data-color="Фиолетовый"] { background-color: #7D3C98; }
+.color-dot[data-color="Чёрный"]     { background-color: #1C1C1C; }
+
+/* ===== Состояние «недоступно» в каталоге ===== */
+.catalog-image-wrap {
+    position: relative;
+    overflow: hidden;
+    border-radius: inherit;
+}
+
+.catalog-image-wrap img {
+    display: block;
+    width: 100%;
+    transition: filter 0.3s ease;
+}
+
+.unavailable-ribbon {
+    position: absolute;
+    top: 12px;
+    left: -2px;
+    background: #c62828;
+    color: #fff;
+    padding: 6px 14px 6px 12px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    border-radius: 0 6px 6px 0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: 0.02em;
+    z-index: 2;
+}
+
+.unavailable-ribbon .bx {
+    font-size: 0.95rem;
+}
+
+.catalog-rental-link.is-unavailable .catalog-image-wrap img {
+    filter: grayscale(0.85) brightness(0.92);
+}
+
+.catalog-rental-link.is-unavailable {
+    opacity: 0.85;
+}
+
+.catalog-rental-link.is-unavailable .rental-btn {
+    background: #888 !important;
+    color: #fff !important;
+    cursor: not-allowed;
+}
+
+.catalog-rental-link.is-unavailable:hover .catalog-rental-box {
+    transform: none;
+    box-shadow: none;
+}
