@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Оплата — Aura Motum</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
 <body>
 <header th:replace="~{fragments/header :: header}"></header>
 
-<section class="booking-page container">
+<section class="booking-page container" id="payment-root" th:attr="data-amount=${payment.amount}">
     <div class="page-header">
         <h1>Оплата бронирования</h1>
         <p th:text="${booking.car.brand + ' ' + booking.car.model}">Toyota Camry</p>
@@ -85,9 +85,9 @@
             </div>
 
             <div class="currency-toggle mt-md">
-                <button class="currency-btn active" onclick="setCurrency('RUB')">RUB</button>
-                <button class="currency-btn" onclick="setCurrency('USD')">USD</button>
-                <button class="currency-btn" onclick="setCurrency('EUR')">EUR</button>
+                <button type="button" class="currency-btn active" onclick="setCurrency('RUB', this)">RUB</button>
+                <button type="button" class="currency-btn" onclick="setCurrency('USD', this)">USD</button>
+                <button type="button" class="currency-btn" onclick="setCurrency('EUR', this)">EUR</button>
             </div>
         </div>
     </div>
@@ -95,23 +95,6 @@
 
 <footer th:replace="~{fragments/footer :: footer}"></footer>
 
-<script th:inline="javascript">
-    const amount = [[${payment.amount}]];
-
-    async function setCurrency(cur) {
-        document.querySelectorAll('.currency-btn').forEach(b => b.classList.remove('active'));
-        event.target.classList.add('active');
-
-        if (cur === 'RUB') {
-            document.getElementById('total-converted').textContent = amount + ' ₽';
-            return;
-        }
-
-        const res = await fetch(`/api/payments/convert?amount=${amount}&currency=${cur}`);
-        const data = await res.json();
-        const symbol = cur === 'USD' ? '$' : '€';
-        document.getElementById('total-converted').textContent = data.converted.toFixed(2) + ' ' + symbol;
-    }
-</script>
+<script th:src="@{/js/payment.js}" defer></script>
 </body>
 </html>

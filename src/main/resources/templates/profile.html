@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Профиль — Aura Motum</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
 <body>
@@ -604,63 +604,6 @@
 </div>
 
 <footer th:replace="~{fragments/footer :: footer}"></footer>
-
-<script>
-    function switchBlock(hideId, showId) {
-        document.getElementById(hideId + 'Block').style.display = 'none';
-        document.getElementById(showId + 'Block').style.display = 'block';
-    }
-
-    function submitAvatarForm() {
-        const input = document.getElementById('avatarUploadTrigger');
-        if (!input.files || !input.files[0]) return;
-        const file = input.files[0];
-        const allowed = ['image/jpeg', 'image/png', 'image/webp'];
-        if (!allowed.includes(file.type)) {
-            alert('Разрешены только JPG, PNG, WEBP');
-            return;
-        }
-        if (file.size > 5 * 1024 * 1024) {
-            alert('Файл слишком большой. Максимум 5 МБ');
-            return;
-        }
-        const reader = new FileReader();
-        reader.onload = e => document.getElementById('avatarPreview').src = e.target.result;
-        reader.readAsDataURL(file);
-        document.getElementById('avatarForm').submit();
-    }
-
-    function confirmDelete() {
-        document.getElementById('deleteModal').style.display = 'flex';
-    }
-
-    function closeDelete() {
-        document.getElementById('deleteModal').style.display = 'none';
-    }
-
-    document.getElementById('deleteModal').addEventListener('click', function (e) {
-        if (e.target === this) closeDelete();
-    });
-
-    document.addEventListener('DOMContentLoaded', function () {
-        let total = 0;
-        document.querySelectorAll('.profile-step').forEach(step => {
-            if (step.dataset.done === 'true') {
-                const t = step.querySelector('.step-percent');
-                if (t) total += parseInt(t.textContent);
-            }
-        });
-        total = Math.min(total, 100);
-        const el = document.getElementById('progressText');
-        const circle = document.getElementById('progressCircle');
-        if (el) el.textContent = total + '%';
-        if (circle) {
-            circle.style.transition = 'stroke-dashoffset 1s ease';
-            setTimeout(() => {
-                circle.style.strokeDashoffset = 276.5 - (total / 100) * 276.5;
-            }, 100);
-        }
-    });
-</script>
+<script th:src="@{/js/profile.js}" defer></script>
 </body>
 </html>
