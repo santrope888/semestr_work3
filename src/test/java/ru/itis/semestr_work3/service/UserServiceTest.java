@@ -14,7 +14,9 @@ import ru.itis.semestr_work3.entity.User;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.repository.RoleRepository;
 import ru.itis.semestr_work3.repository.UserRepository;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
 import java.time.LocalDate;
 import java.util.Optional;
 
@@ -31,17 +33,24 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
     @Mock
     private RoleRepository roleRepository;
+
     @Mock
     private PasswordEncoder passwordEncoder;
+
     @Mock
     private FileStorageService fileStorageService;
+
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private UserService userService;
 
     private UserDto userDto;
+
     private User user;
     private Role role;
 
@@ -150,6 +159,112 @@ class UserServiceTest {
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThat(userService.findById(99L)).isEmpty();
+    }
+
+    @Test
+    void findAll_returnsUsers() {
+        when(userRepository.findAll()).thenReturn(List.of(user));
+
+        List<User> result = userService.findAll();
+
+        assertThat(result).containsExactly(user);
+    }
+
+    @Test
+    void approveDocument_withLicense_setsLicenseConfirmedAndSendsNotification() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        User result = userService.approveDocument(1L, "license");
+
+        assertThat(result.getLicenseStatus()).isEqualTo("CONFIRMED");
+        verify(notificationService).send(
+                result,
+                "DOCUMENT_APPROVED",
+                "Ваш документ \"Водительское удостоверение\" подтверждён администратором."
+        );
+    }
+
+    @Test
+    void approveDocument_withPassport_setsPassportConfirmedAndSendsNotification() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        User result = userService.approveDocument(1L, "passport");
+
+        assertThat(result.getPassportStatus()).isEqualTo("CONFIRMED");
+        verify(notificationService).send(
+                result,
+                "DOCUMENT_APPROVED",
+                "Ваш документ \"Паспорт\" подтверждён администратором."
+        );
+    }
+
+    @Test
+    void approveDocument_whenUserMissing_throwsException() {
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> userService.approveDocument(99L, "license"));
+
+        verify(userRepository, never()).save(any(User.class));
+        verify(notificationService, never()).send(any(User.class), any(), any());
+    }
+
+    @Test
+    void approveDocument_withUnknownDocumentType_throwsException() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        assertThrows(IllegalArgumentException.class, () -> userService.approveDocument(1L, "unknown"));
+
+        verify(userRepository, never()).save(any(User.class));
+        verify(notificationService, never()).send(any(User.class), any(), any());
+    }
+
+    @Test
+    void rejectDocument_withLicense_setsLicenseRejectedAndSendsNotification() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        User result = userService.rejectDocument(1L, "license");
+
+        assertThat(result.getLicenseStatus()).isEqualTo("REJECTED");
+        verify(notificationService).send(
+                result,
+                "DOCUMENT_REJECTED",
+                "Ваш документ \"Водительское удостоверение\" отклонён. Загрузите его повторно."
+        );
+    }
+
+    @Test
+    void rejectDocument_withPassport_setsPassportRejectedAndSendsNotification() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        User result = userService.rejectDocument(1L, "passport");
+
+        assertThat(result.getPassportStatus()).isEqualTo("REJECTED");
+        verify(notificationService).send(
+                result,
+                "DOCUMENT_REJECTED",
+                "Ваш документ \"Паспорт\" отклонён. Загрузите его повторно."
+        );
+    }
+
+    @Test
+    void rejectDocument_whenUserMissing_throwsException() {
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> userService.rejectDocument(99L, "passport"));
+
+        verify(userRepository, never()).save(any(User.class));
+        verify(notificationService, never()).send(any(User.class), any(), any());
+    }
+
+    @Test
+    void humanDocName_withUnknownType_returnsOriginalValue() {
+        String result = ReflectionTestUtils.invokeMethod(userService, "humanDocName", "unknown");
+
+        assertThat(result).isEqualTo("unknown");
     }
 
     @Test

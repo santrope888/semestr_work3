@@ -465,4 +465,79 @@ class FileStorageServiceTest {
             assertThat(ex.getMessage()).contains("Не удалось создать папку");
         }
     }
+
+    @Test
+    void saveAvatar_whenFileIsNull_throwsException() {
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> fileStorageService.saveAvatar(null)
+        );
+
+        assertThat(ex.getMessage()).isEqualTo("Файл не выбран");
+    }
+
+    @Test
+    void saveAvatar_whenOriginalFilenameProducesBlankSlug_returnsOnlySuffixWithExtension() {
+        MockMultipartFile file = new MockMultipartFile(
+                "avatar",
+                "!!!.png",
+                "image/png",
+                new byte[]{1, 2, 3}
+        );
+
+        String path = fileStorageService.saveAvatar(file);
+
+        assertThat(path).startsWith("/uploads/avatars/");
+        assertThat(path).matches("/uploads/avatars/[a-f0-9]{8}\\.png");
+
+        String fileName = path.substring("/uploads/avatars/".length());
+        Path savedFile = tempDir.resolve("avatars").resolve(fileName);
+        assertThat(Files.exists(savedFile)).isTrue();
+    }
+
+    @Test
+    void loadAsResourceFromStoredPath_whenPathPointsToDirectory_throwsException() throws Exception {
+        Path documentsDir = tempDir.resolve("documents");
+        Files.createDirectories(documentsDir);
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> fileStorageService.loadAsResourceFromStoredPath("/uploads/documents")
+        );
+
+        assertThat(ex.getMessage()).isEqualTo("Файл не найден");
+    }
+
+    @Test
+    void slugify_whenOriginalIsNull_returnsEmptyString() {
+        String result = ReflectionTestUtils.invokeMethod(fileStorageService, "slugify", (String) null);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void slugify_whenOriginalIsBlank_returnsEmptyString() {
+        String result = ReflectionTestUtils.invokeMethod(fileStorageService, "slugify", "   ");
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void slugify_whenSlugIsLong_truncatesToMaxLength() {
+        String original = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png";
+
+        String result = ReflectionTestUtils.invokeMethod(fileStorageService, "slugify", original);
+
+        assertThat(result).hasSize(40);
+        assertThat(result).isEqualTo("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    }
+
+    @Test
+    void slugify_whenSlugIsLongAndEndsWithDashAfterTruncate_removesTrailingDash() {
+        String original = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-.png";
+
+        String result = ReflectionTestUtils.invokeMethod(fileStorageService, "slugify", original);
+
+        assertThat(result).isEqualTo("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    }
 }

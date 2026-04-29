@@ -324,4 +324,40 @@ class CarServiceTest {
         assertThat(order).isNotNull();
         assertThat(order.getDirection()).isEqualTo(expectedDirection);
     }
+
+    @Test
+    void findDistinctTransmissions_filtersBlankValuesRemovesDuplicatesAndSorts() {
+        Car second = new Car();
+        second.setTransmission("MT");
+        Car third = new Car();
+        third.setTransmission("AT");
+        Car fourth = new Car();
+        fourth.setTransmission("");
+        Car fifth = new Car();
+        fifth.setTransmission(null);
+
+        when(carRepository.findAll()).thenReturn(List.of(car, second, third, fourth, fifth));
+
+        List<String> result = carService.findDistinctTransmissions();
+
+        assertThat(result).containsExactly("AT", "MT");
+    }
+
+    @Test
+    void findDistinctDrives_filtersBlankValuesRemovesDuplicatesAndSorts() {
+        Car second = new Car();
+        second.setDrive("RWD");
+        Car third = new Car();
+        third.setDrive("AWD");
+        Car fourth = new Car();
+        fourth.setDrive("");
+        Car fifth = new Car();
+        fifth.setDrive(null);
+
+        when(carRepository.findAll()).thenReturn(List.of(car, second, third, fourth, fifth));
+
+        List<String> result = carService.findDistinctDrives();
+
+        assertThat(result).containsExactly("AWD", "RWD");
+    }
 }
