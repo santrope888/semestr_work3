@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Оплата — Aura Motum</title>
+    <title>Платёж — Aura Motum</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
@@ -12,7 +12,7 @@
 
 <section class="booking-page container" id="payment-root" th:attr="data-amount=${payment.amount}">
     <div class="page-header">
-        <h1>Оплата бронирования</h1>
+        <h1>Детали платежа</h1>
         <p th:text="${booking.car.brand + ' ' + booking.car.model}">Toyota Camry</p>
     </div>
 
@@ -35,6 +35,15 @@
                           th:classappend="'badge-' + ${booking.status.toLowerCase()}"
                           th:text="${booking.status}">PENDING</span>
                 </div>
+                <div class="summary-row" th:if="${payment.method != null}">
+                    <span class="label">Способ оплаты</span>
+                    <span class="value" th:text="${payment.method}">CARD</span>
+                </div>
+                <div class="summary-row" th:if="${payment.paidAt != null}">
+                    <span class="label">Дата оплаты</span>
+                    <span class="value"
+                          th:text="${#temporals.format(payment.paidAt, 'dd.MM.yyyy HH:mm')}">01.01.2025 12:00</span>
+                </div>
 
                 <div th:if="${not #sets.isEmpty(booking.insurances)}" style="margin-top:20px;">
                     <h4 style="margin-bottom:10px;">Страховки</h4>
@@ -44,26 +53,31 @@
                     </div>
                 </div>
 
-                <h3 style="margin-top:28px;margin-bottom:16px;">Способ оплаты</h3>
-                <form th:action="@{/payments/{id}/pay(id=${payment.id})}" method="post">
-                    <div style="display:flex;gap:10px;margin-bottom:20px;">
-                        <label class="insurance-item" style="flex:1;">
-                            <input type="radio" name="method" value="CARD" checked>
-                            <div class="insurance-info">
-                                <div class="insurance-name"><i class='bx bx-credit-card'></i> Карта</div>
-                            </div>
-                        </label>
-                        <label class="insurance-item" style="flex:1;">
-                            <input type="radio" name="method" value="CASH">
-                            <div class="insurance-info">
-                                <div class="insurance-name"><i class='bx bx-money'></i> Наличные</div>
-                            </div>
-                        </label>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-lg btn-block">
-                        Оплатить <span th:text="${payment.amount + ' ₽'}"></span>
-                    </button>
-                </form>
+                <div th:if="${payment.status == 'PENDING'}"
+                     style="margin-top:24px;padding:16px;background:#fff7ed;border-radius:12px;border:1px solid #fed7aa;">
+                    <p style="margin:0;color:#9a3412;">
+                        <i class='bx bx-info-circle'></i>
+                        Платёж ещё не оплачен. Для оплаты перейдите в
+                        <a th:href="@{/bookings/wizard/{id}(id=${booking.id})}"
+                           style="color:#9a3412;font-weight:600;text-decoration:underline;">мастер бронирования</a>.
+                    </p>
+                </div>
+
+                <div th:if="${payment.status == 'PAID'}"
+                     style="margin-top:24px;padding:16px;background:#f0fdf4;border-radius:12px;border:1px solid #bbf7d0;">
+                    <p style="margin:0;color:#166534;">
+                        <i class='bx bx-check-circle'></i>
+                        Платёж успешно оплачен.
+                    </p>
+                </div>
+
+                <div th:if="${payment.status == 'REFUNDED'}"
+                     style="margin-top:24px;padding:16px;background:#fef2f2;border-radius:12px;border:1px solid #fecaca;">
+                    <p style="margin:0;color:#991b1b;">
+                        <i class='bx bx-undo'></i>
+                        Средства по этому платежу возвращены.
+                    </p>
+                </div>
             </div>
         </div>
 
