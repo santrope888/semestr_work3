@@ -6,9 +6,13 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.itis.semestr_work3.dto.ReviewFilter;
+import ru.itis.semestr_work3.entity.Car;
 import ru.itis.semestr_work3.entity.Review;
+import ru.itis.semestr_work3.entity.User;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
+import ru.itis.semestr_work3.repository.CarRepository;
 import ru.itis.semestr_work3.repository.ReviewRepository;
+import ru.itis.semestr_work3.repository.UserRepository;
 import ru.itis.semestr_work3.specifications.ReviewSpecifications;
 
 import java.time.LocalDate;
@@ -23,6 +27,8 @@ import java.util.Optional;
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
+    private final CarRepository carRepository;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public List<Review> findFilteredReviews(ReviewFilter filter) {
@@ -118,9 +124,20 @@ public class ReviewService {
             throw new IllegalArgumentException("Не указан автомобиль");
         }
 
+        User user = userRepository.findById(review.getUser().getId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Пользователь не найден: " + review.getUser().getId()));
+
+        Car car = carRepository.findById(review.getCar().getId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Автомобиль не найден: " + review.getCar().getId()));
+
+        review.setUser(user);
+        review.setCar(car);
+
         Specification<Review> existsSpecification = Specification
-                .where(ReviewSpecifications.hasUser(review.getUser().getId()))
-                .and(ReviewSpecifications.hasCar(review.getCar().getId()));
+                .where(ReviewSpecifications.hasUser(user.getId()))
+                .and(ReviewSpecifications.hasCar(car.getId()));
 
         if (reviewRepository.count(existsSpecification) > 0) {
             throw new IllegalArgumentException("Вы уже оставляли отзыв на этот автомобиль");

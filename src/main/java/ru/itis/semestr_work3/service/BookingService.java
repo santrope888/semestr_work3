@@ -47,6 +47,11 @@ public class BookingService {
 
     public static final Set<String> ALLOWED_PAYMENT_METHODS = Set.of("CARD", "CASH");
 
+    private static final String STATUS_PENDING = "PENDING";
+    private static final String STATUS_CONFIRMED = "CONFIRMED";
+    private static final String STATUS_CANCELLED = "CANCELLED";
+    private static final String STATUS_COMPLETED = "COMPLETED";
+
     private static final String BOOKING_NUMBER_PREFIX = "AM-";
     private static final String BOOKING_NUMBER_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     private static final int BOOKING_NUMBER_LENGTH = 6;
@@ -107,7 +112,7 @@ public class BookingService {
         Specification<Booking> spec = Specification
                 .where(BookingSpecifications.hasCar(carId))
                 .and((root, query, cb) ->
-                        cb.not(root.get("status").in("CANCELLED", "COMPLETED")));
+                        cb.not(root.get("status").in(STATUS_CANCELLED, STATUS_COMPLETED)));
 
         return bookingRepository.findAll(spec).stream()
                 .map(b -> Map.of(
@@ -162,13 +167,13 @@ public class BookingService {
         booking.setUser(actualUser);
         booking.setInsurances(selectedInsurances);
         booking.setTotalPrice(carPrice + insurancePrice);
-        booking.setStatus("PENDING");
+        booking.setStatus(STATUS_PENDING);
         booking.setCreatedAt(LocalDate.now());
 
         Payment payment = new Payment();
         payment.setAmount(booking.getTotalPrice());
         payment.setCurrency("RUB");
-        payment.setStatus("PENDING");
+        payment.setStatus(STATUS_PENDING);
         payment.setBooking(booking);
 
         booking.setPayment(payment);
@@ -241,7 +246,7 @@ public class BookingService {
         booking.setChildSeat(seat);
         booking.setDriverService(driver);
         booking.setTotalPrice(carPrice + insurancePrice + extrasPrice);
-        booking.setStatus("PENDING");
+        booking.setStatus(STATUS_PENDING);
         booking.setCreatedAt(LocalDate.now());
         booking.setBookingNumber(generateUniqueBookingNumber());
 
@@ -249,11 +254,12 @@ public class BookingService {
         payment.setAmount(booking.getTotalPrice());
         payment.setCurrency("RUB");
         payment.setMethod(request.getPaymentMethod());
-        payment.setStatus("PENDING");
+        payment.setStatus(STATUS_PENDING);
         payment.setBooking(booking);
         booking.setPayment(payment);
 
         Booking saved = bookingRepository.save(booking);
+
         log.info("Создана бронь #{} (booking_number={}) для пользователя {}",
                 saved.getId(), saved.getBookingNumber(), userId);
 
@@ -279,7 +285,15 @@ public class BookingService {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Бронирование не найдено"));
 
-        booking.setStatus("CONFIRMED");
+        if (!STATUS_PENDING.equals(booking.getStatus())) {
+            log.warn("Попытка подтвердить бронь #{} в недопустимом статусе {}",
+                    id, booking.getStatus());
+            throw new IllegalStateException(
+                    "Подтвердить можно только бронь в статусе PENDING (текущий: "
+                            + booking.getStatus() + ")");
+        }
+
+        booking.setStatus(STATUS_CONFIRMED);
         Booking saved = bookingRepository.save(booking);
 
         notificationService.send(
@@ -304,7 +318,16 @@ public class BookingService {
             throw new SecurityException("Нельзя отменить чужое бронирование");
         }
 
-        booking.setStatus("CANCELLED");
+        if (STATUS_CANCELLED.equals(booking.getStatus())) {
+            log.warn("Попытка повторной отмены брони #{}", id);
+            throw new IllegalStateException("Бронь уже отменена");
+        }
+        if (STATUS_COMPLETED.equals(booking.getStatus())) {
+            log.warn("Попытка отменить завершённую бронь #{}", id);
+            throw new IllegalStateException("Завершённую бронь нельзя отменить");
+        }
+
+        booking.setStatus(STATUS_CANCELLED);
 
         boolean wasPaidByCard = booking.getPayment() != null
                 && "CARD".equals(booking.getPayment().getMethod())
@@ -339,7 +362,15 @@ public class BookingService {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Бронирование не найдено"));
 
-        booking.setStatus("COMPLETED");
+        if (!STATUS_CONFIRMED.equals(booking.getStatus())) {
+            log.warn("Попытка завершить бронь #{} в недопустимом статусе {}",
+                    id, booking.getStatus());
+            throw new IllegalStateException(
+                    "Завершить можно только подтверждённую бронь (текущий статус: "
+                            + booking.getStatus() + ")");
+        }
+
+        booking.setStatus(STATUS_COMPLETED);
         Booking saved = bookingRepository.save(booking);
 
         notificationService.send(

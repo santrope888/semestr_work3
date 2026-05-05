@@ -119,20 +119,17 @@ public class FileStorageService {
     }
 
     private String getExtension(MultipartFile file) {
-        String original = file.getOriginalFilename();
-        if (original != null && original.contains(".")) {
-            return original.substring(original.lastIndexOf('.')).toLowerCase();
+        String contentType = file.getContentType();
+        if (contentType == null) {
+            throw new IllegalArgumentException("Не удалось определить тип файла");
         }
-        String ct = file.getContentType();
-        if (ct == null) {
-            return ".bin";
-        }
-        return switch (ct) {
-            case "image/jpeg" -> ".jpg";
+        return switch (contentType) {
+            case "image/jpeg", "image/jpg" -> ".jpg";
             case "image/png" -> ".png";
             case "image/webp" -> ".webp";
             case "application/pdf" -> ".pdf";
-            default -> ".bin";
+            default -> throw new IllegalArgumentException(
+                    "Недопустимый формат файла: " + contentType);
         };
     }
 

@@ -44,6 +44,9 @@ public class CarRequest {
 
     private String imagePath;
     private String description;
+
     private Boolean available;
+
+    @NotNull(message = "Укажите категорию автомобиля")
     private Long categoryId;
 }

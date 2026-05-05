@@ -131,7 +131,9 @@ public class CarService {
 
     public Car create(Car car) {
         car.setCreatedAt(LocalDate.now());
-        car.setAvailable(true);
+        if (car.getAvailable() == null) {
+            car.setAvailable(true);
+        }
         return carRepository.save(car);
     }
 
