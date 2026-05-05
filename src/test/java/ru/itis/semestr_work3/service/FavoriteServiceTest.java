@@ -45,7 +45,7 @@ class FavoriteServiceTest {
     @Test
     void findByUser_returnsFavorites() {
         Favorite favorite = new Favorite();
-        when(favoriteRepository.findByUser(1L)).thenReturn(List.of(favorite));
+        when(favoriteRepository.findByUserId(1L)).thenReturn(List.of(favorite));
 
         assertThat(favoriteService.findByUser(1L)).containsExactly(favorite);
     }

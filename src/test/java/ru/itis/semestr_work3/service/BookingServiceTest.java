@@ -84,6 +84,7 @@ class BookingServiceTest {
         booking.setUser(user);
         booking.setStartDate(LocalDate.now().plusDays(1));
         booking.setEndDate(LocalDate.now().plusDays(3));
+        booking.setStatus("PENDING");
     }
 
     @Test
@@ -370,8 +371,25 @@ class BookingServiceTest {
     }
 
     @Test
-    void cancel_whenOwnerCancelsAndPaymentExists_refundsPayment() {
+    void cancel_whenPaidByCard_setsPaymentToRefunded() {
         Payment payment = new Payment();
+        payment.setMethod("CARD");
+        payment.setStatus("PAID");
+        booking.setPayment(payment);
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Booking result = bookingService.cancel(1L, 1L);
+
+        assertThat(result.getStatus()).isEqualTo("CANCELLED");
+        assertThat(result.getPayment().getStatus()).isEqualTo("REFUNDED");
+    }
+
+    @Test
+    void cancel_whenPaymentPending_marksPaymentAsRefunded() {
+        Payment payment = new Payment();
+        payment.setMethod("CASH");
         payment.setStatus("PENDING");
         booking.setPayment(payment);
 
@@ -383,6 +401,7 @@ class BookingServiceTest {
         assertThat(result.getStatus()).isEqualTo("CANCELLED");
         assertThat(result.getPayment().getStatus()).isEqualTo("REFUNDED");
     }
+
 
     @Test
     void cancel_whenOwnerCancelsWithoutPayment_justCancelsBooking() {
@@ -412,11 +431,10 @@ class BookingServiceTest {
 
     @Test
     void complete_whenBookingExists_setsCompletedStatus() {
+        booking.setStatus("CONFIRMED");
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
         when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
         Booking result = bookingService.complete(1L);
-
         assertThat(result.getStatus()).isEqualTo("COMPLETED");
     }
 
@@ -755,5 +773,50 @@ class BookingServiceTest {
 
         assertThat(messageCaptor.getValue()).contains("AM-ABC123");
         assertThat(messageCaptor.getValue()).contains("Возврат средств поступит на карту");
+    }
+
+    @Test
+    void confirm_whenAlreadyConfirmed_throwsIllegalState() {
+        booking.setStatus("CONFIRMED");
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+
+        assertThrows(IllegalStateException.class, () -> bookingService.confirm(1L));
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    @Test
+    void confirm_whenCancelled_throwsIllegalState() {
+        booking.setStatus("CANCELLED");
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+
+        assertThrows(IllegalStateException.class, () -> bookingService.confirm(1L));
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    @Test
+    void cancel_whenAlreadyCancelled_throwsIllegalState() {
+        booking.setStatus("CANCELLED");
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+
+        assertThrows(IllegalStateException.class, () -> bookingService.cancel(1L, 1L));
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    @Test
+    void cancel_whenCompleted_throwsIllegalState() {
+        booking.setStatus("COMPLETED");
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+
+        assertThrows(IllegalStateException.class, () -> bookingService.cancel(1L, 1L));
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    @Test
+    void complete_whenStatusNotConfirmed_throwsIllegalState() {
+        booking.setStatus("PENDING");
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+
+        assertThrows(IllegalStateException.class, () -> bookingService.complete(1L));
+        verify(bookingRepository, never()).save(any(Booking.class));
     }
 }

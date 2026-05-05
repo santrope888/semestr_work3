@@ -132,7 +132,7 @@ class AiChatServiceTest {
 
     @Test
     void getUserSessions_returnsSessions() {
-        when(sessionRepository.findByUser(1L)).thenReturn(List.of(session));
+        when(sessionRepository.findByUserIdOrderByCreatedAtDesc(1L)).thenReturn(List.of(session));
 
         List<ChatSession> result = aiChatService.getUserSessions(1L);
 
@@ -162,7 +162,7 @@ class AiChatServiceTest {
         message.setRole("USER");
         message.setContent("Привет");
 
-        when(messageRepository.findBySession(10L)).thenReturn(List.of(message));
+        when(messageRepository.findBySessionIdOrderByCreatedAtAsc(10L)).thenReturn(List.of(message));
 
         List<ChatMessage> result = aiChatService.getSessionMessages(10L);
 
@@ -177,7 +177,6 @@ class AiChatServiceTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void sendMessage_success_savesUserAndAssistantMessages() {
         Category category = new Category();
         category.setName("SUV");
@@ -209,7 +208,7 @@ class AiChatServiceTest {
         when(sessionRepository.findById(10L)).thenReturn(Optional.of(session));
         when(carRepository.findAll(org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<Car>>any()))
                 .thenReturn(List.of(firstCar, secondCar));
-        when(messageRepository.findBySession(10L)).thenReturn(List.of(historyMessage));
+        when(messageRepository.findBySessionIdOrderByCreatedAtAsc(10L)).thenReturn(List.of(historyMessage));
         when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
                 .thenReturn(ResponseEntity.ok(Map.of("message", Map.of("content", "Подойдут Audi Q8 и BMW X6"))));
         when(messageRepository.save(any(ChatMessage.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -241,7 +240,7 @@ class AiChatServiceTest {
         when(sessionRepository.findById(10L)).thenReturn(Optional.of(session));
         when(carRepository.findAll(org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<Car>>any()))
                 .thenReturn(List.<Car>of());
-        when(messageRepository.findBySession(10L)).thenReturn(List.<ChatMessage>of());
+        when(messageRepository.findBySessionIdOrderByCreatedAtAsc(10L)).thenReturn(List.<ChatMessage>of());
         when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
                 .thenReturn(ResponseEntity.ok(null));
         when(messageRepository.save(any(ChatMessage.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -257,7 +256,6 @@ class AiChatServiceTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void sendMessage_whenMessageHasNoContent_throwsExternalServiceException() {
         Map<String, Object> message = new HashMap<>();
         Map<String, Object> body = new HashMap<>();
@@ -266,7 +264,7 @@ class AiChatServiceTest {
         when(sessionRepository.findById(10L)).thenReturn(Optional.of(session));
         when(carRepository.findAll(org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<Car>>any()))
                 .thenReturn(List.<Car>of());
-        when(messageRepository.findBySession(10L)).thenReturn(new ArrayList<>());
+        when(messageRepository.findBySessionIdOrderByCreatedAtAsc(10L)).thenReturn(new ArrayList<>());
         when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
                 .thenReturn(ResponseEntity.ok(body));
         when(messageRepository.save(any(ChatMessage.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -282,7 +280,6 @@ class AiChatServiceTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void sendMessage_whenMessageHasWrongFormat_throwsExternalServiceException() {
         Map<String, Object> body = new HashMap<>();
         body.put("message", "wrong-format");
@@ -290,7 +287,7 @@ class AiChatServiceTest {
         when(sessionRepository.findById(10L)).thenReturn(Optional.of(session));
         when(carRepository.findAll(org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<Car>>any()))
                 .thenReturn(List.<Car>of());
-        when(messageRepository.findBySession(10L)).thenReturn(List.<ChatMessage>of());
+        when(messageRepository.findBySessionIdOrderByCreatedAtAsc(10L)).thenReturn(List.<ChatMessage>of());
         when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
                 .thenReturn(ResponseEntity.ok(body));
         when(messageRepository.save(any(ChatMessage.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -310,7 +307,7 @@ class AiChatServiceTest {
         when(sessionRepository.findById(10L)).thenReturn(Optional.of(session));
         when(carRepository.findAll(org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<Car>>any()))
                 .thenReturn(List.<Car>of());
-        when(messageRepository.findBySession(10L)).thenReturn(List.<ChatMessage>of());
+        when(messageRepository.findBySessionIdOrderByCreatedAtAsc(10L)).thenReturn(List.<ChatMessage>of());
         when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
                 .thenThrow(new RuntimeException("Connection refused"));
         when(messageRepository.save(any(ChatMessage.class))).thenAnswer(invocation -> invocation.getArgument(0));

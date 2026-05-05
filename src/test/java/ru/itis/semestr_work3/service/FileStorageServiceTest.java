@@ -359,13 +359,13 @@ class FileStorageServiceTest {
     }
 
     @Test
-    void getExtension_returnsOriginalExtension_whenFilenameContainsDot() {
+    void getExtension_ignoresOriginalFilename_andUsesContentType() {
         MultipartFile file = mock(MultipartFile.class);
-        when(file.getOriginalFilename()).thenReturn("image.jpeg");
+        when(file.getContentType()).thenReturn("image/png");
 
         String extension = ReflectionTestUtils.invokeMethod(fileStorageService, "getExtension", file);
 
-        assertThat(extension).isEqualTo(".jpeg");
+        assertThat(extension).isEqualTo(".png");
     }
 
     @Test
@@ -413,25 +413,25 @@ class FileStorageServiceTest {
     }
 
     @Test
-    void getExtension_returnsBin_whenContentTypeIsNull() {
+    void getExtension_whenContentTypeIsNull_throwsIllegalArgument() {
         MultipartFile file = mock(MultipartFile.class);
-        when(file.getOriginalFilename()).thenReturn(null);
         when(file.getContentType()).thenReturn(null);
 
-        String extension = ReflectionTestUtils.invokeMethod(fileStorageService, "getExtension", file);
-
-        assertThat(extension).isEqualTo(".bin");
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> ReflectionTestUtils.invokeMethod(fileStorageService, "getExtension", file)
+        );
     }
 
     @Test
-    void getExtension_returnsBin_whenContentTypeUnknown() {
+    void getExtension_whenContentTypeUnknown_throwsIllegalArgument() {
         MultipartFile file = mock(MultipartFile.class);
-        when(file.getOriginalFilename()).thenReturn("file");
         when(file.getContentType()).thenReturn("application/octet-stream");
 
-        String extension = ReflectionTestUtils.invokeMethod(fileStorageService, "getExtension", file);
-
-        assertThat(extension).isEqualTo(".bin");
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> ReflectionTestUtils.invokeMethod(fileStorageService, "getExtension", file)
+        );
     }
 
     @Test

@@ -46,14 +46,14 @@ class PaymentServiceTest {
     @Test
     void findByBooking_whenExists_returnsPayment() {
         Payment payment = new Payment();
-        when(paymentRepository.findByBooking(10L)).thenReturn(Optional.of(payment));
+        when(paymentRepository.findByBookingId(10L)).thenReturn(Optional.of(payment));
 
         assertThat(paymentService.findByBooking(10L)).contains(payment);
     }
 
     @Test
     void findByBooking_whenMissing_returnsEmpty() {
-        when(paymentRepository.findByBooking(10L)).thenReturn(Optional.empty());
+        when(paymentRepository.findByBookingId(10L)).thenReturn(Optional.empty());
 
         assertThat(paymentService.findByBooking(10L)).isEmpty();
     }
@@ -91,6 +91,26 @@ class PaymentServiceTest {
     }
 
     @Test
+    void pay_whenAlreadyPaid_throwsIllegalStateAndDoesNotSave() {
+        Payment payment = new Payment();
+        payment.setStatus("PAID");
+        when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+
+        assertThrows(IllegalStateException.class, () -> paymentService.pay(1L, "CARD"));
+        verify(paymentRepository, never()).save(any());
+    }
+
+    @Test
+    void pay_whenRefunded_throwsIllegalStateAndDoesNotSave() {
+        Payment payment = new Payment();
+        payment.setStatus("REFUNDED");
+        when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+
+        assertThrows(IllegalStateException.class, () -> paymentService.pay(1L, "CARD"));
+        verify(paymentRepository, never()).save(any());
+    }
+
+    @Test
     void refund_whenPaymentExists_setsRefundedStatus() {
         Payment payment = new Payment();
         when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
@@ -106,5 +126,37 @@ class PaymentServiceTest {
         when(paymentRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> paymentService.refund(1L));
+    }
+
+    @Test
+    void refund_whenAlreadyRefunded_isIdempotentAndDoesNotSave() {
+        Payment payment = new Payment();
+        payment.setStatus("REFUNDED");
+        when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+
+        Payment result = paymentService.refund(1L);
+
+        assertThat(result.getStatus()).isEqualTo("REFUNDED");
+        verify(paymentRepository, never()).save(any());
+    }
+
+    @Test
+    void pay_whenUnsupportedMethod_throwsExceptionAndDoesNotTouchRepository() {
+        org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> paymentService.pay(1L, "BITCOIN")
+        );
+        verify(paymentRepository, never()).findById(any());
+    }
+
+    @Test
+    void pay_whenMethodInLowerCase_isNormalizedToUpperCase() {
+        Payment payment = new Payment();
+        when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Payment result = paymentService.pay(1L, "card");
+
+        assertThat(result.getMethod()).isEqualTo("CARD");
     }
 }

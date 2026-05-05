@@ -207,8 +207,20 @@ class CarServiceTest {
     }
 
     @Test
-    void create_setsCreatedAtAndAvailableAndSaves() {
+    void create_whenAvailableProvidedFalse_keepsFalseAndSetsCreatedAt() {
         car.setAvailable(false);
+        car.setCreatedAt(null);
+        when(carRepository.save(any(Car.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Car result = carService.create(car);
+
+        assertThat(result.getAvailable()).isFalse();
+        assertThat(result.getCreatedAt()).isEqualTo(LocalDate.now());
+    }
+
+    @Test
+    void create_whenAvailableIsNull_setsTrueByDefault() {
+        car.setAvailable(null);
         car.setCreatedAt(null);
         when(carRepository.save(any(Car.class))).thenAnswer(invocation -> invocation.getArgument(0));
 

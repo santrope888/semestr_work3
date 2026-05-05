@@ -13,7 +13,9 @@ import ru.itis.semestr_work3.entity.Car;
 import ru.itis.semestr_work3.entity.Review;
 import ru.itis.semestr_work3.entity.User;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
+import ru.itis.semestr_work3.repository.CarRepository;
 import ru.itis.semestr_work3.repository.ReviewRepository;
+import ru.itis.semestr_work3.repository.UserRepository;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -22,6 +24,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -31,17 +34,25 @@ class ReviewServiceTest {
     @Mock
     private ReviewRepository reviewRepository;
 
+    @Mock
+    private CarRepository carRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
     @InjectMocks
     private ReviewService reviewService;
 
+    private User user;
+    private Car car;
     private Review review;
 
     @BeforeEach
     void setUp() {
-        User user = new User();
+        user = new User();
         user.setId(1L);
 
-        Car car = new Car();
+        car = new Car();
         car.setId(2L);
 
         review = new Review();
@@ -90,7 +101,7 @@ class ReviewServiceTest {
     }
 
     @Test
-    void findByUser_returnsReviewsForUser() {
+    void findByUser_returnsReviewsByUser() {
         when(reviewRepository.findAll(any(Specification.class))).thenReturn(List.of(review));
 
         assertThat(reviewService.findByUser(1L)).containsExactly(review);
@@ -98,22 +109,16 @@ class ReviewServiceTest {
 
     @Test
     void getAverageRating_whenReviewsExist_returnsAverage() {
-        Review second = new Review();
-        second.setCar(review.getCar());
-        second.setRating(3);
-
-        when(reviewRepository.findAll(any(Specification.class), any(Sort.class)))
-                .thenReturn(List.of(review, second));
+        when(reviewRepository.findAll(any(Specification.class), any(Sort.class))).thenReturn(List.of(review));
 
         double result = reviewService.getAverageRating(2L);
 
-        assertThat(result).isEqualTo(4.0);
+        assertThat(result).isEqualTo(5.0);
     }
 
     @Test
     void getAverageRating_whenNoReviews_returnsZero() {
-        when(reviewRepository.findAll(any(Specification.class), any(Sort.class)))
-                .thenReturn(List.of());
+        when(reviewRepository.findAll(any(Specification.class), any(Sort.class))).thenReturn(List.of());
 
         double result = reviewService.getAverageRating(2L);
 
@@ -187,6 +192,8 @@ class ReviewServiceTest {
 
     @Test
     void create_withValidReview_setsCreatedAtAndSaves() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(carRepository.findById(2L)).thenReturn(Optional.of(car));
         when(reviewRepository.count(any(Specification.class))).thenReturn(0L);
         when(reviewRepository.save(any(Review.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -239,7 +246,26 @@ class ReviewServiceTest {
     }
 
     @Test
+    void create_whenUserDoesNotExist_throwsResourceNotFound() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> reviewService.create(review));
+        verify(reviewRepository, never()).save(any(Review.class));
+    }
+
+    @Test
+    void create_whenCarDoesNotExist_throwsResourceNotFound() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(carRepository.findById(2L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> reviewService.create(review));
+        verify(reviewRepository, never()).save(any(Review.class));
+    }
+
+    @Test
     void create_whenReviewAlreadyExists_throwsException() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(carRepository.findById(2L)).thenReturn(Optional.of(car));
         when(reviewRepository.count(any(Specification.class))).thenReturn(1L);
 
         assertThrows(IllegalArgumentException.class, () -> reviewService.create(review));

@@ -48,7 +48,7 @@ class NotificationServiceTest {
     @Test
     void findByUser_returnsNotifications() {
         Notification notification = new Notification();
-        when(notificationRepository.findByUser(1L)).thenReturn(List.of(notification));
+        when(notificationRepository.findByUserIdOrderByCreatedAtDesc(1L)).thenReturn(List.of(notification));
 
         assertThat(notificationService.findByUser(1L)).containsExactly(notification);
     }
