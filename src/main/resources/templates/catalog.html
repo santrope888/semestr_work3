@@ -552,6 +552,64 @@
             <p>Попробуй изменить фильтры или сбросить параметры поиска.</p>
             <a th:href="@{/catalog}" class="btn btn-primary">Сбросить фильтры</a>
         </div>
+        <nav class="pagination" th:if="${carsPage != null and carsPage.totalPages > 1}"
+             aria-label="Навигация по страницам каталога">
+            <a class="pagination-link"
+               th:classappend="${carsPage.first} ? 'pagination-disabled' : ''"
+               th:href="@{/catalog(
+            page=${carsPage.first ? 0 : carsPage.number - 1},
+            size=${carsPage.size},
+            search=${filter.search},
+            categoryIds=${filter.categoryIds},
+            brands=${filter.brands},
+            colors=${filter.colors},
+            ratings=${filter.ratings},
+            drives=${filter.drives},
+            transmissions=${filter.transmissions},
+            minPrice=${filter.minPrice},
+            maxPrice=${filter.maxPrice},
+            available=${filter.available})}"
+               aria-label="Предыдущая страница">
+                <i class="bx bx-chevron-left"></i>
+            </a>
+
+            <a class="pagination-link"
+               th:each="i : ${#numbers.sequence(0, carsPage.totalPages - 1)}"
+               th:classappend="${i == carsPage.number} ? 'pagination-active' : ''"
+               th:href="@{/catalog(
+            page=${i},
+            size=${carsPage.size},
+            search=${filter.search},
+            categoryIds=${filter.categoryIds},
+            brands=${filter.brands},
+            colors=${filter.colors},
+            ratings=${filter.ratings},
+            drives=${filter.drives},
+            transmissions=${filter.transmissions},
+            minPrice=${filter.minPrice},
+            maxPrice=${filter.maxPrice},
+            available=${filter.available})}"
+               th:text="${i + 1}">1</a>
+
+            <a class="pagination-link"
+               th:classappend="${carsPage.last} ? 'pagination-disabled' : ''"
+               th:href="@{/catalog(
+            page=${carsPage.last ? carsPage.totalPages - 1 : carsPage.number + 1},
+            size=${carsPage.size},
+            search=${filter.search},
+            categoryIds=${filter.categoryIds},
+            brands=${filter.brands},
+            colors=${filter.colors},
+            ratings=${filter.ratings},
+            drives=${filter.drives},
+            transmissions=${filter.transmissions},
+            minPrice=${filter.minPrice},
+            maxPrice=${filter.maxPrice},
+            available=${filter.available})}"
+               aria-label="Следующая страница">
+                <i class="bx bx-chevron-right"></i>
+            </a>
+        </nav>
     </div>
 </section>
 
