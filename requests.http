@@ -1,50 +1,36 @@
-# Aura Motum — API requests
-# 1. Запустить приложение: ./mvnw spring-boot:run
-# 2. Выполнить Login request из раздела AUTH
-# 3. После логина выполнять остальные запросы в той же сессии IDEA
-
-@host = http://localhost:8080
-
-### --------------------------------------------------
-### AUTH
-### --------------------------------------------------
-
-### Login as admin
-POST {{host}}/login
-Content-Type: application/x-www-form-urlencoded
-
-username=admin&password=admin
-
-### Login as user
-POST {{host}}/login
-Content-Type: application/x-www-form-urlencoded
-
-username=testuser&password=password123
-
-### Register new user
+### Register new user (MVC form, returns redirect to /login on success)
 POST {{host}}/register
 Content-Type: application/x-www-form-urlencoded
 
-username=testuser&email=test@mail.ru&password=password123&confirmPassword=password123
-
-### Logout
-POST {{host}}/logout
+username=testuser&email=test@mail.ru&password=password123&phoneNumber=+79991234567
 
 ### --------------------------------------------------
 ### CARS
 ### --------------------------------------------------
 
-### Get all cars
+### Get all cars (paged)
 GET {{host}}/api/cars
+Authorization: {{userAuth}}
+
+### Get all cars (no pagination)
+GET {{host}}/api/cars/all
+Authorization: {{userAuth}}
+
+### Get available cars
+GET {{host}}/api/cars/available
+Authorization: {{userAuth}}
 
 ### Get cars with filter
-GET {{host}}/api/cars?brand=Toyota&minPrice=1000&maxPrice=5000&seats=5
+GET {{host}}/api/cars?minPrice=1000&maxPrice=5000&seats=5
+Authorization: {{userAuth}}
 
 ### Get car by id
 GET {{host}}/api/cars/1
+Authorization: {{userAuth}}
 
 ### Create car (ADMIN only)
 POST {{host}}/api/cars
+Authorization: {{adminAuth}}
 Content-Type: application/json
 
 {
@@ -64,6 +50,7 @@ Content-Type: application/json
 
 ### Update car (ADMIN only)
 PUT {{host}}/api/cars/1
+Authorization: {{adminAuth}}
 Content-Type: application/json
 
 {
@@ -83,6 +70,7 @@ Content-Type: application/json
 
 ### Delete car (ADMIN only)
 DELETE {{host}}/api/cars/1
+Authorization: {{adminAuth}}
 
 ### --------------------------------------------------
 ### BOOKINGS
@@ -90,15 +78,23 @@ DELETE {{host}}/api/cars/1
 
 ### Get my bookings (user sees own, admin sees all)
 GET {{host}}/api/bookings
+Authorization: {{userAuth}}
+
+### Get all bookings as admin
+GET {{host}}/api/bookings
+Authorization: {{adminAuth}}
 
 ### Get booking by id
 GET {{host}}/api/bookings/1
+Authorization: {{userAuth}}
 
 ### Get booked periods for car
 GET {{host}}/api/bookings/car/1/booked-periods
+Authorization: {{userAuth}}
 
 ### Create booking
 POST {{host}}/api/bookings
+Authorization: {{userAuth}}
 Content-Type: application/json
 
 {
@@ -110,6 +106,7 @@ Content-Type: application/json
 
 ### Create booking without insurance
 POST {{host}}/api/bookings
+Authorization: {{userAuth}}
 Content-Type: application/json
 
 {
@@ -121,12 +118,15 @@ Content-Type: application/json
 
 ### Cancel booking
 POST {{host}}/api/bookings/1/cancel
+Authorization: {{userAuth}}
 
 ### Confirm booking (ADMIN only)
 POST {{host}}/api/bookings/1/confirm
+Authorization: {{adminAuth}}
 
 ### Complete booking (ADMIN only)
 POST {{host}}/api/bookings/1/complete
+Authorization: {{adminAuth}}
 
 ### --------------------------------------------------
 ### PAYMENTS
@@ -134,23 +134,28 @@ POST {{host}}/api/bookings/1/complete
 
 ### Get payment by id
 GET {{host}}/api/payments/1
+Authorization: {{userAuth}}
 
 ### Get payment by booking id
 GET {{host}}/api/payments/booking/1
+Authorization: {{userAuth}}
 
 ### Pay by card
 POST {{host}}/api/payments/1/pay?method=CARD
+Authorization: {{userAuth}}
 
 ### Pay by cash
 POST {{host}}/api/payments/1/pay?method=CASH
+Authorization: {{userAuth}}
 
 ### Refund payment (ADMIN only)
 POST {{host}}/api/payments/1/refund
+Authorization: {{adminAuth}}
 
-### Convert currency
+### Convert currency to EUR (public, no auth)
 GET {{host}}/api/payments/convert?amount=5000&currency=EUR
 
-### Convert to USD
+### Convert currency to USD (public, no auth)
 GET {{host}}/api/payments/convert?amount=5000&currency=USD
 
 ### --------------------------------------------------
@@ -159,15 +164,19 @@ GET {{host}}/api/payments/convert?amount=5000&currency=USD
 
 ### Get all reviews
 GET {{host}}/api/reviews
+Authorization: {{userAuth}}
 
 ### Get reviews by car
 GET {{host}}/api/reviews/car/1
+Authorization: {{userAuth}}
 
 ### Get reviews by user
 GET {{host}}/api/reviews/user/1
+Authorization: {{userAuth}}
 
 ### Create review
 POST {{host}}/api/reviews
+Authorization: {{userAuth}}
 Content-Type: application/json
 
 {
@@ -178,6 +187,7 @@ Content-Type: application/json
 
 ### Create review without comment
 POST {{host}}/api/reviews
+Authorization: {{userAuth}}
 Content-Type: application/json
 
 {
@@ -188,6 +198,7 @@ Content-Type: application/json
 
 ### Delete review
 DELETE {{host}}/api/reviews/1
+Authorization: {{userAuth}}
 
 ### --------------------------------------------------
 ### FAVORITES
@@ -195,15 +206,19 @@ DELETE {{host}}/api/reviews/1
 
 ### Get my favorites
 GET {{host}}/api/favorites
+Authorization: {{userAuth}}
 
 ### Check if car is in favorites
 GET {{host}}/api/favorites/check?carId=1
+Authorization: {{userAuth}}
 
 ### Add to favorites
 POST {{host}}/api/favorites?carId=1
+Authorization: {{userAuth}}
 
 ### Remove from favorites
 DELETE {{host}}/api/favorites?carId=1
+Authorization: {{userAuth}}
 
 ### --------------------------------------------------
 ### NOTIFICATIONS
@@ -211,15 +226,19 @@ DELETE {{host}}/api/favorites?carId=1
 
 ### Get my notifications
 GET {{host}}/api/notifications/my
+Authorization: {{userAuth}}
 
 ### Get unread count
 GET {{host}}/api/notifications/count
+Authorization: {{userAuth}}
 
 ### Mark notification as read
 PATCH {{host}}/api/notifications/1/read
+Authorization: {{userAuth}}
 
 ### Mark all as read
 PATCH {{host}}/api/notifications/read-all
+Authorization: {{userAuth}}
 
 ### --------------------------------------------------
 ### CHAT
@@ -227,15 +246,19 @@ PATCH {{host}}/api/notifications/read-all
 
 ### Get my sessions
 GET {{host}}/api/chat/sessions
+Authorization: {{userAuth}}
 
 ### Create new session
 POST {{host}}/api/chat/sessions?title=Подбор автомобиля
+Authorization: {{userAuth}}
 
 ### Get messages of session
 GET {{host}}/api/chat/sessions/1/messages
+Authorization: {{userAuth}}
 
 ### Send message
 POST {{host}}/api/chat/sessions/1/send
+Authorization: {{userAuth}}
 Content-Type: application/json
 
 {
@@ -244,6 +267,7 @@ Content-Type: application/json
 
 ### Send another message
 POST {{host}}/api/chat/sessions/1/send
+Authorization: {{userAuth}}
 Content-Type: application/json
 
 {

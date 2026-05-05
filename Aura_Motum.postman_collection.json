@@ -1,0 +1,1125 @@
+{
+  "info": {
+    "_postman_id": "66936e54-12ef-4ba1-9460-b9a2fa1ebdf6",
+    "name": "Aura Motum — REST API",
+    "description": "Коллекция запросов для тестирования REST API проекта Aura Motum.\n\n**Аутентификация:**\n- REST API использует HTTP Basic Auth — настроена на уровне коллекции.\n- По умолчанию используются креды admin/admin (через переменные коллекции).\n- Чтобы тестировать как user — поменяйте переменные username/password в Variables коллекции на user/user.\n\n**Учётные данные** (создаются миграцией V17):\n- admin / admin (роль ADMIN)\n- user  / user  (роль USER)\n\n**MVC endpoints** (/login, /register) защищены CSRF и тестируются через браузер, а не через эту коллекцию.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "basic",
+    "basic": [
+      {
+        "key": "username",
+        "value": "{{username}}",
+        "type": "string"
+      },
+      {
+        "key": "password",
+        "value": "{{password}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "host",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "username",
+      "value": "admin",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "admin",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "MVC ENDPOINTS (для справки)",
+      "item": [
+        {
+          "name": "Register new user (MVC form)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}/register",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "register"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "testuser",
+                  "type": "text"
+                },
+                {
+                  "key": "email",
+                  "value": "test@mail.ru",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "password123",
+                  "type": "text"
+                },
+                {
+                  "key": "phoneNumber",
+                  "value": "+79991234567",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "MVC формы защищены CSRF и тестируются через браузер. Эти запросы оставлены только для справки."
+    },
+    {
+      "name": "CARS",
+      "item": [
+        {
+          "name": "Get all cars (paged)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/cars",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "cars"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get all cars (no pagination)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/cars/all",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "cars",
+                "all"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get available cars",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/cars/available",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "cars",
+                "available"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get cars with filter",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/cars?minPrice=1000&maxPrice=5000&seats=5",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "cars"
+              ],
+              "query": [
+                {
+                  "key": "minPrice",
+                  "value": "1000"
+                },
+                {
+                  "key": "maxPrice",
+                  "value": "5000"
+                },
+                {
+                  "key": "seats",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get car by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/cars/1",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "cars",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create car (ADMIN only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}/api/cars",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "cars"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"brand\": \"Toyota\",\n  \"model\": \"Camry\",\n  \"year\": 2022,\n  \"color\": \"Белый\",\n  \"pricePerDay\": 3500,\n  \"seats\": 5,\n  \"transmission\": \"AUTOMATIC\",\n  \"engine\": \"2.5L\",\n  \"drive\": \"FWD\",\n  \"description\": \"Комфортный седан\",\n  \"available\": true,\n  \"categoryId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update car (ADMIN only)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}/api/cars/1",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "cars",
+                "1"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"brand\": \"Toyota\",\n  \"model\": \"Camry\",\n  \"year\": 2023,\n  \"color\": \"Чёрный\",\n  \"pricePerDay\": 4000,\n  \"seats\": 5,\n  \"transmission\": \"AUTOMATIC\",\n  \"engine\": \"2.5L\",\n  \"drive\": \"FWD\",\n  \"description\": \"Обновлённый комфортный седан\",\n  \"available\": true,\n  \"categoryId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete car (ADMIN only)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/cars/1",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "cars",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "BOOKINGS",
+      "item": [
+        {
+          "name": "Get my bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/bookings",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get booking by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/bookings/1",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get booked periods for car",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/bookings/car/1/booked-periods",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "car",
+                "1",
+                "booked-periods"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}/api/bookings",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"carId\": 1,\n  \"startDate\": \"2026-06-01\",\n  \"endDate\": \"2026-06-07\",\n  \"insuranceIds\": [\n    1\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create booking without insurance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}/api/bookings",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"carId\": 1,\n  \"startDate\": \"2026-07-01\",\n  \"endDate\": \"2026-07-05\",\n  \"insuranceIds\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel booking",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/bookings/1/cancel",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "1",
+                "cancel"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm booking (ADMIN only)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/bookings/1/confirm",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "1",
+                "confirm"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Complete booking (ADMIN only)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/bookings/1/complete",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "1",
+                "complete"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "PAYMENTS",
+      "item": [
+        {
+          "name": "Get payment by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/payments/1",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get payment by booking id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/payments/booking/1",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "booking",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Pay by card",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/payments/1/pay?method=CARD",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "1",
+                "pay"
+              ],
+              "query": [
+                {
+                  "key": "method",
+                  "value": "CARD"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Pay by cash",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/payments/1/pay?method=CASH",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "1",
+                "pay"
+              ],
+              "query": [
+                {
+                  "key": "method",
+                  "value": "CASH"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refund payment (ADMIN only)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/payments/1/refund",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "1",
+                "refund"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Convert currency to EUR (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/payments/convert?amount=5000&currency=EUR",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "convert"
+              ],
+              "query": [
+                {
+                  "key": "amount",
+                  "value": "5000"
+                },
+                {
+                  "key": "currency",
+                  "value": "EUR"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Convert currency to USD (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/payments/convert?amount=5000&currency=USD",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "convert"
+              ],
+              "query": [
+                {
+                  "key": "amount",
+                  "value": "5000"
+                },
+                {
+                  "key": "currency",
+                  "value": "USD"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "REVIEWS",
+      "item": [
+        {
+          "name": "Get all reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/reviews",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "reviews"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get reviews by car",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/reviews/car/1",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "reviews",
+                "car",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get reviews by user",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/reviews/user/1",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "reviews",
+                "user",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}/api/reviews",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "reviews"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"carId\": 1,\n  \"rating\": 5,\n  \"comment\": \"Отличный автомобиль, всё понравилось\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create review without comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}/api/reviews",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "reviews"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"carId\": 2,\n  \"rating\": 4,\n  \"comment\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete review",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/reviews/1",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "reviews",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "FAVORITES",
+      "item": [
+        {
+          "name": "Get my favorites",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/favorites",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "favorites"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check if car is in favorites",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/favorites/check?carId=1",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "favorites",
+                "check"
+              ],
+              "query": [
+                {
+                  "key": "carId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add to favorites",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/favorites?carId=1",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "favorites"
+              ],
+              "query": [
+                {
+                  "key": "carId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove from favorites",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/favorites?carId=1",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "favorites"
+              ],
+              "query": [
+                {
+                  "key": "carId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "NOTIFICATIONS",
+      "item": [
+        {
+          "name": "Get my notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/notifications/my",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "my"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get unread count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/notifications/count",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "count"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark notification as read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/notifications/1/read",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "1",
+                "read"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark all as read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/notifications/read-all",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "read-all"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "CHAT",
+      "item": [
+        {
+          "name": "Get my sessions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/chat/sessions",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "chat",
+                "sessions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create new session",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/chat/sessions?title=Подбор автомобиля",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "chat",
+                "sessions"
+              ],
+              "query": [
+                {
+                  "key": "title",
+                  "value": "Подбор автомобиля"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get messages of session",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/chat/sessions/1/messages",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "chat",
+                "sessions",
+                "1",
+                "messages"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Send message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}/api/chat/sessions/1/send",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "chat",
+                "sessions",
+                "1",
+                "send"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Посоветуй автомобиль для семьи с двумя детьми\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Send another message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}/api/chat/sessions/1/send",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "chat",
+                "sessions",
+                "1",
+                "send"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Нужен автомобиль с автоматической коробкой до 4000 рублей в день\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
