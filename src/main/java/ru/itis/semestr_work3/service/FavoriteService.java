@@ -18,7 +18,7 @@ public class FavoriteService {
     private final FavoriteRepository favoriteRepository;
 
     public List<Favorite> findByUser(Long userId) {
-        return favoriteRepository.findByUser(userId);
+        return favoriteRepository.findByUserId(userId);
     }
 
     public boolean isFavorite(Long userId, Long carId) {

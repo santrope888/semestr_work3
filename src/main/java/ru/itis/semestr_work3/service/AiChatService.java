@@ -67,7 +67,7 @@ public class AiChatService {
 
     @Transactional(readOnly = true)
     public List<ChatSession> getUserSessions(Long userId) {
-        return sessionRepository.findByUser(userId);
+        return sessionRepository.findByUserIdOrderByCreatedAtDesc(userId);
     }
 
     @Transactional(readOnly = true)
@@ -78,7 +78,7 @@ public class AiChatService {
 
     @Transactional(readOnly = true)
     public List<ChatMessage> getSessionMessages(Long sessionId) {
-        return messageRepository.findBySession(sessionId);
+        return messageRepository.findBySessionIdOrderByCreatedAtAsc(sessionId);
     }
 
     @Transactional
@@ -119,7 +119,7 @@ public class AiChatService {
                     + "\n\nРекомендуй пользователю подходящие автомобили из этого списка, "
                     + "объясняя свой выбор. Отвечай на русском языке.";
 
-            List<ChatMessage> history = messageRepository.findBySession(session.getId());
+            List<ChatMessage> history = messageRepository.findBySessionIdOrderByCreatedAtAsc(session.getId());
 
             List<Map<String, String>> messages = new ArrayList<>();
             messages.add(Map.of("role", "system", "content", systemPrompt));

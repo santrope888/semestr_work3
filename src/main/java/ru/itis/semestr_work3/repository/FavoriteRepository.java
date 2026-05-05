@@ -11,8 +11,7 @@ import java.util.Optional;
 
 public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
 
-    @Query("SELECT f FROM Favorite f WHERE f.user.id = :userId")
-    List<Favorite> findByUser(@Param("userId") Long userId);
+    List<Favorite> findByUserId(Long userId);
 
     @Query("SELECT f FROM Favorite f WHERE f.user.id = :userId AND f.car.id = :carId")
     Optional<Favorite> findOne(@Param("userId") Long userId, @Param("carId") Long carId);

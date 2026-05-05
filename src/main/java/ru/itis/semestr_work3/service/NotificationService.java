@@ -26,7 +26,7 @@ public class NotificationService {
 
     @Transactional(readOnly = true)
     public List<Notification> findByUser(Long userId) {
-        return notificationRepository.findByUser(userId);
+        return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId);
     }
 
     @Transactional(readOnly = true)

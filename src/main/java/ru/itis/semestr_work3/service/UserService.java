@@ -12,7 +12,6 @@ import ru.itis.semestr_work3.entity.User;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.repository.RoleRepository;
 import ru.itis.semestr_work3.repository.UserRepository;
-import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 
 import java.time.LocalDate;
 import java.util.List;
