@@ -3,10 +3,13 @@ package ru.itis.semestr_work3.controllers.api;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import ru.itis.semestr_work3.converter.PaymentMapper;
 import ru.itis.semestr_work3.dto.PaymentDto;
 import ru.itis.semestr_work3.entity.Payment;
@@ -28,37 +31,33 @@ public class PaymentController {
 
     @Operation(summary = "Получить платёж по ID")
     @GetMapping("/{id}")
-    public PaymentDto findById(@PathVariable Long id,
-                               @AuthenticationPrincipal UserDetails principal) {
+    @PreAuthorize("hasAuthority('ADMIN') or @paymentSecurity.isOwner(#id, principal)")
+    public PaymentDto findById(@PathVariable Long id) {
         Payment payment = paymentService.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Платёж не найден"));
-        checkOwner(payment, principal);
         return paymentMapper.toDto(payment);
     }
 
     @Operation(summary = "Получить платёж по ID бронирования")
     @GetMapping("/booking/{bookingId}")
-    public PaymentDto findByBooking(@PathVariable Long bookingId,
-                                    @AuthenticationPrincipal UserDetails principal) {
+    @PreAuthorize("hasAuthority('ADMIN') or @paymentSecurity.isOwnerByBooking(#bookingId, principal)")
+    public PaymentDto findByBooking(@PathVariable Long bookingId) {
         Payment payment = paymentService.findByBooking(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Платёж по бронированию не найден"));
-        checkOwner(payment, principal);
         return paymentMapper.toDto(payment);
     }
 
     @Operation(summary = "Оплатить (метод: CARD или CASH)")
     @PostMapping("/{id}/pay")
+    @PreAuthorize("hasAuthority('ADMIN') or @paymentSecurity.isOwner(#id, principal)")
     public PaymentDto pay(@PathVariable Long id,
-                          @RequestParam String method,
-                          @AuthenticationPrincipal UserDetails principal) {
-        Payment payment = paymentService.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Платёж не найден"));
-        checkOwner(payment, principal);
+                          @RequestParam String method) {
         return paymentMapper.toDto(paymentService.pay(id, method));
     }
 
-    @Operation(summary = "Вернуть платёж")
+    @Operation(summary = "Вернуть платёж (только ADMIN)")
     @PostMapping("/{id}/refund")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public PaymentDto refund(@PathVariable Long id) {
         return paymentMapper.toDto(paymentService.refund(id));
     }
@@ -69,13 +68,5 @@ public class PaymentController {
                                        @RequestParam String currency) {
         double converted = currencyService.convert(amount, currency);
         return Map.of("original", amount, "currency", currency, "converted", converted);
-    }
-
-    private void checkOwner(Payment payment, UserDetails principal) {
-        boolean isAdmin = principal.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ADMIN"));
-        if (!isAdmin && !payment.getBooking().getUser().getUsername().equals(principal.getUsername())) {
-            throw new AccessDeniedException("Доступ запрещён");
-        }
     }
 }
