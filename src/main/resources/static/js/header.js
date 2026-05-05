@@ -7,6 +7,10 @@
         return token && header ? { [header]: token } : {};
     }
 
+    function isAuthenticated() {
+        return document.getElementById('notifBadge') !== null;
+    }
+
     function toggleUserMenu(e) {
         e.stopPropagation();
         document.getElementById('notifDropdown')?.classList.remove('open');
@@ -49,6 +53,7 @@
     }
 
     async function loadNotifications() {
+        if (!isAuthenticated()) return;
         try {
             const res = await fetch('/api/notifications/my');
             if (!res.ok) return;
@@ -90,6 +95,7 @@
     }
 
     async function markRead(id, el) {
+        if (!isAuthenticated()) return;
         try {
             const res = await fetch(`/api/notifications/${id}/read`, {
                 method: 'PATCH',
@@ -109,6 +115,7 @@
     }
 
     async function markAllRead() {
+        if (!isAuthenticated()) return;
         try {
             const res = await fetch('/api/notifications/read-all', {
                 method: 'PATCH',
@@ -130,6 +137,7 @@
     }
 
     async function updateBadge() {
+        if (!isAuthenticated()) return;
         try {
             const res = await fetch('/api/notifications/count');
             if (!res.ok) return;
@@ -142,7 +150,7 @@
             } else {
                 badge.style.display = 'none';
             }
-        } catch (e) { /* silent */ }
+        } catch (e) {}
     }
 
     window.toggleUserMenu = toggleUserMenu;

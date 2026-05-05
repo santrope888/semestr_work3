@@ -6,20 +6,12 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import ru.itis.semestr_work3.controllers.AdminCarController;
-import ru.itis.semestr_work3.controllers.AuthController;
-import ru.itis.semestr_work3.controllers.DocumentController;
-import ru.itis.semestr_work3.controllers.OAuthController;
-import ru.itis.semestr_work3.controllers.PageController;
 
 @Slf4j
-@ControllerAdvice(assignableTypes = {
-        PageController.class,
-        AuthController.class,
-        OAuthController.class,
-        AdminCarController.class,
-        DocumentController.class
-})
+@ControllerAdvice(
+        basePackages = "ru.itis.semestr_work3.controllers",
+        annotations = org.springframework.stereotype.Controller.class
+)
 public class MvcExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -60,6 +52,16 @@ public class MvcExceptionHandler {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         model.addAttribute("errorMessage", "Доступ запрещён");
         return "error/403";
+    }
+
+    @ExceptionHandler(ExternalServiceException.class)
+    public String handleExternalService(ExternalServiceException e,
+                                        Model model,
+                                        HttpServletResponse response) {
+        log.error("External service error: {}", e.getMessage(), e);
+        response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+        model.addAttribute("errorMessage", e.getMessage());
+        return "error/500";
     }
 
     @ExceptionHandler(Exception.class)

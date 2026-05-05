@@ -78,14 +78,14 @@
                     <form th:if="${booking.status == 'PENDING'}"
                           th:action="@{/admin/bookings/{id}/confirm(id=${booking.id})}"
                           method="post" style="display:inline;">
-                        <button class="btn btn-sm btn-primary" title="Подтвердить">
+                        <button type="submit" class="btn btn-sm btn-primary" title="Подтвердить">
                             <i class='bx bx-check'></i>
                         </button>
                     </form>
                     <form th:if="${booking.status == 'CONFIRMED'}"
                           th:action="@{/admin/bookings/{id}/complete(id=${booking.id})}"
                           method="post" style="display:inline;">
-                        <button class="btn btn-sm btn-primary" title="Завершить">
+                        <button type="submit" class="btn btn-sm btn-primary" title="Завершить">
                             <i class='bx bx-check-double'></i>
                         </button>
                     </form>

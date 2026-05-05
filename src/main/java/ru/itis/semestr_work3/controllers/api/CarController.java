@@ -99,11 +99,7 @@ public class CarController {
         car.setAvailable(request.getAvailable());
 
         if (request.getCategoryId() != null) {
-            Category category = categoryService.findAll().stream()
-                    .filter(c -> c.getId().equals(request.getCategoryId()))
-                    .findFirst()
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Категория не найдена: " + request.getCategoryId()));
+            Category category = categoryService.findById(request.getCategoryId());
             car.setCategory(category);
         }
 

@@ -71,11 +71,6 @@
             </div>
             <div class="sidebar-nav-group">
                 <div class="sidebar-nav-label">Аккаунт</div>
-                <a th:href="@{/profile(section='security')}"
-                   th:classappend="${section == 'security'} ? ' active' : ''"
-                   class="sidebar-nav-item">
-                    <i class='bx bx-lock-alt'></i> Безопасность
-                </a>
             </div>
         </nav>
 
@@ -540,34 +535,8 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
-
-        <div th:if="${section == 'security'}">
-            <h2 style="font-size:1.4rem;margin-bottom:24px;">Безопасность</h2>
-            <div class="profile-card">
-                <h3 style="margin-bottom:20px;font-size:1rem;">Изменить пароль</h3>
-                <div style="max-width:400px;display:flex;flex-direction:column;gap:14px;">
-                    <div class="form-group">
-                        <label class="form-label">Текущий пароль</label>
-                        <input type="password" class="form-input" placeholder="••••••••">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Новый пароль</label>
-                        <input type="password" class="form-input" placeholder="••••••••">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Повторите новый пароль</label>
-                        <input type="password" class="form-input" placeholder="••••••••">
-                    </div>
-                    <button class="btn btn-primary" style="margin-top:4px;width:fit-content;">
-                        Сменить пароль
-                    </button>
-                </div>
-            </div>
-        </div>
-
     </div>
 </div>
 
