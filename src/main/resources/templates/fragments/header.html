@@ -3,7 +3,7 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <header th:fragment="header">
 
-    <meta th:name="_csrf"        th:content="${_csrf.token}"/>
+    <meta th:name="_csrf" th:content="${_csrf.token}"/>
     <meta th:name="_csrf_header" th:content="${_csrf.headerName}"/>
 
     <div class="nav">
@@ -11,13 +11,48 @@
 
         <div class="navbar">
             <a th:href="@{/}" class="nav-link">Главная</a>
-            <a th:href="@{/catalog}" class="nav-link">Каталог</a>
-            <a th:href="@{/favorites}" class="nav-link" sec:authorize="isAuthenticated()">Избранное</a>
-            <a th:href="@{/bookings}" class="nav-link" sec:authorize="isAuthenticated()">Мои брони</a>
-            <a th:href="@{/chat}" class="nav-link" sec:authorize="isAuthenticated()">ИИ-помощник</a>
-            <a th:href="@{/admin/cars}" class="nav-link admin-link-accent" sec:authorize="hasAuthority('ADMIN')">Автомобили</a>
-            <a th:href="@{/admin/bookings}" class="nav-link admin-link-accent" sec:authorize="hasAuthority('ADMIN')">Брони</a>
-            <a th:href="@{/admin/users}" class="nav-link admin-link-accent" sec:authorize="hasAuthority('ADMIN')">Пользователи</a>
+
+            <a th:href="@{/catalog}"
+               class="nav-link"
+               sec:authorize="isAnonymous() or !hasAuthority('ADMIN')">
+                Каталог
+            </a>
+
+            <a th:href="@{/favorites}"
+               class="nav-link"
+               sec:authorize="isAuthenticated() and !hasAuthority('ADMIN')">
+                Избранное
+            </a>
+
+            <a th:href="@{/bookings}"
+               class="nav-link"
+               sec:authorize="isAuthenticated() and !hasAuthority('ADMIN')">
+                Мои брони
+            </a>
+
+            <a th:href="@{/chat}"
+               class="nav-link"
+               sec:authorize="isAuthenticated() and !hasAuthority('ADMIN')">
+                ИИ-помощник
+            </a>
+
+            <a th:href="@{/admin/cars}"
+               class="nav-link"
+               sec:authorize="hasAuthority('ADMIN')">
+                Автомобили
+            </a>
+
+            <a th:href="@{/admin/bookings}"
+               class="nav-link"
+               sec:authorize="hasAuthority('ADMIN')">
+                Брони
+            </a>
+
+            <a th:href="@{/admin/users}"
+               class="nav-link"
+               sec:authorize="hasAuthority('ADMIN')">
+                Пользователи
+            </a>
         </div>
 
         <div class="nav-icons">
@@ -58,6 +93,7 @@
                              th:src="${currentUser.avatarPath}"
                              class="user-avatar-small user-avatar-img"
                              alt="avatar">
+
                         <div th:unless="${currentUser != null and currentUser.avatarPath != null}"
                              class="user-avatar-small">
                             <span th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">A</span>
@@ -70,26 +106,63 @@
                                  th:src="${currentUser.avatarPath}"
                                  class="dropdown-user-avatar-img"
                                  alt="avatar">
+
                             <div th:unless="${currentUser != null and currentUser.avatarPath != null}"
                                  class="dropdown-avatar">
                                 <span th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">A</span>
                             </div>
+
                             <div>
                                 <div class="dropdown-username" sec:authentication="name">username</div>
-                                <div class="dropdown-role">Пользователь</div>
+
+                                <div class="dropdown-role" sec:authorize="hasAuthority('ADMIN')">
+                                    Администратор
+                                </div>
+
+                                <div class="dropdown-role" sec:authorize="!hasAuthority('ADMIN')">
+                                    Пользователь
+                                </div>
                             </div>
                         </div>
+
                         <div class="dropdown-divider"></div>
+
                         <a th:href="@{/profile}" class="dropdown-item">
                             <i class='bx bx-user'></i> Профиль
                         </a>
-                        <a th:href="@{/bookings}" class="dropdown-item">
+
+                        <a th:href="@{/admin/cars}"
+                           class="dropdown-item"
+                           sec:authorize="hasAuthority('ADMIN')">
+                            <i class='bx bx-car'></i> Автомобили
+                        </a>
+
+                        <a th:href="@{/admin/bookings}"
+                           class="dropdown-item"
+                           sec:authorize="hasAuthority('ADMIN')">
+                            <i class='bx bx-calendar-check'></i> Брони
+                        </a>
+
+                        <a th:href="@{/admin/users}"
+                           class="dropdown-item"
+                           sec:authorize="hasAuthority('ADMIN')">
+                            <i class='bx bx-user-check'></i> Пользователи
+                        </a>
+
+                        <a th:href="@{/bookings}"
+                           class="dropdown-item"
+                           sec:authorize="!hasAuthority('ADMIN')">
                             <i class='bx bx-calendar'></i> Мои брони
                         </a>
-                        <a th:href="@{/favorites}" class="dropdown-item">
+
+                        <a th:href="@{/favorites}"
+                           class="dropdown-item"
+                           sec:authorize="!hasAuthority('ADMIN')">
                             <i class='bx bx-heart'></i> Избранное
                         </a>
+
                         <div class="dropdown-divider"></div>
+
                         <form th:action="@{/logout}" method="post" class="dropdown-logout-form">
                             <button type="submit" class="dropdown-item dropdown-item-danger">
                                 <i class='bx bx-log-out'></i> Выйти

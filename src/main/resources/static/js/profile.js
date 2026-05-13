@@ -4,66 +4,139 @@
     function switchBlock(hideId, showId) {
         const hideEl = document.getElementById(hideId + 'Block');
         const showEl = document.getElementById(showId + 'Block');
-        if (hideEl) hideEl.style.display = 'none';
-        if (showEl) showEl.style.display = 'block';
+
+        if (hideEl) {
+            hideEl.style.display = 'none';
+        }
+
+        if (showEl) {
+            showEl.style.display = 'block';
+        }
     }
 
     function submitAvatarForm() {
         const input = document.getElementById('avatarUploadTrigger');
-        if (!input || !input.files || !input.files[0]) return;
+
+        if (!input || !input.files || !input.files[0]) {
+            return;
+        }
+
         const file = input.files[0];
         const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+
         if (!allowed.includes(file.type)) {
-            alert('Разрешены только JPG, PNG, WEBP');
+            showProfileToast('Разрешены только JPG, PNG, WEBP', 'error');
+            input.value = '';
             return;
         }
+
         if (file.size > 5 * 1024 * 1024) {
-            alert('Файл слишком большой. Максимум 5 МБ');
+            showProfileToast('Файл слишком большой. Максимум 5 МБ', 'error');
+            input.value = '';
             return;
         }
+
         const reader = new FileReader();
-        reader.onload = e => {
+
+        reader.onload = event => {
             const preview = document.getElementById('avatarPreview');
-            if (preview) preview.src = e.target.result;
+
+            if (preview) {
+                preview.src = event.target.result;
+            }
         };
+
         reader.readAsDataURL(file);
+
         const form = document.getElementById('avatarForm');
-        if (form) form.submit();
+
+        if (form) {
+            form.submit();
+        }
+    }
+
+    function showProfileToast(message, type) {
+        let toast = document.getElementById('profileToast');
+
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'profileToast';
+            toast.className = 'profile-toast';
+            document.body.appendChild(toast);
+        }
+
+        toast.textContent = message;
+        toast.className = 'profile-toast';
+
+        if (type === 'success') {
+            toast.classList.add('profile-toast-success');
+        } else {
+            toast.classList.add('profile-toast-error');
+        }
+
+        requestAnimationFrame(function () {
+            toast.classList.add('show');
+        });
+
+        window.clearTimeout(toast.hideTimer);
+        toast.hideTimer = window.setTimeout(function () {
+            toast.classList.remove('show');
+        }, 3500);
     }
 
     function confirmDelete() {
         const modal = document.getElementById('deleteModal');
-        if (modal) modal.style.display = 'flex';
+
+        if (modal) {
+            modal.style.display = 'flex';
+        }
     }
 
     function closeDelete() {
         const modal = document.getElementById('deleteModal');
-        if (modal) modal.style.display = 'none';
+
+        if (modal) {
+            modal.style.display = 'none';
+        }
     }
 
     document.addEventListener('DOMContentLoaded', function () {
         const modal = document.getElementById('deleteModal');
+
         if (modal) {
-            modal.addEventListener('click', function (e) {
-                if (e.target === this) closeDelete();
+            modal.addEventListener('click', function (event) {
+                if (event.target === this) {
+                    closeDelete();
+                }
             });
         }
 
         let total = 0;
+
         document.querySelectorAll('.profile-step').forEach(step => {
             if (step.dataset.done === 'true') {
-                const t = step.querySelector('.step-percent');
-                if (t) total += parseInt(t.textContent);
+                const percent = step.querySelector('.step-percent');
+
+                if (percent) {
+                    total += parseInt(percent.textContent, 10);
+                }
             }
         });
+
         total = Math.min(total, 100);
-        const el = document.getElementById('progressText');
-        const circle = document.getElementById('progressCircle');
-        if (el) el.textContent = total + '%';
-        if (circle) {
-            circle.style.transition = 'stroke-dashoffset 1s ease';
+
+        const progressText = document.getElementById('progressText');
+        const progressCircle = document.getElementById('progressCircle');
+
+        if (progressText) {
+            progressText.textContent = total + '%';
+        }
+
+        if (progressCircle) {
+            progressCircle.style.transition = 'stroke-dashoffset 1s ease';
+
             setTimeout(() => {
-                circle.style.strokeDashoffset = 276.5 - (total / 100) * 276.5;
+                progressCircle.style.strokeDashoffset = 276.5 - (total / 100) * 276.5;
             }, 100);
         }
     });

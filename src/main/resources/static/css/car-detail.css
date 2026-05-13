@@ -9,6 +9,10 @@
     --cd-ok:#2d9d5a;
 }
 
+.car-detail-page {
+    padding-top: 7.5rem;
+}
+
 .crumbs{display:flex;align-items:center;gap:8px;color:var(--cd-alt);font-size:.85rem;margin:1rem 0 1.2rem;flex-wrap:wrap}
 .crumbs a{color:var(--cd-alt);transition:.2s;text-decoration:none}
 .crumbs a:hover{color:var(--cd-main)}

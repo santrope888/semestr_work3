@@ -3,6 +3,7 @@
 
     const root = document.getElementById('chat-root');
     const chatSessionId = root ? Number(root.dataset.sessionId) || null : null;
+    let pendingDeleteChatForm = null;
 
     function getCsrfHeaders() {
         const token = document.querySelector('meta[name="_csrf"]')?.content;
@@ -66,6 +67,40 @@
         menu?.classList.toggle('open');
     }
 
+    function updateActiveChatTitle(title) {
+        if (!title) return;
+
+        const activeTitle = document.querySelector('.chat-session-link.active span');
+        if (activeTitle) {
+            activeTitle.textContent = title;
+        }
+
+        document.title = `${title} · AuraBot — Aura Motum`;
+    }
+
+    function openDeleteChatModal(form) {
+        pendingDeleteChatForm = form;
+
+        const menu = document.getElementById('chat-sessions-menu');
+        menu?.classList.remove('open');
+
+        const modal = document.getElementById('chatDeleteModal');
+        modal?.classList.add('open');
+    }
+
+    function closeDeleteChatModal() {
+        pendingDeleteChatForm = null;
+
+        const modal = document.getElementById('chatDeleteModal');
+        modal?.classList.remove('open');
+    }
+
+    function confirmDeleteChat() {
+        if (!pendingDeleteChatForm) return;
+
+        pendingDeleteChatForm.submit();
+    }
+
     document.addEventListener('click', function (e) {
         const menu = document.getElementById('chat-sessions-menu');
         if (!menu) return;
@@ -119,6 +154,10 @@
 
             const data = await res.json();
 
+            if (data?.title) {
+                updateActiveChatTitle(data.title);
+            }
+
             if (data?.response) {
                 appendMessage('assistant', data.response);
             } else {
@@ -141,8 +180,28 @@
         if (messages) messages.scrollTop = messages.scrollHeight;
 
         document.getElementById('chat-input')?.focus();
+
+        document.querySelectorAll('[data-delete-chat-btn]').forEach((btn) => {
+            btn.addEventListener('click', function () {
+                const form = this.closest('[data-delete-chat-form]');
+                if (form) openDeleteChatModal(form);
+            });
+        });
+
+        const deleteModal = document.getElementById('chatDeleteModal');
+        if (deleteModal) {
+            deleteModal.addEventListener('click', function (e) {
+                if (e.target === this) closeDeleteChatModal();
+            });
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeDeleteChatModal();
+        });
     });
 
+    window.closeDeleteChatModal = closeDeleteChatModal;
+    window.confirmDeleteChat = confirmDeleteChat;
     window.toggleChatsMenu = toggleChatsMenu;
     window.sendChat = sendChat;
 })();

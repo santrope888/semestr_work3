@@ -110,9 +110,16 @@
                 openCancelModal(cancelBtn.dataset.bookingId, cancelBtn.dataset.bookingInfo);
                 return;
             }
+
             const reviewBtn = e.target.closest('.review-btn');
             if (reviewBtn) {
                 openReviewModal(reviewBtn.dataset.carId, reviewBtn.dataset.carName);
+                return;
+            }
+
+            const card = e.target.closest('.booking-card');
+            if (card && card.dataset.paymentUrl) {
+                window.location.href = card.dataset.paymentUrl;
             }
         });
     });

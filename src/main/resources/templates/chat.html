@@ -59,14 +59,14 @@
                                     <span th:text="${s.title}">Диалог</span>
                                 </a>
 
-                                <form th:if="${s.id != activeSessionId}"
-                                      th:action="@{/chat/{sessionId}/delete(sessionId=${s.id})}"
+                                <form th:action="@{/chat/{sessionId}/delete(sessionId=${s.id})}"
                                       method="post"
                                       class="chat-session-delete-form"
-                                      onsubmit="return confirm('Удалить этот чат?');">
+                                      data-delete-chat-form>
                                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                     <input type="hidden" name="currentSessionId" th:value="${activeSessionId}">
-                                    <button type="submit" class="chat-session-delete" title="Удалить чат">
+
+                                    <button type="button" class="chat-session-delete" title="Удалить чат" data-delete-chat-btn>
                                         <i class='bx bx-trash'></i>
                                     </button>
                                 </form>
@@ -101,6 +101,36 @@
                     <i class='bx bx-send'></i>
                 </button>
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="chat-delete-modal-overlay" id="chatDeleteModal">
+    <div class="chat-delete-modal">
+        <button type="button" class="chat-delete-modal-close" onclick="closeDeleteChatModal()">
+            &times;
+        </button>
+
+        <div class="chat-delete-modal-icon">
+            <i class='bx bx-trash'></i>
+        </div>
+
+        <h3>Удалить чат?</h3>
+
+        <p>
+            Этот диалог будет удалён из истории.
+            Восстановить его потом не получится.
+        </p>
+
+        <div class="chat-delete-modal-actions">
+            <button type="button" class="chat-delete-cancel" onclick="closeDeleteChatModal()">
+                Отмена
+            </button>
+
+            <button type="button" class="chat-delete-confirm" onclick="confirmDeleteChat()">
+                <i class='bx bx-trash'></i>
+                Удалить
+            </button>
         </div>
     </div>
 </div>
