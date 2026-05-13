@@ -1,0 +1,152 @@
+.admin-car-alert {
+    padding: 12px 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.admin-car-alert-success {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.admin-car-alert-error {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.admin-car-delete-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(6, 4, 20, 0.55);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(4px);
+}
+
+.admin-car-delete-modal-overlay.open {
+    display: flex;
+}
+
+.admin-car-delete-modal {
+    width: min(440px, 100%);
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 30px 28px 24px;
+    box-shadow: 0 24px 70px rgba(6, 4, 20, 0.25);
+    text-align: center;
+    position: relative;
+    animation: adminCarDeleteModalIn 0.18s ease-out;
+}
+
+@keyframes adminCarDeleteModalIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.admin-car-delete-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    border: none;
+    background: transparent;
+    font-size: 1.6rem;
+    line-height: 1;
+    color: #9ca3af;
+    cursor: pointer;
+}
+
+.admin-car-delete-modal-close:hover {
+    color: #111827;
+}
+
+.admin-car-delete-modal-icon {
+    width: 68px;
+    height: 68px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: #fff1f2;
+    color: #dc2626;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.4rem;
+}
+
+.admin-car-delete-modal-title {
+    margin: 0 0 10px;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #08051a;
+}
+
+.admin-car-delete-modal-text {
+    margin: 0 0 10px;
+    color: #6b7280;
+    font-size: 0.95rem;
+    line-height: 1.45;
+}
+
+.admin-car-delete-modal-info {
+    margin: 0 0 18px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: #f8f8f8;
+    color: #111827;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.admin-car-delete-modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.admin-car-delete-modal-actions button {
+    border: none;
+    border-radius: 14px;
+    padding: 12px 22px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: 0.15s ease;
+}
+
+.admin-car-delete-no {
+    background: #f1f1f4;
+    color: #08051a;
+}
+
+.admin-car-delete-no:hover {
+    background: #e4e4e8;
+}
+
+.admin-car-delete-yes {
+    background: #dc2626;
+    color: #ffffff;
+}
+
+.admin-car-delete-yes:hover {
+    background: #b91c1c;
+}
+
+.admin-car-delete-yes:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}

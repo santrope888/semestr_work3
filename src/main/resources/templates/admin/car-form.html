@@ -38,7 +38,13 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Год</label>
-                    <input type="number" th:field="*{year}" class="form-input" required>
+                    <input type="number"
+                           th:field="*{year}"
+                           min="1900"
+                           max="2035"
+                           step="1"
+                           class="form-input"
+                           required>
                     <span th:if="${#fields.hasErrors('year')}" th:errors="*{year}" style="color:#c62828;font-size:0.8rem;"></span>
                 </div>
                 <div class="form-group">
@@ -60,12 +66,22 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Цена/день (₽)</label>
-                    <input type="number" th:field="*{pricePerDay}" class="form-input" required>
+                    <input type="number"
+                           th:field="*{pricePerDay}"
+                           min="1"
+                           step="1"
+                           class="form-input"
+                           required>
                     <span th:if="${#fields.hasErrors('pricePerDay')}" th:errors="*{pricePerDay}" style="color:#c62828;font-size:0.8rem;"></span>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Мест</label>
-                    <input type="number" th:field="*{seats}" class="form-input" required>
+                    <input type="number"
+                           th:field="*{seats}"
+                           min="2"
+                           step="1"
+                           class="form-input"
+                           required>
                     <span th:if="${#fields.hasErrors('seats')}" th:errors="*{seats}" style="color:#c62828;font-size:0.8rem;"></span>
                 </div>
                 <div class="form-group">

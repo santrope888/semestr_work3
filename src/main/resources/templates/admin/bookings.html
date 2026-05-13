@@ -4,7 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Админ — Бронирования</title>
-    <link rel="stylesheet" href="/css/style.css">
+
+    <meta th:name="_csrf" th:content="${_csrf.token}">
+    <meta th:name="_csrf_header" th:content="${_csrf.headerName}">
+    <meta name="_csrf_parameter" th:content="${_csrf.parameterName}">
+
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-bookings.css}">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
 <body>
@@ -16,8 +22,11 @@
         <a th:href="@{/admin/cars}" class="btn btn-secondary">Автомобили</a>
     </div>
 
-    <div th:if="${success}" class="alert alert-success" style="background:#e8f5e9;color:#2e7d32;padding:12px 20px;border-radius:10px;margin-bottom:20px;">
-        <span th:text="${success}"></span>
+    <div id="adminBookingAlert"
+         class="admin-booking-alert"
+         th:classappend="${success != null} ? ' admin-booking-alert-success' : (${error != null} ? ' admin-booking-alert-error' : ' admin-booking-alert-hidden')">
+        <span th:if="${success != null}" th:text="${success}"></span>
+        <span th:if="${error != null}" th:text="${error}"></span>
     </div>
 
     <form method="get" th:action="@{/admin/bookings}" class="mt-md mb-lg">
@@ -29,10 +38,21 @@
                 <option value="COMPLETED" th:selected="${filter.status == 'COMPLETED'}">Completed</option>
                 <option value="CANCELLED" th:selected="${filter.status == 'CANCELLED'}">Cancelled</option>
             </select>
-            <input type="number" name="minTotalPrice" placeholder="Сумма от"
-                   th:value="${filter.minTotalPrice}" class="form-input">
-            <input type="number" name="maxTotalPrice" placeholder="Сумма до"
-                   th:value="${filter.maxTotalPrice}" class="form-input">
+            <input type="number"
+                   name="minTotalPrice"
+                   placeholder="Сумма от"
+                   min="0"
+                   step="1"
+                   th:value="${filter.minTotalPrice}"
+                   class="form-input">
+
+            <input type="number"
+                   name="maxTotalPrice"
+                   placeholder="Сумма до"
+                   min="0"
+                   step="1"
+                   th:value="${filter.maxTotalPrice}"
+                   class="form-input">
             <input type="date" name="startDateFrom" th:value="${filter.startDateFrom}" class="form-input">
             <input type="date" name="endDateTo" th:value="${filter.endDateTo}" class="form-input">
         </div>
@@ -57,52 +77,66 @@
             </tr>
             </thead>
             <tbody>
-            <tr th:each="booking : ${bookings}">
+            <tr th:each="booking : ${bookings}"
+                th:id="'booking-row-' + ${booking.id}"
+                th:data-booking-id="${booking.id}">
                 <td th:text="${booking.id}">1</td>
                 <td th:text="${booking.user.username}">user</td>
                 <td th:text="${booking.car.brand + ' ' + booking.car.model}">Toyota Camry</td>
                 <td th:text="${booking.startDate + ' — ' + booking.endDate}">01.01 — 05.01</td>
                 <td th:text="${booking.totalPrice + ' ₽'}">25 000 ₽</td>
                 <td>
-                    <span class="badge"
+                    <span data-booking-status
+                          class="badge"
                           th:classappend="'badge-' + ${booking.status.toLowerCase()}"
                           th:text="${booking.status}">PENDING</span>
                 </td>
-                <td>
+                <td data-booking-payment-cell>
                     <span th:if="${booking.payment != null}" class="badge"
                           th:classappend="'badge-' + ${booking.payment.status.toLowerCase()}"
                           th:text="${booking.payment.status}">PENDING</span>
                     <span th:if="${booking.payment == null}">—</span>
                 </td>
-                <td style="white-space:nowrap;">
+                <td style="white-space:nowrap;" data-booking-actions>
                     <form th:if="${booking.status == 'PENDING'}"
                           th:action="@{/admin/bookings/{id}/confirm(id=${booking.id})}"
-                          method="post" style="display:inline;">
+                          method="post"
+                          class="admin-booking-action-form"
+                          style="display:inline;">
                         <button type="submit" class="btn btn-sm btn-primary" title="Подтвердить">
                             <i class='bx bx-check'></i>
                         </button>
                     </form>
-                    <form th:if="${booking.status == 'CONFIRMED'}"
+
+                    <form th:if="${booking.status == 'CONFIRMED' and !booking.endDate.isAfter(today)}"
                           th:action="@{/admin/bookings/{id}/complete(id=${booking.id})}"
-                          method="post" style="display:inline;">
+                          method="post"
+                          class="admin-booking-action-form"
+                          style="display:inline;">
                         <button type="submit" class="btn btn-sm btn-primary" title="Завершить">
                             <i class='bx bx-check-double'></i>
                         </button>
                     </form>
+
+                    <button th:if="${booking.status == 'CONFIRMED' and booking.endDate.isAfter(today)}"
+                            type="button"
+                            class="btn btn-sm btn-secondary"
+                            disabled
+                            title="Завершить можно только в день окончания аренды или позже"
+                            style="opacity:0.55;cursor:not-allowed;">
+                        <i class='bx bx-check-double'></i>
+                    </button>
+
                     <form th:if="${booking.status == 'PENDING' or booking.status == 'CONFIRMED'}"
                           th:action="@{/admin/bookings/{id}/cancel(id=${booking.id})}"
-                          method="post" style="display:inline;">
-                        <button class="btn btn-sm btn-danger" title="Отменить"
-                                onclick="return confirm('Отменить бронирование?')">
+                          method="post"
+                          class="admin-booking-cancel-form"
+                          style="display:inline;">
+                        <button type="button"
+                                class="btn btn-sm btn-danger admin-cancel-open"
+                                title="Отменить"
+                                th:data-booking-info="${booking.car.brand + ' ' + booking.car.model + ' · ' + booking.startDate + ' — ' + booking.endDate}">
                             <i class='bx bx-x'></i>
-                        </button>
-                    </form>
-                    <form th:if="${booking.payment != null and booking.payment.status == 'PAID'}"
-                          th:action="@{/admin/bookings/{id}/refund(id=${booking.id})}"
-                          method="post" style="display:inline;">
-                        <button class="btn btn-sm btn-danger" title="Возврат"
-                                onclick="return confirm('Оформить возврат?')">
-                            <i class='bx bx-undo'></i>
                         </button>
                     </form>
                 </td>
@@ -118,5 +152,6 @@
 </div>
 
 <footer th:replace="~{fragments/footer :: footer}"></footer>
+<script th:src="@{/js/admin-bookings.js}"></script>
 </body>
 </html>
