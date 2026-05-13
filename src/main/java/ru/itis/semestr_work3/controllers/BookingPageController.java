@@ -14,10 +14,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import ru.itis.semestr_work3.dto.BookingFilter;
 import ru.itis.semestr_work3.entity.Booking;
 import ru.itis.semestr_work3.entity.Car;
-import ru.itis.semestr_work3.exception.ResourceNotFoundException;
 import ru.itis.semestr_work3.service.BookingService;
 import ru.itis.semestr_work3.service.CarService;
-import ru.itis.semestr_work3.service.InsuranceService;
 import ru.itis.semestr_work3.service.ReviewService;
 import ru.itis.semestr_work3.service.UserService;
 
@@ -30,17 +28,13 @@ import java.util.Set;
 public class BookingPageController {
 
     private final CarService carService;
-    private final InsuranceService insuranceService;
     private final BookingService bookingService;
     private final ReviewService reviewService;
     private final UserService userService;
 
     @GetMapping("/bookings/new")
-    public String bookingForm(@RequestParam Long carId, Model model) {
-        model.addAttribute("car", carService.findById(carId)
-                .orElseThrow(() -> new ResourceNotFoundException("Автомобиль не найден")));
-        model.addAttribute("insurances", insuranceService.findAll());
-        return "booking-new";
+    public String bookingForm(@RequestParam Long carId) {
+        return "redirect:/bookings/wizard/" + carId;
     }
 
     @PostMapping("/bookings")

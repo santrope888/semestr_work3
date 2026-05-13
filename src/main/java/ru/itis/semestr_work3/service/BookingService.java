@@ -23,6 +23,7 @@ import ru.itis.semestr_work3.specifications.BookingSpecifications;
 
 import java.security.SecureRandom;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +53,14 @@ public class BookingService {
     private static final String STATUS_CANCELLED = "CANCELLED";
     private static final String STATUS_COMPLETED = "COMPLETED";
 
+    private static final String PAYMENT_STATUS_PENDING = "PENDING";
+    private static final String PAYMENT_STATUS_PAID = "PAID";
+    private static final String PAYMENT_STATUS_REFUNDED = "REFUNDED";
+    private static final String PAYMENT_STATUS_CANCELLED = "CANCELLED";
+
+    private static final String PAYMENT_METHOD_CARD = "CARD";
+    private static final String PAYMENT_METHOD_CASH = "CASH";
+
     private static final String BOOKING_NUMBER_PREFIX = "AM-";
     private static final String BOOKING_NUMBER_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     private static final int BOOKING_NUMBER_LENGTH = 6;
@@ -71,6 +80,8 @@ public class BookingService {
             return bookingRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
         }
 
+        normalizeBookingFilter(filter);
+
         Specification<Booking> specification = Specification
                 .where(BookingSpecifications.hasUser(filter.getUserId()))
                 .and(BookingSpecifications.hasCar(filter.getCarId()))
@@ -81,6 +92,24 @@ public class BookingService {
                 .and(BookingSpecifications.createdBetween(filter.getCreatedFrom(), filter.getCreatedTo()));
 
         return bookingRepository.findAll(specification, Sort.by(Sort.Direction.DESC, "createdAt"));
+    }
+
+    private void normalizeBookingFilter(BookingFilter filter) {
+        if (filter.getMinTotalPrice() != null && filter.getMinTotalPrice() < 0) {
+            filter.setMinTotalPrice(null);
+        }
+
+        if (filter.getMaxTotalPrice() != null && filter.getMaxTotalPrice() < 0) {
+            filter.setMaxTotalPrice(null);
+        }
+
+        if (filter.getMinTotalPrice() != null
+                && filter.getMaxTotalPrice() != null
+                && filter.getMinTotalPrice() > filter.getMaxTotalPrice()) {
+            Integer min = filter.getMinTotalPrice();
+            filter.setMinTotalPrice(filter.getMaxTotalPrice());
+            filter.setMaxTotalPrice(min);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -173,7 +202,8 @@ public class BookingService {
         Payment payment = new Payment();
         payment.setAmount(booking.getTotalPrice());
         payment.setCurrency("RUB");
-        payment.setStatus(STATUS_PENDING);
+        payment.setMethod(PAYMENT_METHOD_CASH);
+        payment.setStatus(PAYMENT_STATUS_PENDING);
         payment.setBooking(booking);
 
         booking.setPayment(payment);
@@ -254,7 +284,14 @@ public class BookingService {
         payment.setAmount(booking.getTotalPrice());
         payment.setCurrency("RUB");
         payment.setMethod(request.getPaymentMethod());
-        payment.setStatus(STATUS_PENDING);
+
+        if (PAYMENT_METHOD_CARD.equals(request.getPaymentMethod())) {
+            payment.setStatus(PAYMENT_STATUS_PAID);
+            payment.setPaidAt(LocalDateTime.now());
+        } else {
+            payment.setStatus(PAYMENT_STATUS_PENDING);
+        }
+
         payment.setBooking(booking);
         booking.setPayment(payment);
 
@@ -263,7 +300,7 @@ public class BookingService {
         log.info("Создана бронь #{} (booking_number={}) для пользователя {}",
                 saved.getId(), saved.getBookingNumber(), userId);
 
-        String paymentNote = "CASH".equals(request.getPaymentMethod())
+        String paymentNote = PAYMENT_METHOD_CASH.equals(request.getPaymentMethod())
                 ? " Оплата при выдаче автомобиля."
                 : " Оплачено картой.";
         notificationService.send(
@@ -322,19 +359,26 @@ public class BookingService {
             log.warn("Попытка повторной отмены брони #{}", id);
             throw new IllegalStateException("Бронь уже отменена");
         }
+
         if (STATUS_COMPLETED.equals(booking.getStatus())) {
             log.warn("Попытка отменить завершённую бронь #{}", id);
             throw new IllegalStateException("Завершённую бронь нельзя отменить");
         }
 
+        Payment payment = booking.getPayment();
+
+        boolean wasPaidByCard = payment != null
+                && PAYMENT_METHOD_CARD.equals(payment.getMethod())
+                && PAYMENT_STATUS_PAID.equals(payment.getStatus());
+
         booking.setStatus(STATUS_CANCELLED);
 
-        boolean wasPaidByCard = booking.getPayment() != null
-                && "CARD".equals(booking.getPayment().getMethod())
-                && "PAID".equals(booking.getPayment().getStatus());
-
-        if (booking.getPayment() != null) {
-            booking.getPayment().setStatus("REFUNDED");
+        if (payment != null) {
+            if (PAYMENT_STATUS_PAID.equals(payment.getStatus())) {
+                payment.setStatus(PAYMENT_STATUS_REFUNDED);
+            } else if (PAYMENT_STATUS_PENDING.equals(payment.getStatus())) {
+                payment.setStatus(PAYMENT_STATUS_CANCELLED);
+            }
         }
 
         Booking saved = bookingRepository.save(booking);
@@ -370,13 +414,45 @@ public class BookingService {
                             + booking.getStatus() + ")");
         }
 
+        if (booking.getEndDate().isAfter(LocalDate.now())) {
+            throw new IllegalStateException("Завершить бронь можно только в день окончания аренды или позже");
+        }
+
+        Payment payment = booking.getPayment();
+
+        if (payment == null) {
+            throw new IllegalStateException("У бронирования нет связанного платежа");
+        }
+
+        if (PAYMENT_STATUS_REFUNDED.equals(payment.getStatus())) {
+            throw new IllegalStateException("Нельзя завершить бронь с возвращённым платежом");
+        }
+
+        if (PAYMENT_STATUS_CANCELLED.equals(payment.getStatus())) {
+            throw new IllegalStateException("Нельзя завершить бронь с отменённым платежом");
+        }
+
+        if (PAYMENT_STATUS_PENDING.equals(payment.getStatus())) {
+            if (PAYMENT_METHOD_CARD.equals(payment.getMethod())) {
+                throw new IllegalStateException("Сначала нужно оплатить бронь картой");
+            }
+
+            payment.setStatus(PAYMENT_STATUS_PAID);
+
+            if (payment.getMethod() == null || payment.getMethod().isBlank()) {
+                payment.setMethod(PAYMENT_METHOD_CASH);
+            }
+
+            payment.setPaidAt(LocalDateTime.now());
+        }
+
         booking.setStatus(STATUS_COMPLETED);
         Booking saved = bookingRepository.save(booking);
 
         notificationService.send(
                 saved.getUser(),
                 "BOOKING_COMPLETED",
-                String.format("Поездка по брони %s завершена. Спасибо, что выбрали нас! Будем рады вашему отзыву.",
+                String.format("Поездка по брони %s завершена. Оплата получена. Спасибо, что выбрали нас! Будем рады вашему отзыву.",
                         saved.getBookingNumber() != null ? saved.getBookingNumber() : "#" + saved.getId())
         );
 

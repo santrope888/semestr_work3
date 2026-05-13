@@ -19,8 +19,10 @@ import java.util.Set;
 @Transactional
 public class PaymentService {
 
+    private static final String STATUS_PENDING = "PENDING";
     private static final String STATUS_PAID = "PAID";
     private static final String STATUS_REFUNDED = "REFUNDED";
+    private static final String STATUS_CANCELLED = "CANCELLED";
 
     private static final Set<String> ALLOWED_PAYMENT_METHODS = Set.of("CARD", "CASH");
 
@@ -55,14 +57,21 @@ public class PaymentService {
             log.warn("Попытка повторной оплаты платежа #{}", paymentId);
             throw new IllegalStateException("Платёж уже оплачен");
         }
+
         if (STATUS_REFUNDED.equals(payment.getStatus())) {
             log.warn("Попытка оплатить возвращённый платёж #{}", paymentId);
             throw new IllegalStateException("Возвращённый платёж нельзя оплатить повторно");
         }
 
+        if (STATUS_CANCELLED.equals(payment.getStatus())) {
+            log.warn("Попытка оплатить отменённый платёж #{}", paymentId);
+            throw new IllegalStateException("Отменённый платёж нельзя оплатить");
+        }
+
         payment.setStatus(STATUS_PAID);
         payment.setMethod(normalizedMethod);
         payment.setPaidAt(LocalDateTime.now());
+
         log.info("Платёж #{} оплачен методом {}", paymentId, normalizedMethod);
         return paymentRepository.save(payment);
     }
@@ -74,6 +83,17 @@ public class PaymentService {
         if (STATUS_REFUNDED.equals(payment.getStatus())) {
             log.warn("Платёж #{} уже был возвращён, повторный refund игнорируется", paymentId);
             return payment;
+        }
+
+        if (STATUS_CANCELLED.equals(payment.getStatus())) {
+            log.warn("Платёж #{} уже отменён", paymentId);
+            return payment;
+        }
+
+        if (STATUS_PENDING.equals(payment.getStatus())) {
+            payment.setStatus(STATUS_CANCELLED);
+            log.info("Неоплаченный платёж #{} отменён", paymentId);
+            return paymentRepository.save(payment);
         }
 
         payment.setStatus(STATUS_REFUNDED);

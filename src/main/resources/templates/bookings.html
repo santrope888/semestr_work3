@@ -29,11 +29,21 @@
                 <option value="CANCELLED" th:selected="${filter.status == 'CANCELLED'}">Cancelled</option>
             </select>
 
-            <input type="number" name="minTotalPrice" placeholder="Сумма от"
-                   th:value="${filter.minTotalPrice}" class="form-input">
+            <input type="number"
+                   name="minTotalPrice"
+                   placeholder="Сумма от"
+                   min="0"
+                   step="1"
+                   th:value="${filter.minTotalPrice}"
+                   class="form-input">
 
-            <input type="number" name="maxTotalPrice" placeholder="Сумма до"
-                   th:value="${filter.maxTotalPrice}" class="form-input">
+            <input type="number"
+                   name="maxTotalPrice"
+                   placeholder="Сумма до"
+                   min="0"
+                   step="1"
+                   th:value="${filter.maxTotalPrice}"
+                   class="form-input">
 
             <input type="date" name="startDateFrom"
                    th:value="${filter.startDateFrom}" class="form-input">
@@ -48,7 +58,10 @@
         </div>
     </form>
 
-    <div th:each="booking : ${bookings}" class="booking-card" th:attr="data-booking-card-id=${booking.id}">
+    <div th:each="booking : ${bookings}"
+         class="booking-card"
+         th:attr="data-booking-card-id=${booking.id},
+              data-payment-url=${booking.payment != null ? '/payments/' + booking.payment.id : ''}">
         <div class="booking-card-image">
             <img th:src="${booking.car.imagePath != null ? booking.car.imagePath : '/images/no-car.png'}"
                  th:alt="${booking.car.brand + ' ' + booking.car.model}"
@@ -72,18 +85,31 @@
 
                 <span class="booking-meta-payment" th:if="${booking.payment != null}">
                     <i class='bx bx-wallet'></i>
-                    <span th:if="${booking.payment.method == 'CARD' and booking.payment.status == 'PAID'}">
-                        Оплачено картой
-                    </span>
-                    <span th:if="${booking.payment.method == 'CARD' and booking.payment.status == 'PENDING'}">
-                        Карта · ожидает списания
-                    </span>
-                    <span th:if="${booking.payment.method == 'CASH' and booking.payment.status != 'REFUNDED'}">
-                        Оплата при выдаче (наличные)
-                    </span>
+
                     <span th:if="${booking.payment.status == 'REFUNDED'}">
                         Возврат оформлен
                     </span>
+
+                    <span th:if="${booking.payment.status == 'CANCELLED'}">
+                        Платёж отменён
+                    </span>
+
+                    <span th:if="${booking.payment.method == 'CARD' and booking.payment.status == 'PAID'}">
+                        Оплачено картой
+                    </span>
+
+                    <span th:if="${booking.payment.method == 'CARD' and booking.payment.status == 'PENDING'}">
+                        Карта · ожидает оплаты
+                    </span>
+
+                    <span th:if="${booking.payment.method == 'CASH' and booking.payment.status == 'PENDING'}">
+                        Оплата при выдаче (наличные)
+                    </span>
+
+                    <span th:if="${booking.payment.method == 'CASH' and booking.payment.status == 'PAID'}">
+                        Оплачено наличными
+                    </span>
+
                     <span th:if="${booking.payment.method == null and booking.payment.status == 'PENDING'}">
                         Способ оплаты не выбран
                     </span>

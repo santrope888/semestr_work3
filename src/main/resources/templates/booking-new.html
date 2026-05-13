@@ -18,7 +18,7 @@
 
     <div class="booking-grid">
         <div>
-            <form th:action="@{/bookings}" method="post">
+            <form th:action="@{/bookings}" method="post" id="legacyBookingForm">
                 <input type="hidden" name="carId" th:value="${car.id}">
 
                 <div class="form-group">
@@ -49,8 +49,7 @@
                     </label>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-lg btn-block" id="submit-btn"
-                        onclick="if(checkOverlap()){event.preventDefault();alert('Выбранные даты заняты. Выберите другой период.');}">
+                <button type="submit" class="btn btn-primary btn-lg btn-block" id="submit-btn">
                     Подтвердить бронирование
                 </button>
             </form>
@@ -153,6 +152,24 @@
 
         warningEl.style.display = 'none';
         return false;
+    }
+
+    const legacyBookingForm = document.getElementById('legacyBookingForm');
+
+    if (legacyBookingForm) {
+        legacyBookingForm.addEventListener('submit', function (event) {
+            if (checkOverlap()) {
+                event.preventDefault();
+
+                const warningEl = document.getElementById('date-warning');
+
+                if (warningEl) {
+                    warningEl.textContent = 'Выбранные даты заняты. Выберите другой период.';
+                    warningEl.style.display = 'block';
+                    warningEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
     }
 
     startDateInput.addEventListener('change', () => {

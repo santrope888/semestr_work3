@@ -53,13 +53,19 @@
                     </div>
                 </div>
 
-                <div th:if="${payment.status == 'PENDING'}"
+                <div th:if="${payment.status == 'PENDING' and payment.method == 'CASH'}"
                      style="margin-top:24px;padding:16px;background:#fff7ed;border-radius:12px;border:1px solid #fed7aa;">
                     <p style="margin:0;color:#9a3412;">
                         <i class='bx bx-info-circle'></i>
-                        Платёж ещё не оплачен. Для оплаты перейдите в
-                        <a th:href="@{/bookings/wizard/{id}(id=${booking.id})}"
-                           style="color:#9a3412;font-weight:600;text-decoration:underline;">мастер бронирования</a>.
+                        Платёж ещё не оплачен. Оплата наличными будет принята при выдаче автомобиля.
+                    </p>
+                </div>
+
+                <div th:if="${payment.status == 'PENDING' and payment.method == 'CARD'}"
+                     style="margin-top:24px;padding:16px;background:#fff7ed;border-radius:12px;border:1px solid #fed7aa;">
+                    <p style="margin:0;color:#9a3412;">
+                        <i class='bx bx-info-circle'></i>
+                        Платёж по карте ожидает оплаты.
                     </p>
                 </div>
 
@@ -76,6 +82,14 @@
                     <p style="margin:0;color:#991b1b;">
                         <i class='bx bx-undo'></i>
                         Средства по этому платежу возвращены.
+                    </p>
+                </div>
+
+                <div th:if="${payment.status == 'CANCELLED'}"
+                     style="margin-top:24px;padding:16px;background:#f3f4f6;border-radius:12px;border:1px solid #d1d5db;">
+                    <p style="margin:0;color:#374151;">
+                        <i class='bx bx-x-circle'></i>
+                        Платёж отменён, потому что бронирование было отменено до оплаты.
                     </p>
                 </div>
             </div>
