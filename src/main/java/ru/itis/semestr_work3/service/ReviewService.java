@@ -112,7 +112,7 @@ public class ReviewService {
     }
 
     public Review create(Review review) {
-        if (review.getRating() < 1 || review.getRating() > 5) {
+        if (review.getRating() == null || review.getRating() < 1 || review.getRating() > 5) {
             throw new IllegalArgumentException("Рейтинг должен быть от 1 до 5");
         }
 

@@ -30,6 +30,8 @@ public class CarService {
             filter = new CarFilter();
         }
 
+        normalizeCarFilter(filter);
+
         Pageable sortedPageable = applySorting(filter, pageable);
 
         Specification<Car> specification = Specification
@@ -47,6 +49,62 @@ public class CarService {
                 .and(CarSpecifications.hasColors(filter.getColors()));
 
         return carRepository.findAll(specification, sortedPageable);
+    }
+
+    private void normalizeCarFilter(CarFilter filter) {
+        if (filter.getMinPrice() != null && filter.getMinPrice() < 0) {
+            filter.setMinPrice(null);
+        }
+
+        if (filter.getMaxPrice() != null && filter.getMaxPrice() < 0) {
+            filter.setMaxPrice(null);
+        }
+
+        if (filter.getMinPrice() != null
+                && filter.getMaxPrice() != null
+                && filter.getMinPrice() > filter.getMaxPrice()) {
+            Integer min = filter.getMinPrice();
+            filter.setMinPrice(filter.getMaxPrice());
+            filter.setMaxPrice(min);
+        }
+
+        if (filter.getSeats() != null && filter.getSeats() < 1) {
+            filter.setSeats(null);
+        }
+
+        if (filter.getMinYear() != null && filter.getMinYear() < 1900) {
+            filter.setMinYear(null);
+        }
+
+        if (filter.getMaxYear() != null && filter.getMaxYear() < 1900) {
+            filter.setMaxYear(null);
+        }
+
+        if (filter.getMinYear() != null
+                && filter.getMaxYear() != null
+                && filter.getMinYear() > filter.getMaxYear()) {
+            Integer min = filter.getMinYear();
+            filter.setMinYear(filter.getMaxYear());
+            filter.setMaxYear(min);
+        }
+
+        if (filter.getRatings() != null) {
+            filter.setRatings(
+                    filter.getRatings().stream()
+                            .filter(rating -> rating != null && rating >= 1 && rating <= 5)
+                            .distinct()
+                            .toList()
+            );
+        }
+
+        if (filter.getCategoryIds() != null) {
+            filter.setCategoryIds(
+                    filter.getCategoryIds().stream()
+                            .filter(id -> id != null && id > 0)
+                            .distinct()
+                            .toList()
+            );
+        }
     }
 
     private Pageable applySorting(CarFilter filter, Pageable pageable) {

@@ -14,6 +14,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter;
+import org.springframework.security.web.server.header.XXssProtectionServerHttpHeadersWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -41,6 +43,14 @@ public class SecurityConfig {
         ObjectMapper mapper = new ObjectMapper();
 
         http
+                .headers(headers -> headers
+                        .contentSecurityPolicy(csp ->
+                                csp.policyDirectives("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'")
+                        )
+                        .contentTypeOptions(Customizer.withDefaults())
+                        .xssProtection(xss -> xss.headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
+                        .frameOptions(frameOptions -> frameOptions.deny())
+                )
                 .securityMatcher("/api/**")
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/payments/convert").permitAll()
@@ -100,22 +110,66 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/", "/catalog", "/cars/**",
-                                "/css/**", "/images/**", "/js/**",
-                                "/uploads/avatars/**", "/uploads/cars/**",
-                                "/login", "/register", "/oauth/**"
+                                "/",
+                                "/catalog",
+                                "/cars/**",
+                                "/css/**",
+                                "/images/**",
+                                "/js/**",
+                                "/uploads/avatars/**",
+                                "/uploads/cars/**",
+                                "/login",
+                                "/register",
+                                "/oauth/**",
+                                "/error",
+                                "/error/**"
                         ).permitAll()
-                        .requestMatchers("/admin/**").hasAuthority("ADMIN")
+
                         .requestMatchers(
-                                "/profile/**", "/favorites/**", "/bookings/**",
-                                "/payments/**", "/notifications/**", "/chat/**"
-                        ).authenticated()
-                        .requestMatchers("/swagger-ui.html",
+                                "/admin/cars",
+                                "/admin/cars/new",
+                                "/admin/cars/*/edit",
+                                "/admin/cars/*/delete",
+                                "/admin/bookings",
+                                "/admin/bookings/*/confirm",
+                                "/admin/bookings/*/complete",
+                                "/admin/bookings/*/cancel",
+                                "/admin/bookings/*/refund",
+                                "/admin/users",
+                                "/admin/users/*/documents/*",
+                                "/admin/users/*/documents/*/approve",
+                                "/admin/users/*/documents/*/reject"
+                        ).hasAuthority("ADMIN")
+
+                        .requestMatchers(
+                                "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs",
                                 "/v3/api-docs/**",
-                                "/v3/api-docs.yaml").hasAuthority("ADMIN")
-                        .anyRequest().authenticated()
+                                "/v3/api-docs.yaml"
+                        ).hasAuthority("ADMIN")
+
+                        .requestMatchers(
+                                "/profile",
+                                "/profile/**",
+                                "/favorites",
+                                "/bookings",
+                                "/bookings/new",
+                                "/bookings/*/cancel",
+                                "/bookings/wizard/**",
+                                "/payments/**",
+                                "/chat",
+                                "/chat/new",
+                                "/chat/*/delete"
+                        ).authenticated()
+
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.POST,
+                                "/bookings",
+                                "/cars/*/reviews"
+                        ).authenticated()
+
+                        .anyRequest().permitAll()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
