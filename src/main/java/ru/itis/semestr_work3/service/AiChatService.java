@@ -86,12 +86,45 @@ public class AiChatService {
         ChatSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Чат-сессия не найдена"));
 
+        List<ChatMessage> oldMessages = messageRepository.findBySessionIdOrderByCreatedAtAsc(sessionId);
+        boolean isFirstMessage = oldMessages.isEmpty();
+
         saveMessage(session, "USER", userMessage);
+
+        if (isFirstMessage && shouldAutoRename(session.getTitle())) {
+            session.setTitle(generateTitleFromMessage(userMessage));
+            sessionRepository.save(session);
+        }
 
         String aiResponse = callOllama(session);
 
         saveMessage(session, "ASSISTANT", aiResponse);
         return aiResponse;
+    }
+
+    private boolean shouldAutoRename(String title) {
+        return title == null
+                || title.isBlank()
+                || title.equals("Новый диалог")
+                || title.equals("Подбор автомобиля");
+    }
+
+    private String generateTitleFromMessage(String message) {
+        if (message == null || message.isBlank()) {
+            return "Новый диалог";
+        }
+
+        String clean = message
+                .replaceAll("\\s+", " ")
+                .trim();
+
+        int maxLength = 38;
+
+        if (clean.length() <= maxLength) {
+            return clean;
+        }
+
+        return clean.substring(0, maxLength).trim() + "...";
     }
 
     private String callOllama(ChatSession session) {
@@ -113,11 +146,23 @@ public class AiChatService {
                     .reduce((a, b) -> a + "\n" + b)
                     .orElse("Нет доступных автомобилей");
 
-            String systemPrompt = "Ты — ИИ-помощник по подбору автомобилей в аренду. "
-                    + "Вот список доступных автомобилей:\n"
-                    + carsInfo
-                    + "\n\nРекомендуй пользователю подходящие автомобили из этого списка, "
-                    + "объясняя свой выбор. Отвечай на русском языке.";
+            String systemPrompt = """
+                    Ты — AuraBot, ИИ-помощник сайта Aura Motum по аренде автомобилей.
+
+                    Общайся естественно, дружелюбно и уверенно. Не отвечай сухо.
+                    Подбирай машины под запрос пользователя и кратко объясняй, почему они подходят.
+
+                    Ограничения:
+                    - не используй markdown-таблицы;
+                    - используй только автомобили из каталога ниже;
+                    - не выдумывай характеристики, которых нет в каталоге;
+                    - не пиши технические параметры, если они не указаны в каталоге;
+                    - не перегружай ответ: лучше 2–4 хорошие рекомендации, чем длинный список;
+                    - отвечай на русском языке.
+
+                    Каталог автомобилей:
+                    %s
+                    """.formatted(carsInfo);
 
             List<ChatMessage> history = messageRepository.findBySessionIdOrderByCreatedAtAsc(session.getId());
 

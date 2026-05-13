@@ -62,12 +62,19 @@ public class ChatController {
                                            @AuthenticationPrincipal UserDetails principal) {
         ChatSession session = aiChatService.findSessionById(sessionId);
         checkSessionOwner(session, principal);
+
         String userMessage = body.get("message");
         if (userMessage == null || userMessage.isBlank()) {
             throw new IllegalArgumentException("Сообщение не может быть пустым");
         }
+
         String response = aiChatService.sendMessage(sessionId, userMessage);
-        return Map.of("response", response);
+        ChatSession updatedSession = aiChatService.findSessionById(sessionId);
+
+        return Map.of(
+                "response", response,
+                "title", updatedSession.getTitle()
+        );
     }
 
     private void checkSessionOwner(ChatSession session, UserDetails principal) {
