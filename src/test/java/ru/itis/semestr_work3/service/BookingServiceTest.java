@@ -387,7 +387,7 @@ class BookingServiceTest {
     }
 
     @Test
-    void cancel_whenPaymentPending_marksPaymentAsRefunded() {
+    void cancel_whenPaymentPending_marksPaymentAsCancelled() {
         Payment payment = new Payment();
         payment.setMethod("CASH");
         payment.setStatus("PENDING");
@@ -399,7 +399,7 @@ class BookingServiceTest {
         Booking result = bookingService.cancel(1L, 1L);
 
         assertThat(result.getStatus()).isEqualTo("CANCELLED");
-        assertThat(result.getPayment().getStatus()).isEqualTo("REFUNDED");
+        assertThat(result.getPayment().getStatus()).isEqualTo("CANCELLED");
     }
 
 
@@ -430,12 +430,24 @@ class BookingServiceTest {
     }
 
     @Test
-    void complete_whenBookingExists_setsCompletedStatus() {
+    void complete_whenConfirmedCashPendingAndRentalEnded_marksBookingCompletedAndPaymentPaid() {
+        Payment payment = new Payment();
+        payment.setMethod("CASH");
+        payment.setStatus("PENDING");
+        booking.setPayment(payment);
         booking.setStatus("CONFIRMED");
+        booking.setEndDate(LocalDate.now());
+
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
         when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
         Booking result = bookingService.complete(1L);
+
         assertThat(result.getStatus()).isEqualTo("COMPLETED");
+        assertThat(result.getPayment().getStatus()).isEqualTo("PAID");
+        assertThat(result.getPayment().getMethod()).isEqualTo("CASH");
+        assertThat(result.getPayment().getPaidAt()).isNotNull();
+        verify(notificationService).send(eq(user), eq("BOOKING_COMPLETED"), anyString());
     }
 
     @Test
@@ -742,6 +754,7 @@ class BookingServiceTest {
 
         verify(notificationService).send(eq(user), eq("BOOKING_CREATED"), anyString());
     }
+
     @Test
     void cancel_whenOwnerCancelsPaidCardBooking_sendsRefundMessage() {
         Payment payment = new Payment();
@@ -819,4 +832,309 @@ class BookingServiceTest {
         assertThrows(IllegalStateException.class, () -> bookingService.complete(1L));
         verify(bookingRepository, never()).save(any(Booking.class));
     }
+
+    @Test
+    void complete_whenPendingPaymentHasBlankMethod_setsCashAndPaid() {
+        Payment payment = new Payment();
+        payment.setMethod("   ");
+        payment.setStatus("PENDING");
+        booking.setPayment(payment);
+        booking.setStatus("CONFIRMED");
+        booking.setEndDate(LocalDate.now().minusDays(1));
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Booking result = bookingService.complete(1L);
+
+        assertThat(result.getStatus()).isEqualTo("COMPLETED");
+        assertThat(result.getPayment().getStatus()).isEqualTo("PAID");
+        assertThat(result.getPayment().getMethod()).isEqualTo("CASH");
+        assertThat(result.getPayment().getPaidAt()).isNotNull();
+    }
+
+    @Test
+    void complete_whenEndDateInFuture_throwsIllegalState() {
+        Payment payment = new Payment();
+        payment.setMethod("CASH");
+        payment.setStatus("PENDING");
+        booking.setPayment(payment);
+        booking.setStatus("CONFIRMED");
+        booking.setEndDate(LocalDate.now().plusDays(1));
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+
+        assertThrows(IllegalStateException.class, () -> bookingService.complete(1L));
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    @Test
+    void complete_whenPaymentMissing_throwsIllegalState() {
+        booking.setPayment(null);
+        booking.setStatus("CONFIRMED");
+        booking.setEndDate(LocalDate.now());
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+
+        assertThrows(IllegalStateException.class, () -> bookingService.complete(1L));
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    @Test
+    void complete_whenPaymentRefunded_throwsIllegalState() {
+        Payment payment = new Payment();
+        payment.setStatus("REFUNDED");
+        booking.setPayment(payment);
+        booking.setStatus("CONFIRMED");
+        booking.setEndDate(LocalDate.now());
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+
+        assertThrows(IllegalStateException.class, () -> bookingService.complete(1L));
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    @Test
+    void complete_whenPaymentCancelled_throwsIllegalState() {
+        Payment payment = new Payment();
+        payment.setStatus("CANCELLED");
+        booking.setPayment(payment);
+        booking.setStatus("CONFIRMED");
+        booking.setEndDate(LocalDate.now());
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+
+        assertThrows(IllegalStateException.class, () -> bookingService.complete(1L));
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    @Test
+    void complete_whenCardPaymentIsStillPending_throwsIllegalState() {
+        Payment payment = new Payment();
+        payment.setMethod("CARD");
+        payment.setStatus("PENDING");
+        booking.setPayment(payment);
+        booking.setStatus("CONFIRMED");
+        booking.setEndDate(LocalDate.now());
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+
+        assertThrows(IllegalStateException.class, () -> bookingService.complete(1L));
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    @Test
+    void complete_whenPaymentAlreadyPaid_completesBookingWithoutChangingPaidAt() {
+        java.time.LocalDateTime paidAt = java.time.LocalDateTime.now().minusHours(2);
+        Payment payment = new Payment();
+        payment.setMethod("CARD");
+        payment.setStatus("PAID");
+        payment.setPaidAt(paidAt);
+        booking.setPayment(payment);
+        booking.setStatus("CONFIRMED");
+        booking.setEndDate(LocalDate.now());
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Booking result = bookingService.complete(1L);
+
+        assertThat(result.getStatus()).isEqualTo("COMPLETED");
+        assertThat(result.getPayment().getStatus()).isEqualTo("PAID");
+        assertThat(result.getPayment().getPaidAt()).isEqualTo(paidAt);
+    }
+
+
+    @Test
+    void create_whenInsuranceIdsIsEmptySet_doesNotLoadInsurances() {
+        Booking booking = booking(LocalDate.now().plusDays(1), LocalDate.now().plusDays(3));
+
+        when(carRepository.findById(1L)).thenReturn(Optional.of(car));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(bookingRepository.count(any(Specification.class))).thenReturn(0L);
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Booking result = bookingService.create(booking, Set.of());
+
+        assertThat(result.getInsurances()).isEmpty();
+        assertThat(result.getTotalPrice()).isEqualTo(3000);
+        assertThat(result.getPayment().getStatus()).isEqualTo("PENDING");
+        verify(insuranceRepository, never()).findAllById(any());
+    }
+
+    @Test
+    void createWithExtras_whenInsuranceIdsIsEmptySet_doesNotLoadInsurances() {
+        ru.itis.semestr_work3.dto.BookingExtrasRequest request = validExtrasRequest();
+        request.setInsuranceIds(Set.of());
+
+        when(carRepository.findById(1L)).thenReturn(Optional.of(car));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(bookingRepository.count(any(Specification.class))).thenReturn(0L);
+        when(bookingRepository.existsByBookingNumber(anyString())).thenReturn(false);
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Booking result = bookingService.createWithExtras(request, 1L);
+
+        assertThat(result.getInsurances()).isEmpty();
+        assertThat(result.getTotalPrice()).isEqualTo(3000);
+        verify(insuranceRepository, never()).findAllById(any());
+    }
+
+    @Test
+    void confirm_whenBookingNumberIsPresent_usesBookingNumberInNotification() {
+        Booking booking = booking(LocalDate.now().plusDays(1), LocalDate.now().plusDays(3));
+        booking.setId(1L);
+        booking.setStatus("PENDING");
+        booking.setBookingNumber("AM-ABC123");
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Booking result = bookingService.confirm(1L);
+
+        assertThat(result.getStatus()).isEqualTo("CONFIRMED");
+
+        org.mockito.ArgumentCaptor<String> messageCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(notificationService).send(eq(user), eq("BOOKING_CONFIRMED"), messageCaptor.capture());
+        assertThat(messageCaptor.getValue()).contains("AM-ABC123");
+    }
+
+    @Test
+    void cancel_whenCardPaymentIsPending_setsPaymentCancelledWithoutRefundText() {
+        Booking booking = booking(LocalDate.now().plusDays(1), LocalDate.now().plusDays(3));
+        booking.setId(1L);
+        booking.setStatus("PENDING");
+        booking.setBookingNumber("AM-CARD01");
+        booking.setPayment(payment("CARD", "PENDING"));
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Booking result = bookingService.cancel(1L, 1L);
+
+        assertThat(result.getStatus()).isEqualTo("CANCELLED");
+        assertThat(result.getPayment().getStatus()).isEqualTo("CANCELLED");
+
+        org.mockito.ArgumentCaptor<String> messageCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(notificationService).send(eq(user), eq("BOOKING_CANCELLED"), messageCaptor.capture());
+        assertThat(messageCaptor.getValue()).contains("AM-CARD01");
+        assertThat(messageCaptor.getValue()).doesNotContain("Возврат средств поступит на карту");
+    }
+
+    @Test
+    void cancel_whenPaymentStatusIsAlreadyRefunded_leavesPaymentStatusUnchanged() {
+        Booking booking = booking(LocalDate.now().plusDays(1), LocalDate.now().plusDays(3));
+        booking.setId(1L);
+        booking.setStatus("PENDING");
+        booking.setPayment(payment("CARD", "REFUNDED"));
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Booking result = bookingService.cancel(1L, 1L);
+
+        assertThat(result.getStatus()).isEqualTo("CANCELLED");
+        assertThat(result.getPayment().getStatus()).isEqualTo("REFUNDED");
+    }
+
+    @Test
+    void complete_whenPendingPaymentMethodIsNull_setsCashAndUsesBookingNumberInNotification() {
+        Booking booking = booking(LocalDate.now().minusDays(3), LocalDate.now());
+        booking.setId(1L);
+        booking.setStatus("CONFIRMED");
+        booking.setBookingNumber("AM-DONE01");
+        booking.setPayment(payment(null, "PENDING"));
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Booking result = bookingService.complete(1L);
+
+        assertThat(result.getStatus()).isEqualTo("COMPLETED");
+        assertThat(result.getPayment().getStatus()).isEqualTo("PAID");
+        assertThat(result.getPayment().getMethod()).isEqualTo("CASH");
+        assertThat(result.getPayment().getPaidAt()).isNotNull();
+
+        org.mockito.ArgumentCaptor<String> messageCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(notificationService).send(eq(user), eq("BOOKING_COMPLETED"), messageCaptor.capture());
+        assertThat(messageCaptor.getValue()).contains("AM-DONE01");
+    }
+
+    @Test
+    void findFilteredBookings_withNegativePriceBounds_clearsBounds() {
+        BookingFilter filter = new BookingFilter();
+        filter.setMinTotalPrice(-50);
+        filter.setMaxTotalPrice(-20);
+
+        when(bookingRepository.findAll(any(Specification.class), any(Sort.class)))
+                .thenReturn(List.of(booking));
+
+        List<Booking> result = bookingService.findFilteredBookings(filter);
+
+        assertThat(result).containsExactly(booking);
+        assertThat(filter.getMinTotalPrice()).isNull();
+        assertThat(filter.getMaxTotalPrice()).isNull();
+    }
+
+    @Test
+    void findFilteredBookings_withOnlyMinPrice_keepsMinAndNullMax() {
+        BookingFilter filter = new BookingFilter();
+        filter.setMinTotalPrice(1000);
+
+        when(bookingRepository.findAll(any(Specification.class), any(Sort.class)))
+                .thenReturn(List.of(booking));
+
+        bookingService.findFilteredBookings(filter);
+
+        assertThat(filter.getMinTotalPrice()).isEqualTo(1000);
+        assertThat(filter.getMaxTotalPrice()).isNull();
+    }
+
+    @Test
+    void findFilteredBookings_withReversedPriceBounds_swapsBounds() {
+        BookingFilter filter = new BookingFilter();
+        filter.setMinTotalPrice(5000);
+        filter.setMaxTotalPrice(1000);
+
+        when(bookingRepository.findAll(any(Specification.class), any(Sort.class)))
+                .thenReturn(List.of(booking));
+
+        bookingService.findFilteredBookings(filter);
+
+        assertThat(filter.getMinTotalPrice()).isEqualTo(1000);
+        assertThat(filter.getMaxTotalPrice()).isEqualTo(5000);
+    }
+
+    @Test
+    void findFilteredBookings_withValidPriceBounds_keepsBounds() {
+        BookingFilter filter = new BookingFilter();
+        filter.setMinTotalPrice(1000);
+        filter.setMaxTotalPrice(5000);
+
+        when(bookingRepository.findAll(any(Specification.class), any(Sort.class)))
+                .thenReturn(List.of(booking));
+
+        bookingService.findFilteredBookings(filter);
+
+        assertThat(filter.getMinTotalPrice()).isEqualTo(1000);
+        assertThat(filter.getMaxTotalPrice()).isEqualTo(5000);
+    }
+
+    private Booking booking(LocalDate startDate, LocalDate endDate) {
+        Booking booking = new Booking();
+        booking.setCar(car);
+        booking.setUser(user);
+        booking.setStartDate(startDate);
+        booking.setEndDate(endDate);
+        booking.setStatus("PENDING");
+        return booking;
+    }
+
+    private Payment payment(String method, String status) {
+        Payment payment = new Payment();
+        payment.setMethod(method);
+        payment.setStatus(status);
+        return payment;
+    }
+
 }

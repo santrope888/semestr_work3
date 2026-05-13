@@ -372,4 +372,98 @@ class CarServiceTest {
 
         assertThat(result).containsExactly("AWD", "RWD");
     }
+
+    @Test
+    void findCars_withInvalidFilterValues_normalizesThem() {
+        CarFilter filter = new CarFilter();
+        filter.setMinPrice(-100);
+        filter.setMaxPrice(-1);
+        filter.setSeats(0);
+        filter.setMinYear(1800);
+        filter.setMaxYear(1899);
+        filter.setRatings(java.util.Arrays.asList(null, 0, 6, 5, 5));
+        filter.setCategoryIds(java.util.Arrays.asList(null, -1L, 0L, 10L, 10L));
+
+        when(carRepository.findAll(
+                org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<Car>>any(),
+                any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(car), PageRequest.of(0, 12), 1));
+
+        carService.findCars(filter, PageRequest.of(0, 12));
+
+        assertThat(filter.getMinPrice()).isNull();
+        assertThat(filter.getMaxPrice()).isNull();
+        assertThat(filter.getSeats()).isNull();
+        assertThat(filter.getMinYear()).isNull();
+        assertThat(filter.getMaxYear()).isNull();
+        assertThat(filter.getRatings()).containsExactly(5);
+        assertThat(filter.getCategoryIds()).containsExactly(10L);
+    }
+
+    @Test
+    void findCars_withOnlyLowerBounds_keepsLowerBoundsAndNullUpperBounds() {
+        CarFilter filter = new CarFilter();
+        filter.setMinPrice(1000);
+        filter.setMinYear(2020);
+
+        when(carRepository.findAll(
+                org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<Car>>any(),
+                any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(car), PageRequest.of(0, 12), 1));
+
+        carService.findCars(filter, PageRequest.of(0, 12));
+
+        assertThat(filter.getMinPrice()).isEqualTo(1000);
+        assertThat(filter.getMaxPrice()).isNull();
+        assertThat(filter.getMinYear()).isEqualTo(2020);
+        assertThat(filter.getMaxYear()).isNull();
+    }
+
+    @Test
+    void findCars_withReversedPriceAndYearBounds_swapsBounds() {
+        CarFilter filter = new CarFilter();
+        filter.setMinPrice(5000);
+        filter.setMaxPrice(1000);
+        filter.setMinYear(2025);
+        filter.setMaxYear(2020);
+
+        when(carRepository.findAll(
+                org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<Car>>any(),
+                any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(car), PageRequest.of(0, 12), 1));
+
+        carService.findCars(filter, PageRequest.of(0, 12));
+
+        assertThat(filter.getMinPrice()).isEqualTo(1000);
+        assertThat(filter.getMaxPrice()).isEqualTo(5000);
+        assertThat(filter.getMinYear()).isEqualTo(2020);
+        assertThat(filter.getMaxYear()).isEqualTo(2025);
+    }
+
+    @Test
+    void findCars_withValidFilterValues_keepsThem() {
+        CarFilter filter = new CarFilter();
+        filter.setMinPrice(1000);
+        filter.setMaxPrice(5000);
+        filter.setSeats(5);
+        filter.setMinYear(2020);
+        filter.setMaxYear(2025);
+        filter.setRatings(List.of(1, 5));
+        filter.setCategoryIds(List.of(10L));
+
+        when(carRepository.findAll(
+                org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<Car>>any(),
+                any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(car), PageRequest.of(0, 12), 1));
+
+        carService.findCars(filter, PageRequest.of(0, 12));
+
+        assertThat(filter.getMinPrice()).isEqualTo(1000);
+        assertThat(filter.getMaxPrice()).isEqualTo(5000);
+        assertThat(filter.getSeats()).isEqualTo(5);
+        assertThat(filter.getMinYear()).isEqualTo(2020);
+        assertThat(filter.getMaxYear()).isEqualTo(2025);
+        assertThat(filter.getRatings()).containsExactly(1, 5);
+        assertThat(filter.getCategoryIds()).containsExactly(10L);
+    }
 }

@@ -286,4 +286,12 @@ class ReviewServiceTest {
 
         assertThrows(ResourceNotFoundException.class, () -> reviewService.delete(99L));
     }
+
+    @Test
+    void create_whenRatingIsNull_throwsException() {
+        review.setRating(null);
+
+        assertThrows(IllegalArgumentException.class, () -> reviewService.create(review));
+        verify(reviewRepository, never()).save(any(Review.class));
+    }
 }

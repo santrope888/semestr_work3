@@ -111,8 +111,9 @@ class PaymentServiceTest {
     }
 
     @Test
-    void refund_whenPaymentExists_setsRefundedStatus() {
+    void refund_whenPaymentPaid_setsRefundedStatus() {
         Payment payment = new Payment();
+        payment.setStatus("PAID");
         when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
         when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -159,4 +160,39 @@ class PaymentServiceTest {
 
         assertThat(result.getMethod()).isEqualTo("CARD");
     }
+
+    @Test
+    void pay_whenCancelled_throwsIllegalStateAndDoesNotSave() {
+        Payment payment = new Payment();
+        payment.setStatus("CANCELLED");
+        when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+
+        assertThrows(IllegalStateException.class, () -> paymentService.pay(1L, "CARD"));
+        verify(paymentRepository, never()).save(any());
+    }
+
+    @Test
+    void refund_whenPending_setsCancelledStatus() {
+        Payment payment = new Payment();
+        payment.setStatus("PENDING");
+        when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Payment result = paymentService.refund(1L);
+
+        assertThat(result.getStatus()).isEqualTo("CANCELLED");
+    }
+
+    @Test
+    void refund_whenAlreadyCancelled_isIdempotentAndDoesNotSave() {
+        Payment payment = new Payment();
+        payment.setStatus("CANCELLED");
+        when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+
+        Payment result = paymentService.refund(1L);
+
+        assertThat(result.getStatus()).isEqualTo("CANCELLED");
+        verify(paymentRepository, never()).save(any());
+    }
+
 }
