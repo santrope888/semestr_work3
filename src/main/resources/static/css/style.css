@@ -2780,11 +2780,13 @@ footer {
 }
 .color-dot[data-color="Бежевый"]    { background-color: #F5F5DC; }
 .color-dot[data-color="Белый"]      { background-color: #FFFFFF; }
+.color-dot[data-color="Бордовый"]   { background-color: #800020; }
 .color-dot[data-color="Голубой"]    { background-color: #87CEEB; }
 .color-dot[data-color="Жёлтый"]     { background-color: #FFD700; }
 .color-dot[data-color="Зелёный"]    { background-color: #1E8449; }
 .color-dot[data-color="Красный"]    { background-color: #C0392B; }
 .color-dot[data-color="Оливковый"]  { background-color: #808000; }
+.color-dot[data-color="Розовый"]    { background-color: #FFB6C1; }
 .color-dot[data-color="Серый"]      { background-color: #7F8C8D; }
 .color-dot[data-color="Синий"]      { background-color: #0033A0; }
 .color-dot[data-color="Фиолетовый"] { background-color: #7D3C98; }
@@ -2935,4 +2937,79 @@ footer {
 
 .catalog-layout {
     padding-bottom: 100px;
+}
+
+.cd-reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.cd-review-card {
+    background: #fff;
+    border: 1px solid #f0f0f0;
+    border-radius: 1rem;
+    padding: 20px 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.cd-review-head {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.cd-review-author {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+}
+
+.cd-review-author i {
+    font-size: 1.5rem;
+    color: var(--main-color);
+}
+
+.cd-review-stars {
+    display: flex;
+    gap: 2px;
+    color: #f5a623;
+    font-size: 1rem;
+}
+
+.cd-review-stars .bx-star {
+    color: #ddd;
+}
+
+.cd-review-date {
+    color: var(--text-alter-color);
+    font-size: 0.85rem;
+    margin-left: auto;
+}
+
+.cd-review-text {
+    margin: 0;
+    color: var(--text-color);
+    line-height: 1.55;
+    font-size: 0.95rem;
+}
+
+.cd-reviews-empty {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text-alter-color);
+}
+
+.cd-reviews-empty i {
+    font-size: 3rem;
+    color: #ddd;
+    display: block;
+    margin-bottom: 12px;
+}
+
+.cd-reviews-empty p {
+    margin: 0;
 }

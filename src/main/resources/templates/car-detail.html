@@ -162,6 +162,12 @@
             <button class="cd-tab active" data-tab="desc" type="button">Описание</button>
             <button class="cd-tab" data-tab="specs" type="button">Характеристики</button>
             <button class="cd-tab" data-tab="eq" type="button">Комплектация</button>
+            <button class="cd-tab" data-tab="reviews" type="button">
+                Отзывы
+                <span th:if="${reviewCount > 0}"
+                      th:text="'(' + ${reviewCount} + ')'"
+                      style="opacity:0.7;font-weight:500;"></span>
+            </button>
         </div>
 
         <div class="cd-pane active" id="cd-pane-desc">
@@ -217,6 +223,34 @@
                     <div class="cd-eq-item"><i class="bx bx-check-circle"></i>Массаж передних сидений</div>
                     <div class="cd-eq-item"><i class="bx bx-check-circle"></i>Климат-контроль 2-зоны</div>
                 </div>
+            </div>
+        </div>
+        <div class="cd-pane" id="cd-pane-reviews">
+            <!-- Список отзывов -->
+            <div th:if="${not #lists.isEmpty(reviews)}" class="cd-reviews-list">
+                <div th:each="review : ${reviews}" class="cd-review-card">
+                    <div class="cd-review-head">
+                        <div class="cd-review-author">
+                            <i class='bx bx-user-circle'></i>
+                            <strong th:text="${review.user.username}">username</strong>
+                        </div>
+                        <div class="cd-review-stars">
+                            <i th:each="i : ${#numbers.sequence(1, 5)}"
+                               class="bx"
+                               th:classappend="${i <= review.rating} ? 'bxs-star' : 'bx-star'"></i>
+                        </div>
+                        <span class="cd-review-date"
+                              th:text="${#temporals.format(review.createdAt, 'dd.MM.yyyy')}">01.01.2025</span>
+                    </div>
+                    <p th:if="${review.comment != null and !#strings.isEmpty(review.comment)}"
+                       th:text="${review.comment}"
+                       class="cd-review-text">Текст отзыва</p>
+                </div>
+            </div>
+
+            <div th:if="${#lists.isEmpty(reviews)}" class="cd-reviews-empty">
+                <i class='bx bx-message-square-detail'></i>
+                <p>Пока никто не оставил отзыв. Будьте первым после поездки!</p>
             </div>
         </div>
     </div>
