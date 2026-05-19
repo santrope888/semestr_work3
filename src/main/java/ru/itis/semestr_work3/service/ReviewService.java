@@ -10,9 +10,11 @@ import ru.itis.semestr_work3.entity.Car;
 import ru.itis.semestr_work3.entity.Review;
 import ru.itis.semestr_work3.entity.User;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
+import ru.itis.semestr_work3.repository.BookingRepository;
 import ru.itis.semestr_work3.repository.CarRepository;
 import ru.itis.semestr_work3.repository.ReviewRepository;
 import ru.itis.semestr_work3.repository.UserRepository;
+import ru.itis.semestr_work3.specifications.BookingSpecifications;
 import ru.itis.semestr_work3.specifications.ReviewSpecifications;
 
 import java.time.LocalDate;
@@ -26,9 +28,12 @@ import java.util.Optional;
 @Transactional
 public class ReviewService {
 
+    private static final String BOOKING_STATUS_COMPLETED = "COMPLETED";
+
     private final ReviewRepository reviewRepository;
     private final CarRepository carRepository;
     private final UserRepository userRepository;
+    private final BookingRepository bookingRepository;
 
     @Transactional(readOnly = true)
     public List<Review> findFilteredReviews(ReviewFilter filter) {
@@ -134,6 +139,17 @@ public class ReviewService {
 
         review.setUser(user);
         review.setCar(car);
+
+        long completedBookings = bookingRepository.count(
+                Specification.where(BookingSpecifications.hasUser(user.getId()))
+                        .and(BookingSpecifications.hasCar(car.getId()))
+                        .and(BookingSpecifications.hasStatus(BOOKING_STATUS_COMPLETED))
+        );
+
+        if (completedBookings == 0) {
+            throw new IllegalArgumentException(
+                    "Отзыв можно оставить только после завершённой аренды этого автомобиля");
+        }
 
         Specification<Review> existsSpecification = Specification
                 .where(ReviewSpecifications.hasUser(user.getId()))

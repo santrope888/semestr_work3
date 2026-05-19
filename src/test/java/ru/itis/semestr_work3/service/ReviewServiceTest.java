@@ -13,6 +13,7 @@ import ru.itis.semestr_work3.entity.Car;
 import ru.itis.semestr_work3.entity.Review;
 import ru.itis.semestr_work3.entity.User;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
+import ru.itis.semestr_work3.repository.BookingRepository;
 import ru.itis.semestr_work3.repository.CarRepository;
 import ru.itis.semestr_work3.repository.ReviewRepository;
 import ru.itis.semestr_work3.repository.UserRepository;
@@ -39,6 +40,9 @@ class ReviewServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private BookingRepository bookingRepository;
 
     @InjectMocks
     private ReviewService reviewService;
@@ -194,6 +198,7 @@ class ReviewServiceTest {
     void create_withValidReview_setsCreatedAtAndSaves() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(carRepository.findById(2L)).thenReturn(Optional.of(car));
+        when(bookingRepository.count(any(Specification.class))).thenReturn(1L);
         when(reviewRepository.count(any(Specification.class))).thenReturn(0L);
         when(reviewRepository.save(any(Review.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -263,9 +268,20 @@ class ReviewServiceTest {
     }
 
     @Test
+    void create_whenNoCompletedBooking_throwsException() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(carRepository.findById(2L)).thenReturn(Optional.of(car));
+        when(bookingRepository.count(any(Specification.class))).thenReturn(0L);
+
+        assertThrows(IllegalArgumentException.class, () -> reviewService.create(review));
+        verify(reviewRepository, never()).save(any(Review.class));
+    }
+
+    @Test
     void create_whenReviewAlreadyExists_throwsException() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(carRepository.findById(2L)).thenReturn(Optional.of(car));
+        when(bookingRepository.count(any(Specification.class))).thenReturn(1L);
         when(reviewRepository.count(any(Specification.class))).thenReturn(1L);
 
         assertThrows(IllegalArgumentException.class, () -> reviewService.create(review));

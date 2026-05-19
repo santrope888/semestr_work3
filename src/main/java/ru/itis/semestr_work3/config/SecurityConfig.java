@@ -169,7 +169,7 @@ public class SecurityConfig {
                                 "/cars/*/reviews"
                         ).authenticated()
 
-                        .anyRequest().permitAll()
+                        .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
