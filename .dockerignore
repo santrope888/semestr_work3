@@ -1,0 +1,34 @@
+# Build artifacts
+target/
+*.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Local secrets and dev files
+.env
+.env.*
+!.env.example
+cookies.txt
+
+# Local file storage
+uploads/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+README.md
+HELP.md
