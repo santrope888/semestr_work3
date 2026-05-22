@@ -179,6 +179,7 @@ http://localhost:8080/swagger-ui.html
   прогоняют HTTP-запросы через MockMvc
 
 ## Структура проекта
+```text
 src/
 ├── main/
 │   ├── java/ru/itis/semestr_work3/
@@ -209,6 +210,7 @@ src/
 │   ├── integration/     — интеграционные тесты с Testcontainers
 │   ├── TestcontainersConfiguration.java
 │   └── TestSemestrWork3Application.java
+```
 
 ## Технические заметки
 
