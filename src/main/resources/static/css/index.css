@@ -445,6 +445,42 @@
     pointer-events: none;
 }
 
+.home-fav-btn {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    border-radius: 50%;
+    color: var(--main-color);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    inline-size: 28px;
+    block-size: 28px;
+    padding: 0;
+}
+
+.home-fav-btn .bx {
+    color: inherit;
+    font-size: 24px;
+    line-height: 1;
+}
+
+.home-fav-btn:focus-visible {
+    outline: 2px solid var(--main-color);
+    outline-offset: 3px;
+}
+
+.home-fav-btn:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+
+.home-fav-btn.on {
+    color: var(--main-color);
+}
+
 .home-grid .trend-box,
 .home-grid .rental-box {
     min-height: 380px;

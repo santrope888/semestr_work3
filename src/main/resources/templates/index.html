@@ -32,6 +32,16 @@
            class="trend-box trend-box-link">
             <div class="rental-top">
                 <h3 th:text="${car.category != null ? car.category.name : 'Premium'}">Эконом</h3>
+                <button type="button"
+                        class="home-fav-btn"
+                        sec:authorize="isAuthenticated()"
+                        th:classappend="${favoriteIds != null and favoriteIds.contains(car.id)} ? ' on' : ''"
+                        th:attr="data-car-id=${car.id}"
+                        onclick="onHomeFavClick(event, this)"
+                        aria-label="В избранное">
+                    <i th:class="${favoriteIds != null and favoriteIds.contains(car.id)} ? 'bx bxs-heart' : 'bx bx-heart'"></i>
+                </button>
+                <i class='bx bx-heart' sec:authorize="isAnonymous()"></i>
             </div>
 
             <div class="home-img-box">
@@ -72,7 +82,16 @@
            class="rental-box rental-box-link">
             <div class="rental-top">
                 <h3 th:text="${car.category != null ? car.category.name : 'Auto'}">Sedan</h3>
-                <i class='bx bx-heart'></i>
+                <button type="button"
+                        class="home-fav-btn"
+                        sec:authorize="isAuthenticated()"
+                        th:classappend="${favoriteIds != null and favoriteIds.contains(car.id)} ? ' on' : ''"
+                        th:attr="data-car-id=${car.id}"
+                        onclick="onHomeFavClick(event, this)"
+                        aria-label="В избранное">
+                    <i th:class="${favoriteIds != null and favoriteIds.contains(car.id)} ? 'bx bxs-heart' : 'bx bx-heart'"></i>
+                </button>
+                <i class='bx bx-heart' sec:authorize="isAnonymous()"></i>
             </div>
 
             <div class="home-img-box">

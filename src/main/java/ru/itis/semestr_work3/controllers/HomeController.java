@@ -41,7 +41,7 @@ public class HomeController {
     private final UserService userService;
 
     @GetMapping("/")
-    public String index(Model model) {
+    public String index(@AuthenticationPrincipal UserDetails userDetails, Model model) {
         CarFilter popularFilter = new CarFilter();
         popularFilter.setSearch("Taycan");
         popularFilter.setAvailable(true);
@@ -57,6 +57,7 @@ public class HomeController {
 
         model.addAttribute("popularCars", popularCars);
         model.addAttribute("fleetCars", fleetCars);
+        model.addAttribute("favoriteIds", getFavoriteIds(userDetails));
         return "index";
     }
 
@@ -80,18 +81,21 @@ public class HomeController {
         model.addAttribute("avgRatings", reviewService.getAverageRatings(carIds));
         model.addAttribute("reviewCounts", reviewService.getReviewCounts(carIds));
 
-        Set<Long> favoriteIds = Collections.emptySet();
-        if (userDetails != null) {
-            var userOpt = userService.findByUsername(userDetails.getUsername());
-            if (userOpt.isPresent()) {
-                favoriteIds = favoriteService.findByUser(userOpt.get().getId()).stream()
-                        .map(f -> f.getCar().getId())
-                        .collect(Collectors.toSet());
-            }
-        }
-        model.addAttribute("favoriteIds", favoriteIds);
+        model.addAttribute("favoriteIds", getFavoriteIds(userDetails));
 
         return "catalog";
+    }
+
+    private Set<Long> getFavoriteIds(UserDetails userDetails) {
+        if (userDetails == null) {
+            return Collections.emptySet();
+        }
+
+        return userService.findByUsername(userDetails.getUsername())
+                .map(user -> favoriteService.findByUser(user.getId()).stream()
+                        .map(f -> f.getCar().getId())
+                        .collect(Collectors.toSet()))
+                .orElseGet(Collections::emptySet);
     }
 
     @GetMapping("/cars/{id}")
