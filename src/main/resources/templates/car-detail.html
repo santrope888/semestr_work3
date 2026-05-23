@@ -36,7 +36,7 @@
                         sec:authorize="isAuthenticated()"
                         th:classappend="${isFavorite} ? ' on' : ''"
                         th:attr="data-car-id=${car.id}"
-                        onclick="toggleFavorite(this)"
+                        data-car-detail-fav-btn
                         title="В избранное">
                     <i th:class="${isFavorite} ? 'bx bxs-heart' : 'bx bx-heart'"></i>
                 </button>
@@ -146,10 +146,9 @@
                    sec:authorize="isAnonymous()">
                     <i class="bx bx-lock-alt"></i> Войдите для брони
                 </a>
-                <button class="cd-btn-main"
+                <button class="cd-btn-main u-inline-style-002"
                         th:unless="${car.available}"
-                        disabled
-                        style="opacity:.6;cursor:not-allowed">
+                        disabled>
                     <i class="bx bx-x-circle"></i> Сейчас недоступен
                 </button>
             </div>
@@ -166,7 +165,7 @@
                 Отзывы
                 <span th:if="${reviewCount > 0}"
                       th:text="'(' + ${reviewCount} + ')'"
-                      style="opacity:0.7;font-weight:500;"></span>
+                      class="cd-review-count"></span>
             </button>
         </div>
 
@@ -209,7 +208,7 @@
 
         <div class="cd-pane" id="cd-pane-eq">
             <div class="cd-desc">
-                <div class="cd-eq-grid" style="grid-template-columns:1fr 1fr 1fr">
+                <div class="cd-eq-grid u-inline-style-003">
                     <div class="cd-eq-item"><i class="bx bx-check-circle"></i>Кожаный салон Nappa</div>
                     <div class="cd-eq-item"><i class="bx bx-check-circle"></i>Подогрев и вентиляция сидений</div>
                     <div class="cd-eq-item"><i class="bx bx-check-circle"></i>Панорамная крыша</div>

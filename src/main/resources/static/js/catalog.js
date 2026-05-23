@@ -48,6 +48,26 @@
         removeFilterFromUrl(filterName, filterValue);
     });
 
+    document.addEventListener('change', function (event) {
+        const control = event.target.closest('[data-auto-submit-form]');
+
+        if (!control) {
+            return;
+        }
+
+        document.getElementById(control.dataset.autoSubmitForm)?.submit();
+    });
+
+    document.addEventListener('error', function (event) {
+        const img = event.target;
+
+        if (!(img instanceof HTMLImageElement) || !img.dataset.fallbackSrc) {
+            return;
+        }
+
+        img.src = img.dataset.fallbackSrc;
+    }, true);
+
     async function onCatalogFavClick(event, btn) {
         event.preventDefault();
         event.stopPropagation();
@@ -114,5 +134,11 @@
         }
     }
 
-    window.onCatalogFavClick = onCatalogFavClick;
+    document.addEventListener('click', function (event) {
+        const btn = event.target.closest('[data-catalog-fav-btn]');
+
+        if (btn) {
+            onCatalogFavClick(event, btn);
+        }
+    });
 })();

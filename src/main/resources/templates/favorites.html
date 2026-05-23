@@ -33,14 +33,14 @@
                 <button type="button"
                         class="fav-card-fav"
                         th:attr="data-car-id=${fav.car.id}"
-                        onclick="onFavoritesPageClick(event, this)"
+                        data-favorite-remove
                         title="Убрать из избранного">
                     <i class="bx bxs-heart"></i>
                 </button>
 
                 <img th:src="${fav.car.imagePath != null ? fav.car.imagePath : '/images/no-car.png'}"
                      th:alt="${fav.car.brand + ' ' + fav.car.model}"
-                     onerror="this.onerror=null;this.src='/images/no-car.png';">
+                     data-fallback-src="/images/no-car.png">
             </div>
 
             <div class="fav-card-body">

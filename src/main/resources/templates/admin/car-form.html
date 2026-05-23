@@ -10,31 +10,31 @@
 <body>
 <header th:replace="~{fragments/header :: header}"></header>
 
-<div class="admin-page container" style="max-width:700px;">
+<div class="admin-page container u-inline-style-082">
     <div class="page-header">
         <h1 th:text="${carId != null ? 'Редактировать' : 'Добавить'} + ' автомобиль'">Добавить автомобиль</h1>
     </div>
 
-    <div style="background:#fff;border-radius:1.5rem;padding:32px;box-shadow:0 4px 20px rgba(0,0,0,0.06);">
+    <div class="u-inline-style-013">
         <form th:action="${carId != null ? '/admin/cars/' + carId + '/edit' : '/admin/cars'}"
               th:object="${carForm}"
               method="post"
               enctype="multipart/form-data">
 
-            <div th:if="${#fields.hasErrors('*')}" style="background:#fce4ec;color:#c62828;padding:12px 16px;border-radius:8px;margin-bottom:16px;">
+            <div th:if="${#fields.hasErrors('*')}" class="u-inline-style-083">
                 <div th:each="err : ${#fields.errors('*')}" th:text="${err}"></div>
             </div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="u-inline-style-084">
                 <div class="form-group">
                     <label class="form-label">Марка</label>
                     <input type="text" th:field="*{brand}" class="form-input" required>
-                    <span th:if="${#fields.hasErrors('brand')}" th:errors="*{brand}" style="color:#c62828;font-size:0.8rem;"></span>
+                    <span th:if="${#fields.hasErrors('brand')}" th:errors="*{brand}" class="u-inline-style-085"></span>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Модель</label>
                     <input type="text" th:field="*{model}" class="form-input" required>
-                    <span th:if="${#fields.hasErrors('model')}" th:errors="*{model}" style="color:#c62828;font-size:0.8rem;"></span>
+                    <span th:if="${#fields.hasErrors('model')}" th:errors="*{model}" class="u-inline-style-085"></span>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Год</label>
@@ -45,7 +45,7 @@
                            step="1"
                            class="form-input"
                            required>
-                    <span th:if="${#fields.hasErrors('year')}" th:errors="*{year}" style="color:#c62828;font-size:0.8rem;"></span>
+                    <span th:if="${#fields.hasErrors('year')}" th:errors="*{year}" class="u-inline-style-085"></span>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Цвет</label>
@@ -64,7 +64,7 @@
                         <option value="Фиолетовый">Фиолетовый</option>
                         <option value="Чёрный">Чёрный</option>
                     </select>
-                    <span th:if="${#fields.hasErrors('color')}" th:errors="*{color}" style="color:#c62828;font-size:0.8rem;"></span>
+                    <span th:if="${#fields.hasErrors('color')}" th:errors="*{color}" class="u-inline-style-085"></span>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Цена/день (₽)</label>
@@ -74,7 +74,7 @@
                            step="1"
                            class="form-input"
                            required>
-                    <span th:if="${#fields.hasErrors('pricePerDay')}" th:errors="*{pricePerDay}" style="color:#c62828;font-size:0.8rem;"></span>
+                    <span th:if="${#fields.hasErrors('pricePerDay')}" th:errors="*{pricePerDay}" class="u-inline-style-085"></span>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Мест</label>
@@ -84,7 +84,7 @@
                            step="1"
                            class="form-input"
                            required>
-                    <span th:if="${#fields.hasErrors('seats')}" th:errors="*{seats}" style="color:#c62828;font-size:0.8rem;"></span>
+                    <span th:if="${#fields.hasErrors('seats')}" th:errors="*{seats}" class="u-inline-style-085"></span>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Коробка</label>
@@ -117,7 +117,7 @@
                                 th:value="${cat.id}"
                                 th:text="${cat.name}">Категория</option>
                     </select>
-                    <span th:if="${#fields.hasErrors('categoryId')}" th:errors="*{categoryId}" style="color:#c62828;font-size:0.8rem;"></span>
+                    <span th:if="${#fields.hasErrors('categoryId')}" th:errors="*{categoryId}" class="u-inline-style-085"></span>
                 </div>
             </div>
 
@@ -132,14 +132,11 @@
             <div class="form-group">
                 <label class="form-label">Фото</label>
 
-                <div th:if="${currentImagePath != null}"
-                     style="margin-bottom:12px;display:flex;align-items:center;gap:16px;">
+                <div th:if="${currentImagePath != null}" class="u-inline-style-086">
                     <img th:src="${currentImagePath}"
-                         alt="Текущее фото"
-                         style="width:140px;height:90px;object-fit:cover;border-radius:8px;
-                                border:1px solid rgba(0,0,0,0.08);">
-                    <div style="font-size:0.85rem;color:#666;line-height:1.4;">
-                        <div style="font-weight:600;color:#333;">Текущее фото</div>
+                         alt="Текущее фото" class="u-inline-style-087">
+                    <div class="u-inline-style-088">
+                        <div class="u-inline-style-089">Текущее фото</div>
                         <div>Загрузите новое, чтобы заменить</div>
                     </div>
                 </div>
@@ -148,22 +145,19 @@
                        name="image"
                        class="form-input"
                        accept="image/jpeg,image/png,image/webp">
-                <small style="color:#999;font-size:0.8rem;display:block;margin-top:4px;">
+                <small class="u-inline-style-090">
                     JPEG, PNG или WebP, до 5 МБ
                 </small>
             </div>
 
             <div class="form-group">
                 <label class="form-label">Статус</label>
-                <label style="display:flex;align-items:center;gap:12px;padding:12px 16px;
-                              background:#f6f7f9;border-radius:10px;cursor:pointer;
-                              border:1px solid rgba(0,0,0,0.05);">
+                <label class="u-inline-style-091">
                     <input type="checkbox"
-                           th:field="*{available}"
-                           style="width:18px;height:18px;cursor:pointer;accent-color:var(--main-color);">
+                           th:field="*{available}" class="u-inline-style-092">
                     <div>
-                        <div style="font-weight:600;color:#333;">Доступен для аренды</div>
-                        <div style="font-size:0.82rem;color:#888;">
+                        <div class="u-inline-style-089">Доступен для аренды</div>
+                        <div class="u-inline-style-093">
                             Снимите галочку, если авто на ТО, в ремонте или временно не сдаётся
                         </div>
                     </div>

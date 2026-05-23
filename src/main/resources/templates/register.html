@@ -10,11 +10,11 @@
 <body>
 <div class="auth-page">
     <div class="auth-card">
-        <a th:href="@{/}" class="logo" style="text-align:center;display:block;margin-bottom:32px;">Aura<span>Motum</span></a>
+        <a th:href="@{/}" class="logo u-inline-style-008">Aura<span>Motum</span></a>
         <h2>Регистрация</h2>
         <p class="auth-subtitle">Создайте аккаунт для бронирования</p>
 
-        <div th:if="${error}" style="background:#fdeaea;color:#b83030;padding:12px 16px;border-radius:12px;font-size:0.85rem;margin-bottom:20px;" th:text="${error}"></div>
+        <div th:if="${error}" class="u-inline-style-009" th:text="${error}"></div>
 
         <form th:action="@{/register}" method="post">
             <div class="form-group">

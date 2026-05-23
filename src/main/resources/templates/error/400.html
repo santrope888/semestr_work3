@@ -8,24 +8,24 @@
 </head>
 <body>
 <section class="auth-page">
-    <div class="auth-card text-center" style="max-width: 720px;">
-        <h1 style="font-size: 72px; margin-bottom: 12px;">400</h1>
-        <h2 style="margin-bottom: 12px;">Некорректный запрос</h2>
+    <div class="auth-card text-center u-inline-style-095">
+        <h1 class="u-inline-style-096">400</h1>
+        <h2 class="u-inline-style-097">Некорректный запрос</h2>
 
-        <p class="text-muted" style="margin-bottom: 24px;"
+        <p class="text-muted u-inline-style-098"
            th:if="${errorMessage != null and !#strings.isEmpty(errorMessage)}"
            th:text="${errorMessage}">
             Запрос содержит некорректные данные.
         </p>
 
-        <p class="text-muted" style="margin-bottom: 24px;"
+        <p class="text-muted u-inline-style-098"
            th:if="${errorMessage == null or #strings.isEmpty(errorMessage)}">
             Запрос содержит некорректные данные.
         </p>
 
-        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+        <div class="u-inline-style-099">
             <a th:href="@{/}" class="btn btn-primary">На главную</a>
-            <a href="javascript:history.back()" class="btn btn-dark">Назад</a>
+            <a th:href="@{/}" class="btn btn-dark">На главную</a>
         </div>
     </div>
 </section>

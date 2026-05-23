@@ -65,7 +65,7 @@
         <div class="booking-card-image">
             <img th:src="${booking.car.imagePath != null ? booking.car.imagePath : '/images/no-car.png'}"
                  th:alt="${booking.car.brand + ' ' + booking.car.model}"
-                 onerror="this.onerror=null;this.src='/images/no-car.png';">
+                 data-fallback-src="/images/no-car.png">
         </div>
         <div class="booking-card-info">
             <div class="booking-card-title" th:text="${booking.car.brand + ' ' + booking.car.model}">Toyota Camry</div>
@@ -162,18 +162,18 @@
 
 <div class="review-modal-overlay" id="reviewModal">
     <div class="review-modal">
-        <button type="button" class="review-modal-close" onclick="closeReviewModal()">&times;</button>
+        <button type="button" class="review-modal-close" data-review-modal-close>&times;</button>
         <h3>Оставить отзыв</h3>
         <div class="review-modal-sub" id="reviewCarName">Mercedes-Benz GLE</div>
 
         <form id="reviewForm" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
             <div class="star-select" id="starSelect">
-                <i class='bx bx-star' data-value="1" onclick="setRating(1)"></i>
-                <i class='bx bx-star' data-value="2" onclick="setRating(2)"></i>
-                <i class='bx bx-star' data-value="3" onclick="setRating(3)"></i>
-                <i class='bx bx-star' data-value="4" onclick="setRating(4)"></i>
-                <i class='bx bx-star' data-value="5" onclick="setRating(5)"></i>
+                <i class='bx bx-star' data-value="1"></i>
+                <i class='bx bx-star' data-value="2"></i>
+                <i class='bx bx-star' data-value="3"></i>
+                <i class='bx bx-star' data-value="4"></i>
+                <i class='bx bx-star' data-value="5"></i>
             </div>
             <input type="hidden" name="rating" id="ratingInput" value="5">
             <textarea name="comment" class="review-textarea"
@@ -185,7 +185,7 @@
 
 <div class="cancel-modal-overlay" id="cancelModal">
     <div class="cancel-modal">
-        <button type="button" class="cancel-modal-close" onclick="closeCancelModal()">&times;</button>
+        <button type="button" class="cancel-modal-close" data-cancel-modal-close>&times;</button>
         <div class="cancel-modal-icon">
             <i class='bx bx-error-circle'></i>
         </div>
@@ -194,8 +194,8 @@
         <p class="cancel-modal-warn">Если оплата прошла картой — средства вернутся в течение 3-5 рабочих дней.</p>
 
         <div class="cancel-modal-actions">
-            <button type="button" class="btn-secondary" onclick="closeCancelModal()">Не отменять</button>
-            <button type="button" class="btn-danger-solid" id="cancelConfirmBtn" onclick="confirmCancel()">
+            <button type="button" class="btn-secondary" data-cancel-modal-close>Не отменять</button>
+            <button type="button" class="btn-danger-solid" id="cancelConfirmBtn" data-cancel-confirm>
                 <i class='bx bx-x'></i> Подтвердить отмену
             </button>
         </div>

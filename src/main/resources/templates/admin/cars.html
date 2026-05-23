@@ -13,7 +13,7 @@
 <header th:replace="~{fragments/header :: header}"></header>
 
 <div class="admin-page container">
-    <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;">
+    <div class="page-header u-inline-style-076">
         <h1>Управление автомобилями</h1>
         <a th:href="@{/admin/cars/new}" class="btn btn-primary">
             <i class='bx bx-plus'></i> Добавить
@@ -60,15 +60,14 @@
                     </span>
                 </td>
 
-                <td style="white-space: nowrap;">
+                <td class="u-inline-style-094">
                     <a th:href="@{/admin/cars/{id}/edit(id=${car.id})}"
                        class="btn btn-sm btn-secondary">
                         Ред.
                     </a>
 
                     <form th:action="@{/admin/cars/{id}/delete(id=${car.id})}"
-                          method="post"
-                          style="display:inline;">
+                          method="post" class="u-inline-style-080">
                         <button type="button"
                                 class="btn btn-sm btn-danger admin-car-delete-open"
                                 title="Удалить"

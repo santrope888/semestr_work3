@@ -53,5 +53,21 @@
         }
     }
 
-    window.onFavoritesPageClick = onFavoritesPageClick;
+    document.addEventListener('click', function (event) {
+        const btn = event.target.closest('[data-favorite-remove]');
+
+        if (btn) {
+            onFavoritesPageClick(event, btn);
+        }
+    });
+
+    document.addEventListener('error', function (event) {
+        const img = event.target;
+
+        if (!(img instanceof HTMLImageElement) || !img.dataset.fallbackSrc) {
+            return;
+        }
+
+        img.src = img.dataset.fallbackSrc;
+    }, true);
 })();

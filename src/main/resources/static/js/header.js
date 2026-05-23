@@ -144,20 +144,24 @@
             const data = await res.json();
             const badge = document.getElementById('notifBadge');
             if (!badge) return;
+            badge.classList.toggle('is-hidden', data.count <= 0);
+
             if (data.count > 0) {
                 badge.textContent = data.count > 99 ? '99+' : data.count;
-                badge.style.display = 'flex';
-            } else {
-                badge.style.display = 'none';
             }
         } catch (e) {}
     }
 
-    window.toggleUserMenu = toggleUserMenu;
-    window.toggleNotif    = toggleNotif;
-    window.markAllRead    = markAllRead;
     window.loadNotifications = loadNotifications;
     window.updateBadge    = updateBadge;
 
-    document.addEventListener('DOMContentLoaded', updateBadge);
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelector('[data-notif-toggle]')?.addEventListener('click', toggleNotif);
+        document.querySelector('[data-user-menu-toggle]')?.addEventListener('click', toggleUserMenu);
+        document.querySelector('[data-mark-all-read]')?.addEventListener('click', function (event) {
+            event.stopPropagation();
+            markAllRead();
+        });
+        updateBadge();
+    });
 })();

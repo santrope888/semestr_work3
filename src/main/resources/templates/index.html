@@ -34,10 +34,10 @@
                 <h3 th:text="${car.category != null ? car.category.name : 'Premium'}">Эконом</h3>
                 <button type="button"
                         class="home-fav-btn"
+                        data-home-fav-btn
                         sec:authorize="isAuthenticated()"
                         th:classappend="${favoriteIds != null and favoriteIds.contains(car.id)} ? ' on' : ''"
                         th:attr="data-car-id=${car.id}"
-                        onclick="onHomeFavClick(event, this)"
                         aria-label="В избранное">
                     <i th:class="${favoriteIds != null and favoriteIds.contains(car.id)} ? 'bx bxs-heart' : 'bx bx-heart'"></i>
                 </button>
@@ -48,7 +48,7 @@
                 <img th:if="${car.imagePath != null and !#strings.isEmpty(car.imagePath)}"
                      th:src="${car.imagePath}"
                      th:alt="${car.brand + ' ' + car.model}"
-                     onerror="this.parentElement.innerHTML='<span class=&quot;home-img-placeholder&quot;>🚗</span>';">
+                     data-fallback-placeholder="true">
                 <span th:unless="${car.imagePath != null and !#strings.isEmpty(car.imagePath)}"
                       class="home-img-placeholder">🚗</span>
             </div>
@@ -64,10 +64,9 @@
         </a>
     </div>
 
-    <p th:if="${popularCars == null or #lists.isEmpty(popularCars)}"
-       style="text-align:center; color:var(--text-alter-color); margin-top:2rem;">
+    <p th:if="${popularCars == null or #lists.isEmpty(popularCars)}" class="u-inline-style-004">
         Популярные модели скоро появятся.
-        <a th:href="@{/catalog}" style="color:var(--main-color); font-weight:600;">Посмотреть каталог →</a>
+        <a th:href="@{/catalog}" class="u-inline-style-005">Посмотреть каталог →</a>
     </p>
 </section>
 
@@ -84,10 +83,10 @@
                 <h3 th:text="${car.category != null ? car.category.name : 'Auto'}">Sedan</h3>
                 <button type="button"
                         class="home-fav-btn"
+                        data-home-fav-btn
                         sec:authorize="isAuthenticated()"
                         th:classappend="${favoriteIds != null and favoriteIds.contains(car.id)} ? ' on' : ''"
                         th:attr="data-car-id=${car.id}"
-                        onclick="onHomeFavClick(event, this)"
                         aria-label="В избранное">
                     <i th:class="${favoriteIds != null and favoriteIds.contains(car.id)} ? 'bx bxs-heart' : 'bx bx-heart'"></i>
                 </button>
@@ -98,7 +97,7 @@
                 <img th:if="${car.imagePath != null and !#strings.isEmpty(car.imagePath)}"
                      th:src="${car.imagePath}"
                      th:alt="${car.brand + ' ' + car.model}"
-                     onerror="this.parentElement.innerHTML='<span class=&quot;home-img-placeholder&quot;>🚗</span>';">
+                     data-fallback-placeholder="true">
                 <span th:unless="${car.imagePath != null and !#strings.isEmpty(car.imagePath)}"
                       class="home-img-placeholder">🚗</span>
             </div>
@@ -122,17 +121,16 @@
         </a>
     </div>
 
-    <p th:if="${fleetCars == null or #lists.isEmpty(fleetCars)}"
-       style="text-align:center; color:var(--text-alter-color); margin-top:2rem;">
+    <p th:if="${fleetCars == null or #lists.isEmpty(fleetCars)}" class="u-inline-style-004">
         Автопарк скоро пополнится.
-        <a th:href="@{/catalog}" style="color:var(--main-color); font-weight:600;">Перейти в каталог →</a>
+        <a th:href="@{/catalog}" class="u-inline-style-005">Перейти в каталог →</a>
     </p>
 </section>
 
-<section class="container" style="padding: 4rem 0;">
+<section class="container u-inline-style-006">
     <div class="heading">
         <h2>Не знаете, что выбрать?</h2>
-        <p style="color:var(--text-alter-color);margin-top:8px;">
+        <p class="u-inline-style-007">
             Наш ИИ-помощник подберёт автомобиль под вашу задачу
         </p>
     </div>

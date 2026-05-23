@@ -67,5 +67,11 @@
         }
     }
 
-    window.toggleFavorite = toggleFavorite;
+    document.addEventListener('click', function (event) {
+        const btn = event.target.closest('[data-car-detail-fav-btn]');
+
+        if (btn) {
+            toggleFavorite(btn);
+        }
+    });
 })();

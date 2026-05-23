@@ -260,7 +260,7 @@
                         name="sortBy"
                         form="catalogFilterForm"
                         class="catalog-sort-select"
-                        onchange="document.getElementById('catalogFilterForm').submit()">
+                        data-auto-submit-form="catalogFilterForm">
                     <option value="" th:selected="${filter.sortBy == null or #strings.isEmpty(filter.sortBy)}">По умолчанию</option>
                     <option value="priceAsc" th:selected="${filter.sortBy == 'priceAsc'}">Цена: по возрастанию</option>
                     <option value="priceDesc" th:selected="${filter.sortBy == 'priceDesc'}">Цена: по убыванию</option>
@@ -503,7 +503,7 @@
                                 sec:authorize="isAuthenticated()"
                                 th:classappend="${favoriteIds != null and favoriteIds.contains(car.id)} ? ' on' : ''"
                                 th:attr="data-car-id=${car.id}"
-                                onclick="onCatalogFavClick(event, this)"
+                                data-catalog-fav-btn
                                 title="В избранное">
                             <i th:class="${favoriteIds != null and favoriteIds.contains(car.id)} ? 'bx bxs-heart' : 'bx bx-heart'"></i>
                         </button>
@@ -514,7 +514,7 @@
                         <img
                                 th:src="${car.imagePath != null and !#strings.isEmpty(car.imagePath) ? car.imagePath : '/images/no-car.png'}"
                                 th:alt="${car.brand + ' ' + car.model}"
-                                onerror="this.onerror=null;this.src='/images/no-car.png';">
+                                data-fallback-src="/images/no-car.png">
                         <span th:if="${!car.available}" class="unavailable-ribbon">
                     <i class='bx bx-wrench'></i> В ремонте
                 </span>
@@ -522,13 +522,11 @@
 
                     <h2 th:text="${car.brand + ' ' + car.model}">Rolls-Royce</h2>
 
-                    <div style="display:flex;align-items:center;gap:4px;margin:4px 0 6px;">
+                    <div class="catalog-rating-row">
                         <i th:each="i : ${#numbers.sequence(1, 5)}"
-                           class="bx"
-                           th:classappend="${avgRatings != null and avgRatings.containsKey(car.id) and i <= avgRatings.get(car.id)} ? 'bxs-star' : 'bx-star'"
-                           th:style="${avgRatings != null and avgRatings.containsKey(car.id) and i <= avgRatings.get(car.id)} ? 'color:#f5a623;font-size:0.85rem;' : 'color:#ccc;font-size:0.85rem;'"></i>
+                           th:class="${avgRatings != null and avgRatings.containsKey(car.id) and i <= avgRatings.get(car.id)} ? 'bx bxs-star is-filled' : 'bx bx-star'"></i>
                         <span th:if="${reviewCounts != null and reviewCounts.containsKey(car.id) and reviewCounts.get(car.id) > 0}"
-                              style="font-size:0.75rem;color:#999;"
+                              class="catalog-rating-count"
                               th:text="'(' + ${reviewCounts.get(car.id)} + ')'"></span>
                     </div>
 

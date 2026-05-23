@@ -30,5 +30,11 @@
         }
     }
 
-    window.setCurrency = setCurrency;
+    document.addEventListener('click', function (event) {
+        const btn = event.target.closest('.currency-btn[data-currency]');
+
+        if (btn) {
+            setCurrency(btn.dataset.currency, btn);
+        }
+    });
 })();

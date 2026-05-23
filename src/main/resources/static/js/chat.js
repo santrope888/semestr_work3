@@ -181,6 +181,18 @@
 
         document.getElementById('chat-input')?.focus();
 
+        document.querySelector('[data-toggle-chats]')?.addEventListener('click', toggleChatsMenu);
+        document.querySelector('[data-send-chat]')?.addEventListener('click', sendChat);
+        document.querySelector('[data-chat-input]')?.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                sendChat();
+            }
+        });
+        document.querySelectorAll('[data-close-delete-chat-modal]').forEach(btn => {
+            btn.addEventListener('click', closeDeleteChatModal);
+        });
+        document.querySelector('[data-confirm-delete-chat]')?.addEventListener('click', confirmDeleteChat);
+
         document.querySelectorAll('[data-delete-chat-btn]').forEach((btn) => {
             btn.addEventListener('click', function () {
                 const form = this.closest('[data-delete-chat-form]');
@@ -200,8 +212,4 @@
         });
     });
 
-    window.closeDeleteChatModal = closeDeleteChatModal;
-    window.confirmDeleteChat = confirmDeleteChat;
-    window.toggleChatsMenu = toggleChatsMenu;
-    window.sendChat = sendChat;
 })();

@@ -31,18 +31,18 @@
 
         <form id="wizardForm" class="wizard-card"
               th:action="@{/bookings/wizard/{id}(id=${car.id})}" method="post"
-              onsubmit="return validateBeforeSubmit(event)">
+              data-booking-wizard-form>
 
             <div class="stepper">
-                <div class="stepper-item active" data-step="1" onclick="goToStep(1)">
+                <div class="stepper-item active" data-step="1">
                     <div class="stepper-circle">1</div>
                     <div class="stepper-label">Даты и место</div>
                 </div>
-                <div class="stepper-item" data-step="2" onclick="goToStep(2)">
+                <div class="stepper-item" data-step="2">
                     <div class="stepper-circle">2</div>
                     <div class="stepper-label">Опции</div>
                 </div>
-                <div class="stepper-item" data-step="3" onclick="goToStep(3)">
+                <div class="stepper-item" data-step="3">
                     <div class="stepper-circle">3</div>
                     <div class="stepper-label">Оплата</div>
                 </div>
@@ -83,7 +83,7 @@
                 </div>
 
                 <div class="step-actions first-step">
-                    <button type="button" class="btn-next" onclick="nextFromStep(1)">
+                    <button type="button" class="btn-next" data-next-from-step="1">
                         Далее <i class='bx bx-right-arrow-alt'></i>
                     </button>
                 </div>
@@ -146,8 +146,8 @@
                 </label>
 
                 <div class="step-actions">
-                    <button type="button" class="btn-back" onclick="goToStep(1)">Назад</button>
-                    <button type="button" class="btn-next" onclick="nextFromStep(2)">
+                    <button type="button" class="btn-back" data-go-to-step="1">Назад</button>
+                    <button type="button" class="btn-next" data-next-from-step="2">
                         Далее <i class='bx bx-right-arrow-alt'></i>
                     </button>
                 </div>
@@ -157,10 +157,10 @@
                 <div id="step3Error" class="step-error"></div>
 
                 <div class="pay-method-tabs">
-                    <div class="pay-method-tab active" data-method="CARD" onclick="selectPayment('CARD')">
+                    <div class="pay-method-tab active" data-method="CARD">
                         <i class='bx bx-credit-card'></i> Карта
                     </div>
-                    <div class="pay-method-tab" data-method="CASH" onclick="selectPayment('CASH')">
+                    <div class="pay-method-tab" data-method="CASH">
                         <i class='bx bx-money'></i> Наличные
                     </div>
                 </div>
@@ -204,7 +204,7 @@
                 </div>
 
                 <div class="step-actions">
-                    <button type="button" class="btn-back" onclick="goToStep(2)">Назад</button>
+                    <button type="button" class="btn-back" data-go-to-step="2">Назад</button>
                     <button type="submit" class="btn-submit" id="submitBtn">
                         Оплатить <span id="submitTotal">—</span> ✓
                     </button>
@@ -222,7 +222,7 @@
                     <img th:src="${car.imagePath != null and !#strings.isEmpty(car.imagePath)
                                   ? car.imagePath : '/images/no-car.png'}"
                          th:alt="${car.brand + ' ' + car.model}"
-                         onerror="this.style.display='none'">
+                         data-hide-on-error>
                 </div>
                 <div>
                     <div class="summary-car-name" th:text="${car.brand + ' ' + car.model}">Авто</div>
@@ -241,11 +241,11 @@
                 <span>Тариф</span>
                 <span class="v" id="sumTariff">— /день</span>
             </div>
-            <div class="summary-row" id="sumInsuranceRow" style="display:none;">
+            <div class="summary-row u-inline-style-001" id="sumInsuranceRow">
                 <span>Страхование</span>
                 <span class="v" id="sumInsurance">—</span>
             </div>
-            <div class="summary-row" id="sumExtrasRow" style="display:none;">
+            <div class="summary-row u-inline-style-001" id="sumExtrasRow">
                 <span>Доп. опции</span>
                 <span class="v" id="sumExtras">—</span>
             </div>
@@ -258,9 +258,9 @@
             </div>
 
             <div class="currency-toggle">
-                <button type="button" class="currency-btn active" data-currency="RUB" onclick="setCurrency('RUB')">RUB</button>
-                <button type="button" class="currency-btn" data-currency="USD" onclick="setCurrency('USD')">USD</button>
-                <button type="button" class="currency-btn" data-currency="EUR" onclick="setCurrency('EUR')">EUR</button>
+                <button type="button" class="currency-btn active" data-currency="RUB">RUB</button>
+                <button type="button" class="currency-btn" data-currency="USD">USD</button>
+                <button type="button" class="currency-btn" data-currency="EUR">EUR</button>
             </div>
         </aside>
 

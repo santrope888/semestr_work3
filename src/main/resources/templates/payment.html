@@ -18,8 +18,8 @@
 
     <div class="booking-grid">
         <div>
-            <div style="background:#fff;border-radius:1.5rem;padding:32px;box-shadow:0 4px 20px rgba(0,0,0,0.06);">
-                <h3 style="margin-bottom:20px;">Детали бронирования</h3>
+            <div class="u-inline-style-013">
+                <h3 class="u-inline-style-014">Детали бронирования</h3>
 
                 <div class="summary-row">
                     <span class="label">Автомобиль</span>
@@ -45,49 +45,44 @@
                           th:text="${#temporals.format(payment.paidAt, 'dd.MM.yyyy HH:mm')}">01.01.2025 12:00</span>
                 </div>
 
-                <div th:if="${not #sets.isEmpty(booking.insurances)}" style="margin-top:20px;">
-                    <h4 style="margin-bottom:10px;">Страховки</h4>
+                <div th:if="${not #sets.isEmpty(booking.insurances)}" class="u-inline-style-015">
+                    <h4 class="u-inline-style-016">Страховки</h4>
                     <div th:each="ins : ${booking.insurances}" class="summary-row">
                         <span class="label" th:text="${ins.name}">Базовая</span>
                         <span class="value" th:text="${ins.pricePerDay + ' ₽/день'}">500 ₽/день</span>
                     </div>
                 </div>
 
-                <div th:if="${payment.status == 'PENDING' and payment.method == 'CASH'}"
-                     style="margin-top:24px;padding:16px;background:#fff7ed;border-radius:12px;border:1px solid #fed7aa;">
-                    <p style="margin:0;color:#9a3412;">
+                <div th:if="${payment.status == 'PENDING' and payment.method == 'CASH'}" class="u-inline-style-017">
+                    <p class="u-inline-style-018">
                         <i class='bx bx-info-circle'></i>
                         Платёж ещё не оплачен. Оплата наличными будет принята при выдаче автомобиля.
                     </p>
                 </div>
 
-                <div th:if="${payment.status == 'PENDING' and payment.method == 'CARD'}"
-                     style="margin-top:24px;padding:16px;background:#fff7ed;border-radius:12px;border:1px solid #fed7aa;">
-                    <p style="margin:0;color:#9a3412;">
+                <div th:if="${payment.status == 'PENDING' and payment.method == 'CARD'}" class="u-inline-style-017">
+                    <p class="u-inline-style-018">
                         <i class='bx bx-info-circle'></i>
                         Платёж по карте ожидает оплаты.
                     </p>
                 </div>
 
-                <div th:if="${payment.status == 'PAID'}"
-                     style="margin-top:24px;padding:16px;background:#f0fdf4;border-radius:12px;border:1px solid #bbf7d0;">
-                    <p style="margin:0;color:#166534;">
+                <div th:if="${payment.status == 'PAID'}" class="u-inline-style-019">
+                    <p class="u-inline-style-020">
                         <i class='bx bx-check-circle'></i>
                         Платёж успешно оплачен.
                     </p>
                 </div>
 
-                <div th:if="${payment.status == 'REFUNDED'}"
-                     style="margin-top:24px;padding:16px;background:#fef2f2;border-radius:12px;border:1px solid #fecaca;">
-                    <p style="margin:0;color:#991b1b;">
+                <div th:if="${payment.status == 'REFUNDED'}" class="u-inline-style-021">
+                    <p class="u-inline-style-022">
                         <i class='bx bx-undo'></i>
                         Средства по этому платежу возвращены.
                     </p>
                 </div>
 
-                <div th:if="${payment.status == 'CANCELLED'}"
-                     style="margin-top:24px;padding:16px;background:#f3f4f6;border-radius:12px;border:1px solid #d1d5db;">
-                    <p style="margin:0;color:#374151;">
+                <div th:if="${payment.status == 'CANCELLED'}" class="u-inline-style-023">
+                    <p class="u-inline-style-024">
                         <i class='bx bx-x-circle'></i>
                         Платёж отменён, потому что бронирование было отменено до оплаты.
                     </p>
@@ -113,9 +108,9 @@
             </div>
 
             <div class="currency-toggle mt-md">
-                <button type="button" class="currency-btn active" onclick="setCurrency('RUB', this)">RUB</button>
-                <button type="button" class="currency-btn" onclick="setCurrency('USD', this)">USD</button>
-                <button type="button" class="currency-btn" onclick="setCurrency('EUR', this)">EUR</button>
+                <button type="button" class="currency-btn active" data-currency="RUB">RUB</button>
+                <button type="button" class="currency-btn" data-currency="USD">USD</button>
+                <button type="button" class="currency-btn" data-currency="EUR">EUR</button>
             </div>
         </div>
     </div>

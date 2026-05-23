@@ -17,7 +17,7 @@
 <header th:replace="~{fragments/header :: header}"></header>
 
 <div class="admin-page container">
-    <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;">
+    <div class="page-header u-inline-style-076">
         <h1>Управление бронированиями</h1>
         <a th:href="@{/admin/cars}" class="btn btn-secondary">Автомобили</a>
     </div>
@@ -30,7 +30,7 @@
     </div>
 
     <form method="get" th:action="@{/admin/bookings}" class="mt-md mb-lg">
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+        <div class="u-inline-style-077">
             <select name="status" class="form-select">
                 <option value="">Все статусы</option>
                 <option value="PENDING" th:selected="${filter.status == 'PENDING'}">Pending</option>
@@ -56,7 +56,7 @@
             <input type="date" name="startDateFrom" th:value="${filter.startDateFrom}" class="form-input">
             <input type="date" name="endDateTo" th:value="${filter.endDateTo}" class="form-input">
         </div>
-        <div class="mt-md" style="display:flex;gap:12px;">
+        <div class="mt-md u-inline-style-078">
             <button type="submit" class="btn btn-primary">Применить</button>
             <a th:href="@{/admin/bookings}" class="btn btn-secondary">Сбросить</a>
         </div>
@@ -97,12 +97,11 @@
                           th:text="${booking.payment.status}">PENDING</span>
                     <span th:if="${booking.payment == null}">—</span>
                 </td>
-                <td style="white-space:nowrap;" data-booking-actions>
+                <td class="u-inline-style-079" data-booking-actions>
                     <form th:if="${booking.status == 'PENDING'}"
                           th:action="@{/admin/bookings/{id}/confirm(id=${booking.id})}"
                           method="post"
-                          class="admin-booking-action-form"
-                          style="display:inline;">
+                          class="admin-booking-action-form u-inline-style-080">
                         <button type="submit" class="btn btn-sm btn-primary" title="Подтвердить">
                             <i class='bx bx-check'></i>
                         </button>
@@ -111,8 +110,7 @@
                     <form th:if="${booking.status == 'CONFIRMED' and !booking.endDate.isAfter(today)}"
                           th:action="@{/admin/bookings/{id}/complete(id=${booking.id})}"
                           method="post"
-                          class="admin-booking-action-form"
-                          style="display:inline;">
+                          class="admin-booking-action-form u-inline-style-080">
                         <button type="submit" class="btn btn-sm btn-primary" title="Завершить">
                             <i class='bx bx-check-double'></i>
                         </button>
@@ -120,18 +118,16 @@
 
                     <button th:if="${booking.status == 'CONFIRMED' and booking.endDate.isAfter(today)}"
                             type="button"
-                            class="btn btn-sm btn-secondary"
+                            class="btn btn-sm btn-secondary u-inline-style-081"
                             disabled
-                            title="Завершить можно только в день окончания аренды или позже"
-                            style="opacity:0.55;cursor:not-allowed;">
+                            title="Завершить можно только в день окончания аренды или позже">
                         <i class='bx bx-check-double'></i>
                     </button>
 
                     <form th:if="${booking.status == 'PENDING' or booking.status == 'CONFIRMED'}"
                           th:action="@{/admin/bookings/{id}/cancel(id=${booking.id})}"
                           method="post"
-                          class="admin-booking-cancel-form"
-                          style="display:inline;">
+                          class="admin-booking-cancel-form u-inline-style-080">
                         <button type="button"
                                 class="btn btn-sm btn-danger admin-cancel-open"
                                 title="Отменить"

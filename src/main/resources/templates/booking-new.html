@@ -10,7 +10,9 @@
 <body>
 <header th:replace="~{fragments/header :: header}"></header>
 
-<section class="booking-page container">
+<section class="booking-page container"
+         id="legacy-booking-root"
+         th:attr="data-car-id=${car.id},data-car-price=${car.pricePerDay}">
     <div class="page-header">
         <h1>Бронирование</h1>
         <p th:text="${car.brand + ' ' + car.model}">Toyota Camry</p>
@@ -31,10 +33,10 @@
                     <input type="date" name="endDate" class="form-input" required>
                 </div>
 
-                <div id="date-warning" style="display:none;background:#fff3e0;color:#e65100;padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:14px;">
+                <div id="date-warning" class="date-warning is-hidden">
                 </div>
 
-                <h3 style="margin-bottom:16px;">Страховки</h3>
+                <h3 class="section-subtitle">Страховки</h3>
                 <div class="insurance-list">
                     <label class="insurance-item" th:each="ins : ${insurances}">
                         <input type="checkbox"
@@ -84,9 +86,9 @@
             </div>
 
             <div class="currency-toggle mt-md">
-                <button type="button" class="currency-btn active" data-currency="RUB" onclick="setCurrency('RUB')">RUB</button>
-                <button type="button" class="currency-btn" data-currency="USD" onclick="setCurrency('USD')">USD</button>
-                <button type="button" class="currency-btn" data-currency="EUR" onclick="setCurrency('EUR')">EUR</button>
+                <button type="button" class="currency-btn active" data-currency="RUB">RUB</button>
+                <button type="button" class="currency-btn" data-currency="USD">USD</button>
+                <button type="button" class="currency-btn" data-currency="EUR">EUR</button>
             </div>
         </div>
     </div>
@@ -94,248 +96,6 @@
 
 <footer th:replace="~{fragments/footer :: footer}"></footer>
 
-<script th:inline="javascript">
-    const carPricePerDayRub = Number([[${car.pricePerDay}]]);
-    const carId = Number([[${car.id}]]);
-    let currentCurrency = 'RUB';
-    let bookedPeriods = [];
-
-    const startDateInput = document.querySelector('input[name="startDate"]');
-    const endDateInput = document.querySelector('input[name="endDate"]');
-    const insuranceCheckboxes = document.querySelectorAll('input[name="insuranceIds"]');
-
-    const pricePerDayElement = document.getElementById('price-per-day');
-    const daysCountElement = document.getElementById('days-count');
-    const insuranceTotalElement = document.getElementById('insurance-total');
-    const totalPriceElement = document.getElementById('total-price');
-
-    const currencyRateCache = {
-        RUB: 1
-    };
-
-    async function loadBookedPeriods() {
-        try {
-            const res = await fetch(`/api/bookings/car/${carId}/booked-periods`);
-            if (res.ok) {
-                bookedPeriods = await res.json();
-            }
-        } catch (e) {
-            console.error('Не удалось загрузить занятые даты', e);
-        }
-        const today = new Date().toISOString().split('T')[0];
-        startDateInput.setAttribute('min', today);
-        endDateInput.setAttribute('min', today);
-    }
-
-    function checkOverlap() {
-        const startVal = startDateInput.value;
-        const endVal = endDateInput.value;
-        const warningEl = document.getElementById('date-warning');
-
-        if (!startVal || !endVal || !warningEl) {
-            if (warningEl) warningEl.style.display = 'none';
-            return false;
-        }
-
-        const start = new Date(startVal);
-        const end = new Date(endVal);
-
-        for (const period of bookedPeriods) {
-            const bStart = new Date(period.start);
-            const bEnd = new Date(period.end);
-            if (start <= bEnd && end >= bStart) {
-                warningEl.textContent = `Даты пересекаются с бронированием ${period.start} — ${period.end}`;
-                warningEl.style.display = 'block';
-                return true;
-            }
-        }
-
-        warningEl.style.display = 'none';
-        return false;
-    }
-
-    const legacyBookingForm = document.getElementById('legacyBookingForm');
-
-    if (legacyBookingForm) {
-        legacyBookingForm.addEventListener('submit', function (event) {
-            if (checkOverlap()) {
-                event.preventDefault();
-
-                const warningEl = document.getElementById('date-warning');
-
-                if (warningEl) {
-                    warningEl.textContent = 'Выбранные даты заняты. Выберите другой период.';
-                    warningEl.style.display = 'block';
-                    warningEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }
-        });
-    }
-
-    startDateInput.addEventListener('change', () => {
-        if (startDateInput.value) {
-            endDateInput.setAttribute('min', startDateInput.value);
-        }
-        checkOverlap();
-    });
-    endDateInput.addEventListener('change', checkOverlap);
-
-    loadBookedPeriods();
-
-    function calculateDays() {
-        const startValue = startDateInput.value;
-        const endValue = endDateInput.value;
-
-        if (!startValue || !endValue) {
-            return 0;
-        }
-
-        const start = new Date(startValue);
-        const end = new Date(endValue);
-
-        if (end < start) {
-            return 0;
-        }
-
-        const diffMs = end - start;
-        return Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
-    }
-
-    function calculateInsuranceTotalRub(days) {
-        if (days <= 0) {
-            return 0;
-        }
-
-        let insuranceTotal = 0;
-
-        insuranceCheckboxes.forEach(cb => {
-            if (cb.checked) {
-                insuranceTotal += Number(cb.dataset.price) * days;
-            }
-        });
-
-        return insuranceTotal;
-    }
-
-    function calculateSummaryRub() {
-        const days = calculateDays();
-        const insuranceTotalRub = calculateInsuranceTotalRub(days);
-        const carTotalRub = days > 0 ? carPricePerDayRub * days : 0;
-        const totalRub = carTotalRub + insuranceTotalRub;
-
-        return {
-            days,
-            insuranceTotalRub,
-            totalRub
-        };
-    }
-
-    async function getCurrencyRate(currency) {
-        if (currencyRateCache[currency] !== undefined) {
-            return currencyRateCache[currency];
-        }
-
-        const probeAmountRub = 1000;
-        const res = await fetch(`/api/payments/convert?amount=${probeAmountRub}&currency=${currency}`);
-
-        if (!res.ok) {
-            throw new Error('Ошибка получения курса валюты');
-        }
-
-        const data = await res.json();
-        const rate = Number(data.converted) / probeAmountRub;
-
-        currencyRateCache[currency] = rate;
-        return rate;
-    }
-
-    function convertRubAmount(amountRub, rate) {
-        return amountRub * rate;
-    }
-
-    function formatCurrency(amount, currency) {
-        if (currency === 'RUB') {
-            return `${Math.round(amount)} ₽`;
-        }
-
-        if (currency === 'USD') {
-            return `${amount.toFixed(2)} $`;
-        }
-
-        return `${amount.toFixed(2)} €`;
-    }
-
-    async function renderTotal() {
-        const { days, insuranceTotalRub, totalRub } = calculateSummaryRub();
-
-        daysCountElement.textContent = days > 0 ? days : '—';
-
-        if (currentCurrency === 'RUB') {
-            pricePerDayElement.textContent = formatCurrency(carPricePerDayRub, 'RUB');
-            insuranceTotalElement.textContent = days > 0 ? formatCurrency(insuranceTotalRub, 'RUB') : '—';
-            totalPriceElement.textContent = days > 0 ? formatCurrency(totalRub, 'RUB') : '—';
-            return;
-        }
-
-        try {
-            const rate = await getCurrencyRate(currentCurrency);
-
-            const convertedPricePerDay = convertRubAmount(carPricePerDayRub, rate);
-            pricePerDayElement.textContent = formatCurrency(convertedPricePerDay, currentCurrency);
-
-            if (days <= 0) {
-                insuranceTotalElement.textContent = '—';
-                totalPriceElement.textContent = '—';
-                return;
-            }
-
-            const convertedInsurance = convertRubAmount(insuranceTotalRub, rate);
-            const convertedTotal = convertRubAmount(totalRub, rate);
-
-            insuranceTotalElement.textContent = formatCurrency(convertedInsurance, currentCurrency);
-            totalPriceElement.textContent = formatCurrency(convertedTotal, currentCurrency);
-        } catch (e) {
-            pricePerDayElement.textContent = 'Ошибка';
-            insuranceTotalElement.textContent = 'Ошибка';
-            totalPriceElement.textContent = 'Ошибка';
-        }
-    }
-
-    async function setCurrency(cur) {
-        currentCurrency = cur;
-
-        document.querySelectorAll('.currency-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-
-        const activeBtn = document.querySelector(`.currency-btn[data-currency="${cur}"]`);
-        if (activeBtn) {
-            activeBtn.classList.add('active');
-        }
-
-        await renderTotal();
-    }
-
-    startDateInput.addEventListener('change', renderTotal);
-    endDateInput.addEventListener('change', renderTotal);
-
-    insuranceCheckboxes.forEach(cb => {
-        cb.addEventListener('change', renderTotal);
-
-        cb.addEventListener('change', () => {
-            const label = cb.closest('.insurance-item');
-            if (label) {
-                label.classList.toggle('checked', cb.checked);
-            }
-        });
-
-        const label = cb.closest('.insurance-item');
-        if (label) {
-            label.classList.toggle('checked', cb.checked);
-        }
-    });
-
-    renderTotal();
-</script>
+<script th:src="@{/js/booking-new.js}" defer></script>
 </body>
 </html>

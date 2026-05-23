@@ -18,7 +18,7 @@
             <div class="home-car-card-image-wrap">
                 <img th:src="${car.imagePath != null and !#strings.isEmpty(car.imagePath) ? car.imagePath : '/images/no-car.png'}"
                      th:alt="${car.brand + ' ' + car.model}"
-                     onerror="this.onerror=null;this.src='/images/no-car.png';">
+                     data-fallback-src="/images/no-car.png">
             </div>
 
             <div class="home-car-card-body">

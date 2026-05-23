@@ -34,7 +34,7 @@
                 </div>
 
                 <div class="chat-header-actions">
-                    <button type="button" class="chat-header-btn" id="toggle-chats-btn" onclick="toggleChatsMenu()">
+                    <button type="button" class="chat-header-btn" id="toggle-chats-btn" data-toggle-chats>
                         <i class='bx bx-message-rounded-dots'></i>
                         <span>Мои чаты</span>
                     </button>
@@ -95,9 +95,9 @@
                        class="chat-input"
                        id="chat-input"
                        placeholder="Напишите сообщение..."
-                       onkeypress="if(event.key==='Enter') sendChat()">
+                       data-chat-input>
 
-                <button type="button" class="chat-send-btn" id="chat-send-btn" onclick="sendChat()">
+                <button type="button" class="chat-send-btn" id="chat-send-btn" data-send-chat>
                     <i class='bx bx-send'></i>
                 </button>
             </div>
@@ -107,7 +107,7 @@
 
 <div class="chat-delete-modal-overlay" id="chatDeleteModal">
     <div class="chat-delete-modal">
-        <button type="button" class="chat-delete-modal-close" onclick="closeDeleteChatModal()">
+        <button type="button" class="chat-delete-modal-close" data-close-delete-chat-modal>
             &times;
         </button>
 
@@ -123,11 +123,11 @@
         </p>
 
         <div class="chat-delete-modal-actions">
-            <button type="button" class="chat-delete-cancel" onclick="closeDeleteChatModal()">
+            <button type="button" class="chat-delete-cancel" data-close-delete-chat-modal>
                 Отмена
             </button>
 
-            <button type="button" class="chat-delete-confirm" onclick="confirmDeleteChat()">
+            <button type="button" class="chat-delete-confirm" data-confirm-delete-chat>
                 <i class='bx bx-trash'></i>
                 Удалить
             </button>

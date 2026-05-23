@@ -111,6 +111,18 @@
             });
         }
 
+        document.querySelector('[data-avatar-upload]')?.addEventListener('change', submitAvatarForm);
+        document.querySelector('[data-confirm-delete-account]')?.addEventListener('click', confirmDelete);
+        document.querySelector('[data-close-delete-account]')?.addEventListener('click', closeDelete);
+        document.querySelectorAll('[data-switch-hide][data-switch-show]').forEach(btn => {
+            btn.addEventListener('click', () => switchBlock(btn.dataset.switchHide, btn.dataset.switchShow));
+        });
+        document.querySelectorAll('[data-submit-parent-form]').forEach(input => {
+            input.addEventListener('change', function () {
+                this.closest('form')?.submit();
+            });
+        });
+
         let total = 0;
 
         document.querySelectorAll('.profile-step').forEach(step => {
@@ -141,8 +153,4 @@
         }
     });
 
-    window.switchBlock = switchBlock;
-    window.submitAvatarForm = submitAvatarForm;
-    window.confirmDelete = confirmDelete;
-    window.closeDelete = closeDelete;
 })();

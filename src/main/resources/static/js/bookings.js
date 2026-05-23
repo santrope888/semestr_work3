@@ -105,6 +105,30 @@
         }
 
         document.addEventListener('click', function (e) {
+            const reviewClose = e.target.closest('[data-review-modal-close]');
+            if (reviewClose) {
+                closeReviewModal();
+                return;
+            }
+
+            const cancelClose = e.target.closest('[data-cancel-modal-close]');
+            if (cancelClose) {
+                closeCancelModal();
+                return;
+            }
+
+            const cancelConfirm = e.target.closest('[data-cancel-confirm]');
+            if (cancelConfirm) {
+                confirmCancel();
+                return;
+            }
+
+            const ratingStar = e.target.closest('#starSelect i[data-value]');
+            if (ratingStar) {
+                setRating(Number(ratingStar.dataset.value));
+                return;
+            }
+
             const cancelBtn = e.target.closest('.cancel-btn');
             if (cancelBtn) {
                 openCancelModal(cancelBtn.dataset.bookingId, cancelBtn.dataset.bookingInfo);
@@ -122,6 +146,16 @@
                 window.location.href = card.dataset.paymentUrl;
             }
         });
+
+        document.addEventListener('error', function (event) {
+            const img = event.target;
+
+            if (!(img instanceof HTMLImageElement) || !img.dataset.fallbackSrc) {
+                return;
+            }
+
+            img.src = img.dataset.fallbackSrc;
+        }, true);
     });
 
     window.openReviewModal = openReviewModal;

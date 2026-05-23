@@ -11,34 +11,26 @@
 <body>
 <header th:replace="~{fragments/header :: header}"></header>
 
-<div class="profile-layout container" style="padding-top:100px;padding-bottom:60px;">
+<div class="profile-layout container u-inline-style-025">
 
     <aside class="profile-sidebar">
 
         <div class="sidebar-user-card">
-            <div style="position:relative;display:inline-block;">
+            <div class="u-inline-style-026">
                 <img th:src="${user.avatarPath != null ? user.avatarPath : '/images/default-avatar.png'}"
-                     id="avatarPreview"
-                     style="width:72px;height:72px;border-radius:50%;object-fit:cover;
-                            border:2.5px solid var(--main-color);
-                            box-shadow:0 0 0 4px rgba(255,140,0,0.15);" alt="avatar">
-                <label for="avatarUploadTrigger"
-                       style="position:absolute;bottom:0;right:0;width:24px;height:24px;
-                              background:var(--main-color);border-radius:50%;display:flex;
-                              align-items:center;justify-content:center;cursor:pointer;
-                              box-shadow:0 2px 8px rgba(0,0,0,0.2);"
+                     id="avatarPreview" class="u-inline-style-027" alt="avatar">
+                <label for="avatarUploadTrigger" class="u-inline-style-028"
                        title="Сменить фото">
-                    <i class='bx bx-camera' style="color:#fff;font-size:0.75rem;"></i>
+                    <i class="bx bx-camera u-inline-style-029"></i>
                 </label>
             </div>
             <form id="avatarForm" th:action="@{/profile}" method="post"
-                  enctype="multipart/form-data" style="display:none;">
+                  enctype="multipart/form-data" class="u-inline-style-001">
                 <input type="file" id="avatarUploadTrigger" name="avatar"
                        accept="image/jpeg,image/png,image/webp"
-                       onchange="submitAvatarForm()">
+                       data-avatar-upload>
             </form>
-            <div style="margin-top:12px;font-weight:700;font-size:1rem;
-                        letter-spacing:0.01em;" th:text="${user.username}">username</div>
+            <div class="u-inline-style-030" th:text="${user.username}">username</div>
         </div>
 
         <nav class="sidebar-nav">
@@ -53,9 +45,7 @@
                    th:classappend="${section == 'docs'} ? ' active' : ''"
                    class="sidebar-nav-item">
                     <i class='bx bx-file'></i> Документы
-                    <span th:if="${user.licenseStatus == 'NOT_UPLOADED' or user.passportStatus == 'NOT_UPLOADED'}"
-                          style="margin-left:auto;width:8px;height:8px;border-radius:50%;
-                                 background:var(--main-color);flex-shrink:0;"></span>
+                    <span th:if="${user.licenseStatus == 'NOT_UPLOADED' or user.passportStatus == 'NOT_UPLOADED'}" class="u-inline-style-031"></span>
                 </a>
             </div>
             <div class="sidebar-nav-group">
@@ -74,24 +64,16 @@
             </div>
         </nav>
 
-        <div style="padding:0 12px;margin-top:auto;display:flex;flex-direction:column;gap:4px;">
+        <div class="u-inline-style-032">
             <form th:action="@{/logout}" method="post">
-                <button type="submit"
-                        style="display:flex;align-items:center;gap:8px;width:100%;background:none;
-                               border:none;padding:10px 12px;border-radius:10px;color:#e05252;
-                               font-size:0.88rem;cursor:pointer;transition:background 0.15s;"
-                        onmouseover="this.style.background='rgba(224,82,82,0.1)'"
-                        onmouseout="this.style.background='none'">
+                <button type="submit" class="u-inline-style-033 profile-logout-btn"
+                       >
                     <i class='bx bx-log-out'></i> Выйти
                 </button>
             </form>
-            <div style="height:1px;background:rgba(255,255,255,0.07);margin:4px 0;"></div>
-            <button onclick="confirmDelete()"
-                    style="display:flex;align-items:center;gap:8px;width:100%;background:none;
-                           border:none;padding:10px 12px;border-radius:10px;color:#aaa;
-                           font-size:0.82rem;cursor:pointer;transition:all 0.15s;"
-                    onmouseover="this.style.color='#e05252';this.style.background='rgba(224,82,82,0.07)'"
-                    onmouseout="this.style.color='#aaa';this.style.background='none'">
+            <div class="u-inline-style-034"></div>
+            <button data-confirm-delete-account class="u-inline-style-035 profile-delete-btn"
+                   >
                 <i class='bx bx-trash'></i> Удалить аккаунт
             </button>
         </div>
@@ -99,27 +81,23 @@
 
     <div class="profile-content">
 
-        <div th:if="${param.saved}"
-             style="background:#eef8f2;color:#1a7a3a;padding:12px 20px;border-radius:12px;
-                    margin-bottom:20px;font-size:0.9rem;display:flex;align-items:center;gap:8px;">
+        <div th:if="${param.saved}" class="u-inline-style-036">
             <i class='bx bx-check-circle'></i> Изменения успешно сохранены
         </div>
-        <div th:if="${error}"
-             style="background:#fdeaea;color:#b83030;padding:12px 20px;border-radius:12px;
-                    margin-bottom:20px;font-size:0.9rem;display:flex;align-items:center;gap:8px;">
+        <div th:if="${error}" class="u-inline-style-037">
             <i class='bx bx-error-circle'></i>
             <span th:text="${error}"></span>
         </div>
 
         <div th:if="${section == 'info'}">
-            <div style="display:grid;grid-template-columns:1fr 290px;gap:20px;align-items:start;">
+            <div class="u-inline-style-038">
 
-                <div style="display:flex;flex-direction:column;gap:20px;">
+                <div class="u-inline-style-039">
 
                     <div class="profile-card" id="basicViewBlock">
                         <div class="profile-card-header">
                             <h3>Основная информация</h3>
-                            <button onclick="switchBlock('basicView','basicEdit')"
+                            <button data-switch-hide="basicView" data-switch-show="basicEdit"
                                     class="btn-edit-profile">
                                 <i class='bx bx-edit-alt'></i> Изменить
                             </button>
@@ -158,10 +136,10 @@
                         </div>
                     </div>
 
-                    <div class="profile-card" id="basicEditBlock" style="display:none;">
+                    <div class="profile-card u-inline-style-001" id="basicEditBlock">
                         <div class="profile-card-header">
                             <h3>Основная информация</h3>
-                            <button type="button" onclick="switchBlock('basicEdit','basicView')"
+                            <button type="button" data-switch-hide="basicEdit" data-switch-show="basicView"
                                     class="btn-edit-profile">
                                 <i class='bx bx-x'></i> Отмена
                             </button>
@@ -199,9 +177,9 @@
                                            th:value="${user.country}" placeholder="Россия">
                                 </div>
                             </div>
-                            <div style="margin-top:16px;display:flex;gap:12px;">
+                            <div class="u-inline-style-040">
                                 <button type="submit" class="btn btn-primary">Сохранить</button>
-                                <button type="button" onclick="switchBlock('basicEdit','basicView')"
+                                <button type="button" data-switch-hide="basicEdit" data-switch-show="basicView"
                                         class="btn btn-secondary">Отмена</button>
                             </div>
                         </form>
@@ -210,7 +188,7 @@
                     <div class="profile-card" id="contactViewBlock">
                         <div class="profile-card-header">
                             <h3>Контактные данные</h3>
-                            <button onclick="switchBlock('contactView','contactEdit')"
+                            <button data-switch-hide="contactView" data-switch-show="contactEdit"
                                     class="btn-edit-profile">
                                 <i class='bx bx-edit-alt'></i> Изменить
                             </button>
@@ -228,10 +206,10 @@
                         </div>
                     </div>
 
-                    <div class="profile-card" id="contactEditBlock" style="display:none;">
+                    <div class="profile-card u-inline-style-001" id="contactEditBlock">
                         <div class="profile-card-header">
                             <h3>Контактные данные</h3>
-                            <button type="button" onclick="switchBlock('contactEdit','contactView')"
+                            <button type="button" data-switch-hide="contactEdit" data-switch-show="contactView"
                                     class="btn-edit-profile">
                                 <i class='bx bx-x'></i> Отмена
                             </button>
@@ -240,10 +218,9 @@
                             <div class="info-grid-2">
                                 <div class="form-group">
                                     <label class="form-label">Email</label>
-                                    <input type="email" class="form-input"
-                                           th:value="${user.email}" disabled
-                                           style="opacity:0.5;cursor:not-allowed;">
-                                    <small style="color:var(--text-alter-color);font-size:0.75rem;">
+                                    <input type="email" class="form-input u-inline-style-041"
+                                           th:value="${user.email}" disabled>
+                                    <small class="u-inline-style-042">
                                         Нельзя изменить
                                     </small>
                                 </div>
@@ -254,9 +231,9 @@
                                            placeholder="+7 999 000 00 00">
                                 </div>
                             </div>
-                            <div style="margin-top:16px;display:flex;gap:12px;">
+                            <div class="u-inline-style-040">
                                 <button type="submit" class="btn btn-primary">Сохранить</button>
-                                <button type="button" onclick="switchBlock('contactEdit','contactView')"
+                                <button type="button" data-switch-hide="contactEdit" data-switch-show="contactView"
                                         class="btn btn-secondary">Отмена</button>
                             </div>
                         </form>
@@ -264,11 +241,11 @@
 
                 </div>
 
-                <div class="profile-card" style="position:sticky;top:100px;">
-                    <h3 style="font-size:0.95rem;margin-bottom:16px;">Заполни профиль</h3>
-                    <div style="display:flex;justify-content:center;margin-bottom:20px;">
-                        <div style="position:relative;width:110px;height:110px;">
-                            <svg width="110" height="110" style="transform:rotate(-90deg);">
+                <div class="profile-card u-inline-style-043">
+                    <h3 class="u-inline-style-044">Заполни профиль</h3>
+                    <div class="u-inline-style-045">
+                        <div class="u-inline-style-046">
+                            <svg width="110" height="110" class="u-inline-style-047">
                                 <circle cx="55" cy="55" r="44" fill="none"
                                         stroke="rgba(255,255,255,0.08)" stroke-width="9"/>
                                 <circle cx="55" cy="55" r="44" fill="none"
@@ -276,21 +253,19 @@
                                         stroke-linecap="round" id="progressCircle"
                                         stroke-dasharray="276.5" stroke-dashoffset="276.5"/>
                             </svg>
-                            <div style="position:absolute;top:50%;left:50%;
-                                        transform:translate(-50%,-50%);text-align:center;">
-                                <div id="progressText"
-                                     style="font-size:1.4rem;font-weight:700;">0%</div>
-                                <div style="font-size:0.65rem;color:var(--text-alter-color);">
+                            <div class="u-inline-style-048">
+                                <div id="progressText" class="u-inline-style-049">0%</div>
+                                <div class="u-inline-style-050">
                                     готово
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div style="display:flex;flex-direction:column;gap:8px;">
+                    <div class="u-inline-style-051">
 
                         <div class="profile-step" data-done="true">
                             <i class='bx bx-check-circle step-icon-done'></i>
-                            <span style="flex:1;font-size:0.82rem;">Аккаунт создан</span>
+                            <span class="u-inline-style-052">Аккаунт создан</span>
                             <span class="step-percent">10%</span>
                         </div>
 
@@ -300,7 +275,7 @@
                                th:classappend="${user.avatarPath != null}
                                    ? 'bx-check-circle step-icon-done'
                                    : 'bx-circle step-icon-todo'"></i>
-                            <span style="flex:1;font-size:0.82rem;">Фото профиля</span>
+                            <span class="u-inline-style-052">Фото профиля</span>
                             <span class="step-percent">10%</span>
                         </div>
 
@@ -310,7 +285,7 @@
                                th:classappend="${user.firstName != null and !#strings.isEmpty(user.firstName)}
                                    ? 'bx-check-circle step-icon-done'
                                    : 'bx-circle step-icon-todo'"></i>
-                            <span style="flex:1;font-size:0.82rem;">Персональная информация</span>
+                            <span class="u-inline-style-052">Персональная информация</span>
                             <span class="step-percent">10%</span>
                         </div>
 
@@ -320,7 +295,7 @@
                                th:classappend="${user.city != null and !#strings.isEmpty(user.city)}
                                    ? 'bx-check-circle step-icon-done'
                                    : 'bx-circle step-icon-todo'"></i>
-                            <span style="flex:1;font-size:0.82rem;">Местоположение</span>
+                            <span class="u-inline-style-052">Местоположение</span>
                             <span class="step-percent">5%</span>
                         </div>
 
@@ -330,13 +305,13 @@
                                th:classappend="${user.phoneNumber != null and !#strings.isEmpty(user.phoneNumber)}
                                    ? 'bx-check-circle step-icon-done'
                                    : 'bx-circle step-icon-todo'"></i>
-                            <span style="flex:1;font-size:0.82rem;">Номер телефона</span>
+                            <span class="u-inline-style-052">Номер телефона</span>
                             <span class="step-percent">5%</span>
                         </div>
 
                         <div class="profile-step" data-done="true">
                             <i class='bx bx-check-circle step-icon-done'></i>
-                            <span style="flex:1;font-size:0.82rem;">Email</span>
+                            <span class="u-inline-style-052">Email</span>
                             <span class="step-percent">5%</span>
                         </div>
 
@@ -346,8 +321,8 @@
                                th:classappend="${'CONFIRMED'.equals(user.licenseStatus)}
                                    ? 'bx-check-circle step-icon-done'
                                    : 'bx-circle step-icon-todo'"></i>
-                            <span style="flex:1;font-size:0.82rem;">Водит. удостоверение</span>
-                            <span class="step-percent" style="color:var(--main-color);">+30%</span>
+                            <span class="u-inline-style-052">Водит. удостоверение</span>
+                            <span class="step-percent u-inline-style-053">+30%</span>
                         </div>
 
                         <div class="profile-step"
@@ -356,8 +331,8 @@
                                th:classappend="${'CONFIRMED'.equals(user.passportStatus)}
                                    ? 'bx-check-circle step-icon-done'
                                    : 'bx-circle step-icon-todo'"></i>
-                            <span style="flex:1;font-size:0.82rem;">Паспорт</span>
-                            <span class="step-percent" style="color:var(--main-color);">+25%</span>
+                            <span class="u-inline-style-052">Паспорт</span>
+                            <span class="step-percent u-inline-style-053">+25%</span>
                         </div>
 
                     </div>
@@ -367,35 +342,28 @@
         </div>
 
         <div th:if="${section == 'docs'}">
-            <h2 style="font-size:1.4rem;margin-bottom:24px;">Документы</h2>
+            <h2 class="u-inline-style-054">Документы</h2>
 
-            <div th:if="${docSuccess}"
-                 style="background:#eef8f2;color:#1a7a3a;padding:12px 20px;border-radius:12px;
-                        margin-bottom:20px;font-size:0.9rem;display:flex;align-items:center;gap:8px;">
+            <div th:if="${docSuccess}" class="u-inline-style-036">
                 <i class='bx bx-check-circle'></i>
                 <span th:text="${docSuccess}"></span>
             </div>
-            <div th:if="${docError}"
-                 style="background:#fdeaea;color:#b83030;padding:12px 20px;border-radius:12px;
-                        margin-bottom:20px;font-size:0.9rem;display:flex;align-items:center;gap:8px;">
+            <div th:if="${docError}" class="u-inline-style-037">
                 <i class='bx bx-error-circle'></i>
                 <span th:text="${docError}"></span>
             </div>
 
-            <div style="display:flex;flex-direction:column;gap:20px;">
+            <div class="u-inline-style-039">
 
                 <div class="profile-card">
                     <div class="profile-card-header">
-                        <div style="display:flex;align-items:center;gap:14px;">
-                            <div style="width:48px;height:48px;border-radius:12px;
-                                        background:rgba(255,140,0,0.12);display:flex;
-                                        align-items:center;justify-content:center;flex-shrink:0;">
-                                <i class='bx bx-id-card'
-                                   style="font-size:1.5rem;color:var(--main-color);"></i>
+                        <div class="u-inline-style-055">
+                            <div class="u-inline-style-056">
+                                <i class="bx bx-id-card u-inline-style-057"></i>
                             </div>
                             <div>
-                                <div style="font-weight:600;">Водительское удостоверение</div>
-                                <div style="font-size:0.8rem;color:var(--text-alter-color);">
+                                <div class="u-inline-style-058">Водительское удостоверение</div>
+                                <div class="u-inline-style-059">
                                     Обязательно для аренды автомобиля
                                 </div>
                             </div>
@@ -415,9 +383,8 @@
                             </span>
                         </span>
                     </div>
-                    <div style="margin-top:20px;padding-top:16px;
-                                border-top:1px solid rgba(255,255,255,0.07);">
-                        <div style="display:flex;gap:32px;margin-bottom:16px;flex-wrap:wrap;">
+                    <div class="u-inline-style-060">
+                        <div class="u-inline-style-061">
                             <div th:if="${user.licenseUploadedAt != null}">
                                 <div class="info-label">Загружено</div>
                                 <div class="info-value" th:text="${user.licenseUploadedAt}">—</div>
@@ -432,28 +399,24 @@
                             </div>
                         </div>
                         <form th:action="@{/profile/document}" method="post"
-                              enctype="multipart/form-data"
-                              style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                              enctype="multipart/form-data" class="u-inline-style-062">
                             <input type="hidden" name="docType" value="license">
-                            <label style="cursor:pointer;">
-                                <input type="file" name="file" style="display:none;"
+                            <label class="u-inline-style-063">
+                                <input type="file" name="file" class="u-inline-style-001"
                                        accept="image/jpeg,image/png,image/webp,application/pdf"
-                                       onchange="this.closest('form').submit()">
-                                <span class="btn btn-primary" style="font-size:0.85rem;">
+                                       data-submit-parent-form>
+                                <span class="btn btn-primary u-inline-style-064">
                                     <i class='bx bx-upload'></i>
                                     <span th:text="${user.licenseStatus == 'NOT_UPLOADED'} ? 'Загрузить' : 'Заменить'">Загрузить</span>
                                 </span>
                             </label>
                             <a th:if="${user.licensePath != null}"
                                th:href="@{/profile/documents/license}" target="_blank"
-                               class="btn btn-secondary" style="font-size:0.85rem;">
+                               class="btn btn-secondary u-inline-style-064">
                                 <i class='bx bx-show'></i> Посмотреть
                             </a>
                         </form>
-                        <div th:if="${'REJECTED'.equals(user.licenseStatus)}"
-                             style="margin-top:12px;background:rgba(224,82,82,0.08);
-                                    border:1px solid rgba(224,82,82,0.2);border-radius:10px;
-                                    padding:10px 14px;font-size:0.83rem;color:#e05252;">
+                        <div th:if="${'REJECTED'.equals(user.licenseStatus)}" class="u-inline-style-065">
                             <i class='bx bx-info-circle'></i>
                             Документ отклонён. Загрузите новый файл лучшего качества.
                         </div>
@@ -462,16 +425,13 @@
 
                 <div class="profile-card">
                     <div class="profile-card-header">
-                        <div style="display:flex;align-items:center;gap:14px;">
-                            <div style="width:48px;height:48px;border-radius:12px;
-                                        background:rgba(255,140,0,0.12);display:flex;
-                                        align-items:center;justify-content:center;flex-shrink:0;">
-                                <i class='bx bx-book-open'
-                                   style="font-size:1.5rem;color:var(--main-color);"></i>
+                        <div class="u-inline-style-055">
+                            <div class="u-inline-style-056">
+                                <i class="bx bx-book-open u-inline-style-057"></i>
                             </div>
                             <div>
-                                <div style="font-weight:600;">Паспорт</div>
-                                <div style="font-size:0.8rem;color:var(--text-alter-color);">
+                                <div class="u-inline-style-058">Паспорт</div>
+                                <div class="u-inline-style-059">
                                     Для верификации личности
                                 </div>
                             </div>
@@ -491,9 +451,8 @@
                             </span>
                         </span>
                     </div>
-                    <div style="margin-top:20px;padding-top:16px;
-                                border-top:1px solid rgba(255,255,255,0.07);">
-                        <div style="display:flex;gap:32px;margin-bottom:16px;flex-wrap:wrap;">
+                    <div class="u-inline-style-060">
+                        <div class="u-inline-style-061">
                             <div th:if="${user.passportUploadedAt != null}">
                                 <div class="info-label">Загружено</div>
                                 <div class="info-value" th:text="${user.passportUploadedAt}">—</div>
@@ -508,28 +467,24 @@
                             </div>
                         </div>
                         <form th:action="@{/profile/document}" method="post"
-                              enctype="multipart/form-data"
-                              style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                              enctype="multipart/form-data" class="u-inline-style-062">
                             <input type="hidden" name="docType" value="passport">
-                            <label style="cursor:pointer;">
-                                <input type="file" name="file" style="display:none;"
+                            <label class="u-inline-style-063">
+                                <input type="file" name="file" class="u-inline-style-001"
                                        accept="image/jpeg,image/png,image/webp,application/pdf"
-                                       onchange="this.closest('form').submit()">
-                                <span class="btn btn-primary" style="font-size:0.85rem;">
+                                       data-submit-parent-form>
+                                <span class="btn btn-primary u-inline-style-064">
                                     <i class='bx bx-upload'></i>
                                     <span th:text="${user.passportStatus == 'NOT_UPLOADED'} ? 'Загрузить' : 'Заменить'">Загрузить</span>
                                 </span>
                             </label>
                             <a th:if="${user.passportPath != null}"
                                th:href="@{/profile/documents/passport}" target="_blank"
-                               class="btn btn-secondary" style="font-size:0.85rem;">
+                               class="btn btn-secondary u-inline-style-064">
                                 <i class='bx bx-show'></i> Посмотреть
                             </a>
                         </form>
-                        <div th:if="${'REJECTED'.equals(user.passportStatus)}"
-                             style="margin-top:12px;background:rgba(224,82,82,0.08);
-                                    border:1px solid rgba(224,82,82,0.2);border-radius:10px;
-                                    padding:10px 14px;font-size:0.83rem;color:#e05252;">
+                        <div th:if="${'REJECTED'.equals(user.passportStatus)}" class="u-inline-style-065">
                             <i class='bx bx-info-circle'></i>
                             Документ отклонён. Загрузите новый файл лучшего качества.
                         </div>
@@ -540,31 +495,20 @@
     </div>
 </div>
 
-<div id="deleteModal"
-     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);
-            z-index:9999;align-items:center;justify-content:center;">
-    <div style="background:var(--container-color);border-radius:20px;padding:36px;
-                max-width:420px;width:90%;text-align:center;
-                box-shadow:0 20px 60px rgba(0,0,0,0.4);">
-        <div style="width:56px;height:56px;border-radius:50%;
-                    background:rgba(224,82,82,0.12);display:flex;
-                    align-items:center;justify-content:center;margin:0 auto 16px;">
-            <i class='bx bx-trash' style="font-size:1.6rem;color:#e05252;"></i>
+<div id="deleteModal" class="u-inline-style-066">
+    <div class="u-inline-style-067">
+        <div class="u-inline-style-068">
+            <i class="bx bx-trash u-inline-style-069"></i>
         </div>
-        <h3 style="font-size:1.1rem;margin-bottom:10px;">Удалить аккаунт?</h3>
-        <p style="color:var(--text-alter-color);font-size:0.88rem;
-                  margin-bottom:28px;line-height:1.5;">
+        <h3 class="u-inline-style-070">Удалить аккаунт?</h3>
+        <p class="u-inline-style-071">
             Это действие необратимо. Все ваши данные,<br>
             бронирования и история будут удалены.
         </p>
-        <div style="display:flex;gap:12px;justify-content:center;">
-            <button onclick="closeDelete()" class="btn btn-secondary"
-                    style="min-width:120px;">Отмена</button>
-            <form th:action="@{/profile/delete}" method="post" style="margin:0;">
-                <button type="submit"
-                        style="min-width:120px;background:#e05252;color:#fff;border:none;
-                               padding:10px 20px;border-radius:12px;font-size:0.9rem;
-                               font-weight:600;cursor:pointer;">
+        <div class="u-inline-style-072">
+            <button data-close-delete-account class="btn btn-secondary u-inline-style-073">Отмена</button>
+            <form th:action="@{/profile/delete}" method="post" class="u-inline-style-074">
+                <button type="submit" class="u-inline-style-075">
                     Удалить
                 </button>
             </form>

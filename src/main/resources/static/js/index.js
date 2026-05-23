@@ -61,7 +61,26 @@
         }
     }
 
-    window.onHomeFavClick = onHomeFavClick;
+    document.addEventListener('click', function (event) {
+        const btn = event.target.closest('[data-home-fav-btn]');
+
+        if (btn) {
+            onHomeFavClick(event, btn);
+        }
+    });
+
+    document.addEventListener('error', function (event) {
+        const img = event.target;
+
+        if (!(img instanceof HTMLImageElement) || !img.dataset.fallbackPlaceholder) {
+            return;
+        }
+
+        const placeholder = document.createElement('span');
+        placeholder.className = 'home-img-placeholder';
+        placeholder.textContent = '🚗';
+        img.replaceWith(placeholder);
+    }, true);
 
     if (typeof ScrollReveal !== 'function') return;
 

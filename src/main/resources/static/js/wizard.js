@@ -53,6 +53,28 @@
     }
 
     function attachListeners() {
+        document.querySelector('[data-booking-wizard-form]')?.addEventListener('submit', validateBeforeSubmit);
+
+        document.querySelectorAll('.stepper-item[data-step]').forEach(item => {
+            item.addEventListener('click', () => goToStep(Number(item.dataset.step)));
+        });
+
+        document.querySelectorAll('[data-go-to-step]').forEach(btn => {
+            btn.addEventListener('click', () => goToStep(Number(btn.dataset.goToStep)));
+        });
+
+        document.querySelectorAll('[data-next-from-step]').forEach(btn => {
+            btn.addEventListener('click', () => nextFromStep(Number(btn.dataset.nextFromStep)));
+        });
+
+        document.querySelectorAll('.pay-method-tab[data-method]').forEach(tab => {
+            tab.addEventListener('click', () => selectPayment(tab.dataset.method));
+        });
+
+        document.querySelectorAll('.currency-btn[data-currency]').forEach(btn => {
+            btn.addEventListener('click', () => setCurrency(btn.dataset.currency));
+        });
+
         document.getElementById('pickupLocation')?.addEventListener('change', () => clearFieldError('rowPickup'));
         document.getElementById('returnLocation')?.addEventListener('change', () => clearFieldError('rowReturn'));
 
@@ -83,6 +105,16 @@
             e.target.value = e.target.value.replace(/\D/g, '').slice(0, 3);
             clearFieldError('rowCardCvv');
         });
+
+        document.addEventListener('error', function (event) {
+            const img = event.target;
+
+            if (!(img instanceof HTMLImageElement) || !img.dataset.hideOnError) {
+                return;
+            }
+
+            img.classList.add('is-hidden');
+        }, true);
     }
 
     async function loadBookedPeriods() {
@@ -319,9 +351,4 @@
         await recalcAndRender();
     }
 
-    window.goToStep = goToStep;
-    window.nextFromStep = nextFromStep;
-    window.selectPayment = selectPayment;
-    window.setCurrency = setCurrency;
-    window.validateBeforeSubmit = validateBeforeSubmit;
 })();
