@@ -27,6 +27,7 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final FileStorageService fileStorageService;
+    private final GridFsDocumentService gridFsDocumentService;
     private final NotificationService notificationService;
 
     public User register(UserDto userDto) {
@@ -101,19 +102,27 @@ public class UserService {
             throw new IllegalArgumentException("Неизвестный тип документа: " + docType);
         }
 
-        String path = fileStorageService.saveDocument(file, "documents");
+        String newFileId = gridFsDocumentService.store(file);
 
         if ("license".equals(docType)) {
-            user.setLicensePath(path);
+            deleteOldDocument(user.getLicensePath());
+            user.setLicensePath(newFileId);
             user.setLicenseStatus("PENDING");
             user.setLicenseUploadedAt(LocalDate.now());
         } else {
-            user.setPassportPath(path);
+            deleteOldDocument(user.getPassportPath());
+            user.setPassportPath(newFileId);
             user.setPassportStatus("PENDING");
             user.setPassportUploadedAt(LocalDate.now());
         }
 
         return userRepository.save(user);
+    }
+
+    private void deleteOldDocument(String oldFileId) {
+        if (oldFileId != null && !oldFileId.isBlank()) {
+            gridFsDocumentService.delete(oldFileId);
+        }
     }
 
     @Transactional

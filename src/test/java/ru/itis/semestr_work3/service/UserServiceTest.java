@@ -44,6 +44,9 @@ class UserServiceTest {
     private FileStorageService fileStorageService;
 
     @Mock
+    private GridFsDocumentService gridFsDocumentService;
+
+    @Mock
     private NotificationService notificationService;
 
     @InjectMocks
@@ -330,12 +333,12 @@ class UserServiceTest {
     void uploadDocument_withLicense_setsLicenseFields() {
         MockMultipartFile file = new MockMultipartFile("file", "license.jpg", "image/jpeg", new byte[]{1, 2, 3});
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(fileStorageService.saveDocument(any(), eq("documents"))).thenReturn("/uploads/documents/license.jpg");
+        when(gridFsDocumentService.store(any())).thenReturn("64f0c1a2b3c4d5e6f7a8b9c0");
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         User result = userService.uploadDocument(1L, "license", file);
 
-        assertThat(result.getLicensePath()).isEqualTo("/uploads/documents/license.jpg");
+        assertThat(result.getLicensePath()).isEqualTo("64f0c1a2b3c4d5e6f7a8b9c0");
         assertThat(result.getLicenseStatus()).isEqualTo("PENDING");
         assertThat(result.getLicenseUploadedAt()).isEqualTo(LocalDate.now());
     }
@@ -344,14 +347,42 @@ class UserServiceTest {
     void uploadDocument_withPassport_setsPassportFields() {
         MockMultipartFile file = new MockMultipartFile("file", "passport.pdf", "application/pdf", new byte[]{1, 2, 3});
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(fileStorageService.saveDocument(any(), eq("documents"))).thenReturn("/uploads/documents/passport.pdf");
+        when(gridFsDocumentService.store(any())).thenReturn("64f0c1a2b3c4d5e6f7a8b9c1");
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         User result = userService.uploadDocument(1L, "passport", file);
 
-        assertThat(result.getPassportPath()).isEqualTo("/uploads/documents/passport.pdf");
+        assertThat(result.getPassportPath()).isEqualTo("64f0c1a2b3c4d5e6f7a8b9c1");
         assertThat(result.getPassportStatus()).isEqualTo("PENDING");
         assertThat(result.getPassportUploadedAt()).isEqualTo(LocalDate.now());
+    }
+
+    @Test
+    void uploadDocument_whenOldDocumentExists_deletesOldFromGridFs() {
+        user.setLicensePath("oldFileId123");
+        MockMultipartFile file = new MockMultipartFile("file", "license.jpg", "image/jpeg", new byte[]{1, 2, 3});
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(gridFsDocumentService.store(any())).thenReturn("newFileId456");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        User result = userService.uploadDocument(1L, "license", file);
+
+        verify(gridFsDocumentService).delete("oldFileId123");
+        assertThat(result.getLicensePath()).isEqualTo("newFileId456");
+    }
+
+    @Test
+    void uploadDocument_whenOldDocumentPathIsBlank_doesNotDeleteOldDocument() {
+        user.setLicensePath("   ");
+        MockMultipartFile file = new MockMultipartFile("file", "license.jpg", "image/jpeg", new byte[]{1, 2, 3});
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(gridFsDocumentService.store(any())).thenReturn("newFileId456");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        User result = userService.uploadDocument(1L, "license", file);
+
+        verify(gridFsDocumentService, never()).delete(any());
+        assertThat(result.getLicensePath()).isEqualTo("newFileId456");
     }
 
     @Test
@@ -361,7 +392,7 @@ class UserServiceTest {
 
         assertThrows(IllegalArgumentException.class, () -> userService.uploadDocument(1L, "unknown", file));
 
-        verify(fileStorageService, never()).saveDocument(any(), eq("documents"));
+        verify(gridFsDocumentService, never()).store(any());
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -371,7 +402,7 @@ class UserServiceTest {
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> userService.uploadDocument(99L, "license", file));
-        verify(fileStorageService, never()).saveDocument(any(), any());
+        verify(gridFsDocumentService, never()).store(any());
     }
 
     @Test

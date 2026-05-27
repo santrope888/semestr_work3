@@ -2,9 +2,9 @@ package ru.itis.semestr_work3.controllers;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
+import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import ru.itis.semestr_work3.entity.User;
 import ru.itis.semestr_work3.exception.ResourceNotFoundException;
-import ru.itis.semestr_work3.service.FileStorageService;
+import ru.itis.semestr_work3.service.GridFsDocumentService;
 import ru.itis.semestr_work3.service.UserService;
 
 @Controller
@@ -22,7 +22,7 @@ import ru.itis.semestr_work3.service.UserService;
 public class DocumentController {
 
     private final UserService userService;
-    private final FileStorageService fileStorageService;
+    private final GridFsDocumentService gridFsDocumentService;
 
     @GetMapping("/profile/documents/{docType}")
     public ResponseEntity<Resource> getMyDocument(@PathVariable String docType,
@@ -34,7 +34,7 @@ public class DocumentController {
         User user = userService.findByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
 
-        return buildResponse(resolveDocumentPath(user, docType));
+        return buildResponse(resolveDocumentId(user, docType));
     }
 
     @GetMapping("/admin/users/{userId}/documents/{docType}")
@@ -49,10 +49,10 @@ public class DocumentController {
         User user = userService.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
 
-        return buildResponse(resolveDocumentPath(user, docType));
+        return buildResponse(resolveDocumentId(user, docType));
     }
 
-    private String resolveDocumentPath(User user, String docType) {
+    private String resolveDocumentId(User user, String docType) {
         return switch (docType) {
             case "license" -> {
                 if (user.getLicensePath() == null || user.getLicensePath().isBlank()) {
@@ -70,16 +70,26 @@ public class DocumentController {
         };
     }
 
-    private ResponseEntity<Resource> buildResponse(String storedPath) {
-        Resource resource = fileStorageService.loadAsResourceFromStoredPath(storedPath);
-        String fileName = fileStorageService.getFileNameFromStoredPath(storedPath);
+    private ResponseEntity<Resource> buildResponse(String fileId) {
+        GridFsResource resource = gridFsDocumentService.load(fileId);
 
-        MediaType mediaType = MediaTypeFactory.getMediaType(fileName)
-                .orElse(MediaType.APPLICATION_OCTET_STREAM);
+        MediaType mediaType = resolveMediaType(resource);
+        String fileName = resource.getFilename() != null ? resource.getFilename() : "document";
 
         return ResponseEntity.ok()
                 .contentType(mediaType)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
                 .body(resource);
+    }
+
+    private MediaType resolveMediaType(GridFsResource resource) {
+        try {
+            String contentType = resource.getContentType();
+            return contentType != null
+                    ? MediaType.parseMediaType(contentType)
+                    : MediaType.APPLICATION_OCTET_STREAM;
+        } catch (Exception e) {
+            return MediaType.APPLICATION_OCTET_STREAM;
+        }
     }
 }

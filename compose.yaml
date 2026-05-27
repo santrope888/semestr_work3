@@ -22,17 +22,34 @@ services:
     volumes:
       - ollama_data:/root/.ollama
 
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+    healthcheck:
+      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   app:
     build: .
     ports:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      SPRING_MONGODB_URI: mongodb://mongo:27017/carrent_docs
+      SPRING_MONGODB_DATABASE: carrent_docs
+      SPRING_DATA_MONGODB_GRIDFS_DATABASE: carrent_docs
       OAUTH_GOOGLE_CLIENT_ID: ${OAUTH_GOOGLE_CLIENT_ID:-}
       OAUTH_GOOGLE_CLIENT_SECRET: ${OAUTH_GOOGLE_CLIENT_SECRET:-}
       OAUTH_GOOGLE_REDIRECT_URI: ${OAUTH_GOOGLE_REDIRECT_URI:-http://localhost:8080/oauth/google/callback}
     depends_on:
       postgres:
+        condition: service_healthy
+      mongo:
         condition: service_healthy
     volumes:
       - uploads:/app/uploads
@@ -41,3 +58,4 @@ volumes:
   pgdata:
   ollama_data:
   uploads:
+  mongodata:
