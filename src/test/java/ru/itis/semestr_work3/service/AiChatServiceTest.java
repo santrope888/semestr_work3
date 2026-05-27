@@ -12,7 +12,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.client.RestTemplate;
 import ru.itis.semestr_work3.entity.Car;
 import ru.itis.semestr_work3.entity.Category;
 import ru.itis.semestr_work3.entity.ChatMessage;
@@ -55,7 +54,7 @@ class AiChatServiceTest {
     private CarRepository carRepository;
 
     @Mock
-    private RestTemplate restTemplate;
+    private OllamaClientService ollamaClientService;
 
     @InjectMocks
     private AiChatService aiChatService;
@@ -101,7 +100,7 @@ class AiChatServiceTest {
                 .thenReturn(new ArrayList<>());
         when(messageRepository.save(any(ChatMessage.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(carRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Car>>any())).thenReturn(List.of());
-        when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
+        when(ollamaClientService.chat(anyString(), any()))
                 .thenReturn(ResponseEntity.ok(Map.of("message", Map.of("content", "OK"))));
 
         String result = aiChatService.sendMessage(10L, null);
@@ -215,7 +214,7 @@ class AiChatServiceTest {
         when(messageRepository.findBySessionIdOrderByCreatedAtAsc(10L)).thenReturn(List.of(historyMessage));
         when(carRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Car>>any()))
                 .thenReturn(List.of(firstCar, secondCar));
-        when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
+        when(ollamaClientService.chat(anyString(), any()))
                 .thenReturn(ResponseEntity.ok(Map.of("message", Map.of("content", "Подойдут Audi Q8 и BMW X6"))));
         when(messageRepository.save(any(ChatMessage.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -239,7 +238,7 @@ class AiChatServiceTest {
         assertNotNull(savedMessages.get(1).getCreatedAt());
 
         ArgumentCaptor<HttpEntity> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
-        verify(restTemplate).postForEntity(eq("http://localhost:11434/api/chat"), requestCaptor.capture(), eq(Map.class));
+        verify(ollamaClientService).chat(eq("http://localhost:11434/api/chat"), requestCaptor.capture());
 
         @SuppressWarnings("unchecked")
         Map<String, Object> body = (Map<String, Object>) requestCaptor.getValue().getBody();
@@ -322,7 +321,7 @@ class AiChatServiceTest {
         when(messageRepository.findBySessionIdOrderByCreatedAtAsc(10L)).thenReturn(new ArrayList<>());
         when(messageRepository.save(any(ChatMessage.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(carRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Car>>any())).thenReturn(List.of());
-        when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
+        when(ollamaClientService.chat(anyString(), any()))
                 .thenReturn(ResponseEntity.ok(Map.of("message", Map.of("content", "Пока нет доступных автомобилей"))));
 
         String result = aiChatService.sendMessage(10L, "Что есть в наличии?");
@@ -330,7 +329,7 @@ class AiChatServiceTest {
         assertThat(result).isEqualTo("Пока нет доступных автомобилей");
 
         ArgumentCaptor<HttpEntity> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
-        verify(restTemplate).postForEntity(eq("http://localhost:11434/api/chat"), requestCaptor.capture(), eq(Map.class));
+        verify(ollamaClientService).chat(eq("http://localhost:11434/api/chat"), requestCaptor.capture());
         @SuppressWarnings("unchecked")
         Map<String, Object> body = (Map<String, Object>) requestCaptor.getValue().getBody();
         assertThat(body.get("messages").toString())
@@ -341,7 +340,7 @@ class AiChatServiceTest {
     void sendMessage_whenResponseBodyIsNull_throwsExternalServiceException() {
         stubBeforeOllamaCall();
         ResponseEntity<Map> emptyResponse = ResponseEntity.ok(null);
-        when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
+        when(ollamaClientService.chat(anyString(), any()))
                 .thenReturn(emptyResponse);
 
         ExternalServiceException exception = assertThrows(
@@ -356,7 +355,7 @@ class AiChatServiceTest {
     @Test
     void sendMessage_whenMessageHasWrongFormat_throwsExternalServiceException() {
         stubBeforeOllamaCall();
-        when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
+        when(ollamaClientService.chat(anyString(), any()))
                 .thenReturn(ResponseEntity.ok(Map.of("message", "wrong-format")));
 
         ExternalServiceException exception = assertThrows(
@@ -375,7 +374,7 @@ class AiChatServiceTest {
         body.put("message", message);
 
         stubBeforeOllamaCall();
-        when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
+        when(ollamaClientService.chat(anyString(), any()))
                 .thenReturn(ResponseEntity.ok(body));
 
         ExternalServiceException exception = assertThrows(
@@ -390,7 +389,7 @@ class AiChatServiceTest {
     @Test
     void sendMessage_whenContentIsBlank_throwsExternalServiceException() {
         stubBeforeOllamaCall();
-        when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
+        when(ollamaClientService.chat(anyString(), any()))
                 .thenReturn(ResponseEntity.ok(Map.of("message", Map.of("content", "   "))));
 
         ExternalServiceException exception = assertThrows(
@@ -405,7 +404,7 @@ class AiChatServiceTest {
     @Test
     void sendMessage_whenOllamaFails_throwsExternalServiceException() {
         stubBeforeOllamaCall();
-        when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
+        when(ollamaClientService.chat(anyString(), any()))
                 .thenThrow(new RuntimeException("Connection refused"));
 
         ExternalServiceException exception = assertThrows(
@@ -429,7 +428,7 @@ class AiChatServiceTest {
             return saved;
         });
         when(carRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Car>>any())).thenReturn(List.of());
-        when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
+        when(ollamaClientService.chat(anyString(), any()))
                 .thenReturn(ResponseEntity.ok(Map.of("message", Map.of("content", aiResponse))));
     }
 

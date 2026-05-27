@@ -225,7 +225,6 @@
             </div>
         </div>
         <div class="cd-pane" id="cd-pane-reviews">
-            <!-- Список отзывов -->
             <div th:if="${not #lists.isEmpty(reviews)}" class="cd-reviews-list">
                 <div th:each="review : ${reviews}" class="cd-review-card">
                     <div class="cd-review-head">

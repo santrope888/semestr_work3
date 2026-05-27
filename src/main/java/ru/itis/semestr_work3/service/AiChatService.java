@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 import ru.itis.semestr_work3.entity.Car;
 import ru.itis.semestr_work3.entity.ChatMessage;
 import ru.itis.semestr_work3.entity.ChatSession;
@@ -36,7 +35,7 @@ public class AiChatService {
     private final ChatSessionRepository sessionRepository;
     private final ChatMessageRepository messageRepository;
     private final CarRepository carRepository;
-    private final RestTemplate restTemplate;
+    private final OllamaClientService ollamaClientService;
 
     @Value("${ollama.url:http://localhost:11434}")
     private String ollamaUrl;
@@ -186,10 +185,9 @@ public class AiChatService {
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
-            ResponseEntity<Map> response = restTemplate.postForEntity(
+            ResponseEntity<Map> response = ollamaClientService.chat(
                     ollamaUrl + "/api/chat",
-                    request,
-                    Map.class
+                    request
             );
 
             if (response.getBody() == null) {

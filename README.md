@@ -1,22 +1,36 @@
 # Aura Motum — Система аренды автомобилей
 
-Платформа для аренды автомобилей с личным кабинетом, 
+Платформа для аренды автомобилей с личным кабинетом,
 бронированием, оплатой и ИИ-помощником по подбору.
 
 ## Технологии
 
 - **Backend:** Java 21, Spring Boot 4.x, Spring MVC, Spring Security, Spring Data JPA
 - **Шаблонизация:** Thymeleaf
-- **БД:** PostgreSQL 16, Flyway (миграции V1—V18)
+- **Реляционная БД:** PostgreSQL 16, Flyway (миграции V1—V18)
+- **Документная БД (NoSQL):** MongoDB 7 + GridFS — для хранения документов пользователя
 - **Маппинг:** MapStruct
 - **Документация API:** springdoc-openapi 3.0.2 (Swagger UI)
 - **Тесты:** JUnit 5, Mockito, AssertJ, Spring Security Test, Testcontainers
 - **Покрытие:** JaCoCo, enforcer на 100% (METHOD / LINE / BRANCH) сервисного слоя
-- **Инфраструктура:** Docker Compose (app + postgres + ollama)
+- **Отказоустойчивость:** Spring Retry — повторные попытки при сбоях вызова ИИ
+- **Инфраструктура:** Docker Compose (app + postgres + mongo + ollama)
 - **ИИ-помощник:** Ollama-сервер в Docker + cloud-модель `gpt-oss:120b-cloud`
   через Ollama Cloud (требуется `ollama signin` один раз на машину)
 - **Внешние API:** exchangerate-api (курсы валют через RestTemplate),
   Google OAuth 2.0 (через RestTemplate)
+
+## Хранение данных (polyglot persistence)
+
+Проект использует две базы данных, каждую под свой тип данных:
+
+- **PostgreSQL** — реляционные бизнес-данные: пользователи, машины, брони,
+  платежи, отзывы, страховки, уведомления, чат
+- **MongoDB GridFS** — документы пользователя (паспорт, водительское
+  удостоверение): бинарные файлы с метаданными, для которых документная БД
+  подходит лучше реляционной
+- **Файловая система** — изображения (аватары, фото машин), раздаются
+  статически через `WebConfig`
 
 ## Запуск через Docker
 
@@ -40,6 +54,8 @@ OAUTH_GOOGLE_REDIRECT_URI=http://localhost:8080/oauth/google/callback
 docker compose up --build
 ```
 
+Поднимаются четыре сервиса: `app`, `postgres`, `mongo`, `ollama`.
+
 3. Один раз авторизовать Ollama Cloud (для ИИ-помощника):
 
 ```bash
@@ -53,24 +69,32 @@ docker exec -it semestr_work3-ollama-1 ollama signin
 
 ## Локальный запуск (через IDEA)
 
-**Требования:** Java 21, Maven, PostgreSQL, Docker (для интеграционных тестов).
+**Требования:** Java 21, Maven, PostgreSQL, MongoDB, Docker (для интеграционных тестов).
 
-1. Создать БД:
+1. Создать БД PostgreSQL:
 ```sql
 CREATE DATABASE carrent;
 ```
 
-2. Скопировать `.env`, заполнить Google OAuth (см. выше).
+2. Поднять MongoDB (проще всего контейнером):
+```bash
+docker compose up -d mongo
+```
 
-3. Проверить настройки БД в `application.properties`:
+3. Скопировать `.env`, заполнить Google OAuth (см. выше).
+
+4. Проверить настройки в `application.properties`:
 ```properties
 spring.datasource.url=jdbc:postgresql://localhost:5433/carrent
 spring.datasource.username=postgres
 spring.datasource.password=postgres
+spring.mongodb.uri=mongodb://localhost:27017/carrent_docs
+spring.mongodb.database=carrent_docs
+spring.data.mongodb.gridfs.database=carrent_docs
 app.upload.dir=${user.dir}/uploads
 ```
 
-4. Запустить:
+5. Запустить:
 ```bash
 ./mvnw spring-boot:run
 ```
@@ -130,9 +154,12 @@ CSRF-защита через state-параметр.
 - `PaymentService.pay()` — нельзя оплатить уже оплаченный или возвращённый платёж;
   способ оплаты проверяется по whitelist (`CARD`, `CASH`)
 - `PaymentService.refund()` — идемпотентен (повторный refund не меняет статуса)
+- `BookingService.create()` — проверка пересечения дат: машину нельзя забронировать
+  на период, пересекающийся с уже существующей активной бронью
 - `BookingService.confirm()` — только из `PENDING`
-- `BookingService.cancel()` — только из `PENDING` или `CONFIRMED`; для оплаченных
-  карт ставит `REFUNDED` (реальный возврат), для PENDING — `CANCELLED` (отзыв запроса)
+- `BookingService.cancel()` — проверка владельца (отменить может только автор брони);
+  только из `PENDING` или `CONFIRMED`; для оплаченных карт ставит `REFUNDED`
+  (реальный возврат), для PENDING — `CANCELLED` (отзыв запроса)
 - `BookingService.complete()` — только из `CONFIRMED`
 - `ReviewService.create()` — отзыв можно оставить **только после завершённой
   аренды этой машины этим пользователем**, не более одного на машину
@@ -140,6 +167,14 @@ CSRF-защита через state-параметр.
 При нарушении бросается `IllegalStateException` / `IllegalArgumentException`,
 корректно обрабатываемый в `MvcExceptionHandler` (страница 400) и
 `ApiExceptionHandler` (JSON 400).
+
+## Отказоустойчивость (Spring Retry)
+
+Вызовы ИИ-помощника (Ollama) обёрнуты в `OllamaClientService` с аннотацией
+`@Retryable`: при сбое (`RestClientException`) выполняется до 3 повторных
+попыток с задержкой 1 секунда между ними. Если все попытки исчерпаны,
+срабатывает `@Recover`-метод, и пользователю возвращается понятное сообщение
+вместо стектрейса.
 
 ## Swagger UI
 
@@ -156,7 +191,7 @@ http://localhost:8080/swagger-ui.html
 Файл `requests.http`, переменные в `http-client.env.json`.
 
 ### Postman
-Коллекция `Aura_Motum.postman_collection.json` — 46 запросов в 8 папках
+Коллекция `Aura_Motum.postman_collection.json` — запросы по папкам
 (CARS / BOOKINGS / PAYMENTS / REVIEWS / FAVORITES / NOTIFICATIONS / CHAT / MVC).
 Авторизация — Basic Auth на уровне коллекции через `{{username}}` / `{{password}}`.
 
@@ -166,7 +201,7 @@ http://localhost:8080/swagger-ui.html
 ./mvnw verify
 ```
 
-⚠️ Нужен **запущенный Docker** — Testcontainers поднимет PostgreSQL.
+⚠️ Нужен **запущенный Docker** — Testcontainers поднимет PostgreSQL и MongoDB.
 
 Отчёт JaCoCo: `target/site/jacoco/index.html`
 
@@ -175,8 +210,8 @@ http://localhost:8080/swagger-ui.html
   покрытие сервисного слоя по строкам и **ветвлениям** (jacoco enforcer
   `<minimum>1.00</minimum>` для METHOD / LINE / BRANCH)
 - **Интеграционные тесты** (`src/test/java/.../integration/*IT.java`) —
-  поднимают полный Spring-контекст с реальной PostgreSQL через Testcontainers,
-  прогоняют HTTP-запросы через MockMvc
+  поднимают полный Spring-контекст с реальными PostgreSQL и MongoDB через
+  Testcontainers, прогоняют HTTP-запросы через MockMvc
 
 ## Структура проекта
 ```text
@@ -190,9 +225,12 @@ src/
 │   │   │   └── (mvc)        — HomeController, BookingPageController,
 │   │   │                       ProfilePageController, ChatPageController,
 │   │   │                       PaymentPageController (read-only),
+│   │   │                       DocumentController (отдача документов из GridFS),
 │   │   │                       AdminBookingController, AdminCarController,
 │   │   │                       AdminUserController, AuthController, OAuthController
-│   │   ├── service/         — бизнес-логика, state guards
+│   │   ├── service/         — бизнес-логика, state guards,
+│   │   │                       GridFsDocumentService (MongoDB),
+│   │   │                       OllamaClientService (retry)
 │   │   ├── repository/      — Spring Data JPA + @Query
 │   │   ├── entity/          — 12 JPA сущностей (M2M, O2M, O2O связи)
 │   │   ├── dto/             — DTO / Request / Form / Filter
@@ -205,25 +243,28 @@ src/
 │       ├── templates/       — Thymeleaf с фрагментами header/footer
 │       └── db/migration/    — Flyway V1—V18
 └── test/
-├── java/ru/itis/semestr_work3/
-│   ├── service/         — unit-тесты (Mockito)
-│   ├── integration/     — интеграционные тесты с Testcontainers
-│   ├── TestcontainersConfiguration.java
-│   └── TestSemestrWork3Application.java
+    └── java/ru/itis/semestr_work3/
+        ├── service/         — unit-тесты (Mockito)
+        ├── integration/     — интеграционные тесты с Testcontainers
+        ├── TestcontainersConfiguration.java  — PostgreSQL + MongoDB контейнеры
+        └── TestSemestrWork3Application.java
 ```
 
 ## Технические заметки
 
-### Файловое хранилище
-Загруженные пользователем файлы (аватары, документы, фото машин) сохраняются
-в `${app.upload.dir}/{avatars,cars,documents}/`, по умолчанию `${user.dir}/uploads`.
-Раздаются через `WebConfig.addResourceHandlers` под `/uploads/avatars/**`
-и `/uploads/cars/**`.
+### Хранение файлов
+- **Документы пользователя** (паспорт, права) — в **MongoDB GridFS**.
+  `GridFsDocumentService` сохраняет файл, возвращает ObjectId, который
+  записывается в поля `licensePath` / `passportPath` сущности User.
+  Отдаются через `DocumentController` с проверкой прав доступа.
+- **Изображения** (аватары, фото машин) — в файловой системе
+  `${app.upload.dir}/{avatars,cars}/`, раздаются через
+  `WebConfig.addResourceHandlers` под `/uploads/avatars/**` и `/uploads/cars/**`.
 
-`FileStorageService` проверяет файл по whitelist MIME-типов, размеру (≤5 МБ)
-и генерирует безопасное имя (slug + UUID). Расширение вычисляется **строго по
-Content-Type**, а не по имени файла — защита от загрузки `evil.html`
-с поддельным MIME.
+И `FileStorageService` (файловая система), и `GridFsDocumentService` (GridFS)
+проверяют файл по whitelist MIME-типов и размеру (≤5 МБ). Для файловой системы
+расширение вычисляется **строго по Content-Type**, а не по имени файла —
+защита от загрузки `evil.html` с поддельным MIME.
 
 ### Переменные окружения
 Чувствительные данные (Google OAuth) хранятся в `.env` (в `.gitignore`).
@@ -231,8 +272,11 @@ Content-Type**, а не по имени файла — защита от заг�
 
 ### Docker
 - `Dockerfile` — multi-stage build, запуск от non-root пользователя `spring`
-- `.dockerignore` — исключает `target/`, `.idea/`, `.env`, `uploads/`, `cookies.txt`
-- `compose.yaml` — три сервиса: app, postgres, ollama
+- `.dockerignore` — исключает `target/`, `.idea/`, `.env`, `uploads/` и прочее
+- `compose.yaml` — четыре сервиса: app, postgres, mongo, ollama;
+  данные сохраняются в volumes `pgdata`, `mongodata`, `uploads`
+- Образ приложения публикуется как `santrope888/semestr_work3:latest`; в `compose.yaml`
+  он указан через `image:` и при необходимости пересобирается из `build: .`
 
 ### CI / pre-commit
 ```bash
@@ -240,5 +284,5 @@ Content-Type**, а не по имени файла — защита от заг�
 ```
 Должно быть зелёным:
 - Все unit-тесты
-- Все интеграционные тесты (нужен Docker)
+- Все интеграционные тесты (нужен Docker — PostgreSQL + MongoDB)
 - JaCoCo enforcer 100% по METHOD / LINE / BRANCH для сервисов

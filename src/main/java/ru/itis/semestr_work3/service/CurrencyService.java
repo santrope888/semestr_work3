@@ -2,7 +2,11 @@ package ru.itis.semestr_work3.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import ru.itis.semestr_work3.exception.ExternalServiceException;
 
@@ -15,6 +19,11 @@ public class CurrencyService {
 
     private final RestTemplate restTemplate;
 
+    @Retryable(
+            retryFor = RestClientException.class,
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 1000)
+    )
     public double convert(int amountRub, String targetCurrency) {
         if (amountRub < 0) {
             throw new IllegalArgumentException("Сумма не может быть отрицательной");
@@ -45,9 +54,18 @@ public class CurrencyService {
 
         } catch (IllegalArgumentException e) {
             throw e;
+        } catch (RestClientException e) {
+            log.warn("Currency rate request failed: {}", e.getMessage(), e);
+            throw e;
         } catch (Exception e) {
             log.warn("Ошибка при получении курса валют: {}", e.getMessage(), e);
             throw new ExternalServiceException("Сервис конвертации валют временно недоступен", e);
         }
+    }
+
+    @Recover
+    public double recover(RestClientException e, int amountRub, String targetCurrency) {
+        log.warn("Currency {} is unavailable after 3 attempts, returning original amount", targetCurrency, e);
+        return amountRub;
     }
 }
